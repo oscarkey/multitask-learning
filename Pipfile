@@ -5,4 +5,5 @@ name = "pypi"
 
 [packages]
 numpy = "*"
-
+torch = "*"
+cityscapesscripts = "*"
