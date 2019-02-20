@@ -4,6 +4,7 @@ import glob
 import os
 
 import numpy as np
+import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
@@ -66,6 +67,13 @@ class CityscapesDataset(Dataset):
 
     def __len__(self):
         return len(self._file_prefixes)
+
+
+def get_loader(dataset: Dataset, config):
+    return torch.utils.data.Dataloader(
+        dataset,
+        batch_size=config['batch_size'],
+        shuffle=False)
 
 
 if __name__ == '__main__':
