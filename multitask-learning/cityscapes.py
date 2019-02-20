@@ -3,6 +3,8 @@
 import glob
 import os
 
+import numpy as np
+from PIL import Image
 from torch.utils.data import Dataset
 
 
@@ -53,8 +55,8 @@ class CityscapesDataset(Dataset):
         label_file = self._get_file_path_for_index(index, 'labelIds')
         instance_file = self._get_file_path_for_index(index, 'instanceIds')
 
-        # TODO: Process files into tensors.
-        raise NotImplementedError()
+        return (np.asarray(Image.open(label_file)),
+                np.asarray(Image.open(instance_file)))
 
     def _get_file_path_for_index(self, index: int, type: str) -> str:
         path_prefix = os.path.join(self._root_dir, self._file_prefixes[index])
