@@ -53,10 +53,12 @@ class CityscapesDataset(Dataset):
         return os.path.join(directory, prefix)
 
     def __getitem__(self, index: int):
+        image_file = self._get_file_path_for_index(index, 'leftImg8bit')
         label_file = self._get_file_path_for_index(index, 'labelIds')
         instance_file = self._get_file_path_for_index(index, 'instanceIds')
 
-        return (np.asarray(Image.open(label_file)),
+        return (np.asarray(Image.open(image_file)),
+                np.asarray(Image.open(label_file)),
                 np.asarray(Image.open(instance_file)))
 
     def _get_file_path_for_index(self, index: int, type: str) -> str:
@@ -87,3 +89,4 @@ def get_loader(dataset: Dataset, config):
 if __name__ == '__main__':
     root = '/Users/oscar/Downloads/gtFine_trainvaltest/gtFine/train/'
     test = CityscapesDataset(root)
+    print(test[0])
