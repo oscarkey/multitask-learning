@@ -69,6 +69,14 @@ class CityscapesDataset(Dataset):
         return len(self._file_prefixes)
 
 
+def get_loader_from_dir(root_dir: str, config):
+    """Creates a DataLoader for Cityscapes from the given root directory.
+
+    Will load any data file in any sub directory under the root directory.
+    """
+    return get_loader(CityscapesDataset(root_dir), config)
+
+
 def get_loader(dataset: Dataset, config):
     return torch.utils.data.Dataloader(
         dataset,
