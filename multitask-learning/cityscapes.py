@@ -8,6 +8,7 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
+import torchvision.transforms as transforms
 
 class CityscapesDataset(Dataset):
     """A Dataset which loads the Cityscapes dataset from disk.
@@ -48,7 +49,7 @@ class CityscapesDataset(Dataset):
     def _get_file_prefix(directory: str, file_name: str) -> str:
         # The format is {city}_{seq:0>6}_{frame:0>6}_{type1}_{type2}.{ext}
         parts = file_name.split('_')
-        assert len(parts) == 5, 'File name not as expected: ' + str(parts)
+        assert len(parts) == 5 or len(parts) == 4, 'File name not as expected: ' + str(parts)
         prefix = parts[0] + '_' + parts[1] + '_' + parts[2]
         return os.path.join(directory, prefix)
 
@@ -56,14 +57,16 @@ class CityscapesDataset(Dataset):
         image_file = self._get_file_path_for_index(index, 'leftImg8bit')
         label_file = self._get_file_path_for_index(index, 'labelIds')
         instance_file = self._get_file_path_for_index(index, 'instanceIds')
-
-        return (np.asarray(Image.open(image_file)),
+        axis_order = (2,0,1)
+        return (np.transpose(np.asarray(Image.open(image_file)), axis_order),
                 np.asarray(Image.open(label_file)),
                 np.asarray(Image.open(instance_file)))
 
     def _get_file_path_for_index(self, index: int, type: str) -> str:
-        path_prefix = os.path.join(self._root_dir, self._file_prefixes[index])
+        path_prefix = self._file_prefixes[index]
         files = glob.glob(f'{path_prefix}*_{type}.png')
+        print(path_prefix, type)
+        assert len(files) > 0, 'Expect at least one file for the given type.'
         assert len(files) == 1, 'Only expect one file for the given type.'
         return files[0]
 
@@ -76,11 +79,12 @@ def get_loader_from_dir(root_dir: str, config):
 
     Will load any data file in any sub directory under the root directory.
     """
+    
     return get_loader(CityscapesDataset(root_dir), config)
 
 
 def get_loader(dataset: Dataset, config):
-    return torch.utils.data.Dataloader(
+    return torch.utils.data.DataLoader(
         dataset,
         batch_size=config['batch_size'],
         shuffle=False)

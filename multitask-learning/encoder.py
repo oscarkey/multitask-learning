@@ -4,73 +4,6 @@ import torch.nn as nn
 import torchvision.models as models
 import torch.nn.functional as F
 
-"""
-PLAN
-
-Bottleneck(nn.Module)
-
-def __init__(self, )
-
-1x1, 2
-batch norm, ReLU
-3x3,
-batch norm, ReLU
-1x1
-batch norm(?)
-add input to output
-batch norm(?), relu
-
-MODEL
-
-BLOCK 0, OS = 4
-7x7, 64, stride 2
-Batch norm, ReLU
-3x3 max pool, stride 2
-Batch norm, ReLU
-
-
-BLOCK 1, OS = 4
-3 x bottlenecks:
-1x1, 64 stride = 1
-3x3, 64 stride = 1
-1x1, 256 stride = 1
-
-BLOCK 2, OS = 8
-4 x bottlenecks:
-1x1, 128 stride = 1
-3x3, 128 stride = 1
-1x1, 512 stride = 1 (* stride = 2 for the last block)
-
-BLOCK 3, OS = 8
-23 x bottlenecks:
-1x1, 256 stride = 1
-3x3, 256 stride = 1 dilation = 2 padding = dilation
-1x1, 1024 stride = 1
-
-BLOCK 4, OS = 8
-3 x bottlenecks:
-1x1, 512 stride = 1
-3x3, 512 stride = 1 dilation = 2 padding = dilation
-1x1, 2048 stride = 1
-
-ASPP, OS = 8
-4 x PARALLEL convolutional layers
-1x1, 256 stride = 1 dilation = 1 padding = dilation
-3x3, 256 dilation = 12
-3x3, 256 dilation = 24
-3x3, 256 dilation = 36
-    FOR EACH LAYER
-    Global average pooling
-    1x1, 256
-    Batch normalisation
-
-Concatenation
-
-https://pytorch.org/docs/stable/_modules/torchvision/models/resnet.html
-https://mc.ai/resnet-torchvision-bottlenecks-and-layers-not-as-they-seem/
-https://github.com/fregu856/deeplabv3
-
-"""
 
 # code in this cell mostly from torchvision/models/resnet.py
 
@@ -156,9 +89,75 @@ class ASPP(nn.Module):
 
 
 
-class Multitask(nn.Module):
+class Encoder(nn.Module):
+    """
+        Bottleneck(nn.Module)
+
+        def __init__(self, )
+
+        1x1, 2
+        batch norm, ReLU
+        3x3,
+        batch norm, ReLU
+        1x1
+        batch norm(?)
+        add input to output
+        batch norm(?), relu
+
+        MODEL
+
+        BLOCK 0, OS = 4
+        7x7, 64, stride 2
+        Batch norm, ReLU
+        3x3 max pool, stride 2
+        Batch norm, ReLU
+
+
+        BLOCK 1, OS = 4
+        3 x bottlenecks:
+        1x1, 64 stride = 1
+        3x3, 64 stride = 1
+        1x1, 256 stride = 1
+
+        BLOCK 2, OS = 8
+        4 x bottlenecks:
+        1x1, 128 stride = 1
+        3x3, 128 stride = 1
+        1x1, 512 stride = 1 (* stride = 2 for the last block)
+
+        BLOCK 3, OS = 8
+        23 x bottlenecks:
+        1x1, 256 stride = 1
+        3x3, 256 stride = 1 dilation = 2 padding = dilation
+        1x1, 1024 stride = 1
+
+        BLOCK 4, OS = 8
+        3 x bottlenecks:
+        1x1, 512 stride = 1
+        3x3, 512 stride = 1 dilation = 2 padding = dilation
+        1x1, 2048 stride = 1
+
+        ASPP, OS = 8
+        4 x PARALLEL convolutional layers
+        1x1, 256 stride = 1 dilation = 1 padding = dilation
+        3x3, 256 dilation = 12
+        3x3, 256 dilation = 24
+        3x3, 256 dilation = 36
+            FOR EACH LAYER
+            Global average pooling
+            1x1, 256
+            Batch normalisation
+
+        Concatenation
+
+        https://pytorch.org/docs/stable/_modules/torchvision/models/resnet.html
+        https://mc.ai/resnet-torchvision-bottlenecks-and-layers-not-as-they-seem/
+        https://github.com/fregu856/deeplabv3
+
+    """
+
     def __init__(self):
-        super(Multitask, self).__init__()
+        super(Encoder, self).__init__()
         rn101 = models.resnet101()
         self.truncated_rn101 = nn.Sequential(*rn101.children())[:-4]
         
@@ -201,7 +200,7 @@ class Multitask(nn.Module):
 
 if __name__ == '__main__':
 # ### Shape test
-    model = Multitask()
+    model = Encoder()
     test = torch.zeros(size=(2,3,256,512))
     result = model.forward(test)
     assert(result.shape == (2,1280,32,64))

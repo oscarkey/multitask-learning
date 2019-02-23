@@ -15,7 +15,7 @@ def _build_base_decoder():
     )
 
 
-class Decoder(Module):
+class Decoders(Module):
     """Module which contains all three decoders."""
 
     def __init__(self, num_classes):
