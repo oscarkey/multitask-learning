@@ -1,6 +1,8 @@
+# coding: utf-8
+import torch
 import torch.nn as nn
-import torch.utils.model_zoo as model_zoo
-
+import torchvision.models as models
+import torch.nn.functional as F
 
 """
 PLAN
@@ -9,7 +11,7 @@ Bottleneck(nn.Module)
 
 def __init__(self, )
 
-1x1, 2^
+1x1, 2
 batch norm, ReLU
 3x3,
 batch norm, ReLU
@@ -17,8 +19,6 @@ batch norm, ReLU
 batch norm(?)
 add input to output
 batch norm(?), relu
-
-
 
 MODEL
 
@@ -65,126 +65,41 @@ ASPP, OS = 8
     Batch normalisation
 
 Concatenation
-"""
 
-
-
-
-
-
-
-#https://pytorch.org/docs/stable/_modules/torchvision/models/resnet.html
-#https://mc.ai/resnet-torchvision-bottlenecks-and-layers-not-as-they-seem/
-#https://github.com/fregu856/deeplabv3
+https://pytorch.org/docs/stable/_modules/torchvision/models/resnet.html
+https://mc.ai/resnet-torchvision-bottlenecks-and-layers-not-as-they-seem/
+https://github.com/fregu856/deeplabv3
 
 """
-MIT License
 
-Copyright (c) 2018 Fredrik Gustafsson
+# code in this cell mostly from torchvision/models/resnet.py
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-class ASPP_Bottleneck(nn.Module):
-    def __init__(self, num_classes):
-        super(ASPP_Bottleneck, self).__init__()
-
-        self.conv_1x1_1 = nn.Conv2d(4*512, 256, kernel_size=1)
-        self.bn_conv_1x1_1 = nn.BatchNorm2d(256)
-
-        self.conv_3x3_1 = nn.Conv2d(4*512, 256, kernel_size=3, stride=1, padding=6, dilation=6)
-        self.bn_conv_3x3_1 = nn.BatchNorm2d(256)
-
-        self.conv_3x3_2 = nn.Conv2d(4*512, 256, kernel_size=3, stride=1, padding=12, dilation=12)
-        self.bn_conv_3x3_2 = nn.BatchNorm2d(256)
-
-        self.conv_3x3_3 = nn.Conv2d(4*512, 256, kernel_size=3, stride=1, padding=18, dilation=18)
-        self.bn_conv_3x3_3 = nn.BatchNorm2d(256)
-
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-
-        self.conv_1x1_2 = nn.Conv2d(4*512, 256, kernel_size=1)
-        self.bn_conv_1x1_2 = nn.BatchNorm2d(256)
-
-        self.conv_1x1_3 = nn.Conv2d(1280, 256, kernel_size=1) # (1280 = 5*256)
-        self.bn_conv_1x1_3 = nn.BatchNorm2d(256)
-
-        self.conv_1x1_4 = nn.Conv2d(256, num_classes, kernel_size=1)
-
-    def forward(self, feature_map):
-        # (feature_map has shape (batch_size, 4*512, h/16, w/16))
-
-        feature_map_h = feature_map.size()[2] # (== h/16)
-        feature_map_w = feature_map.size()[3] # (== w/16)
-
-        out_1x1 = F.relu(self.bn_conv_1x1_1(self.conv_1x1_1(feature_map))) # (shape: (batch_size, 256, h/16, w/16))
-        out_3x3_1 = F.relu(self.bn_conv_3x3_1(self.conv_3x3_1(feature_map))) # (shape: (batch_size, 256, h/16, w/16))
-        out_3x3_2 = F.relu(self.bn_conv_3x3_2(self.conv_3x3_2(feature_map))) # (shape: (batch_size, 256, h/16, w/16))
-        out_3x3_3 = F.relu(self.bn_conv_3x3_3(self.conv_3x3_3(feature_map))) # (shape: (batch_size, 256, h/16, w/16))
-
-        out_img = self.avg_pool(feature_map) # (shape: (batch_size, 512, 1, 1))
-        out_img = F.relu(self.bn_conv_1x1_2(self.conv_1x1_2(out_img))) # (shape: (batch_size, 256, 1, 1))
-        out_img = F.upsample(out_img, size=(feature_map_h, feature_map_w), mode="bilinear") # (shape: (batch_size, 256, h/16, w/16))
-
-        out = torch.cat([out_1x1, out_3x3_1, out_3x3_2, out_3x3_3, out_img], 1) # (shape: (batch_size, 1280, h/16, w/16))
-        out = F.relu(self.bn_conv_1x1_3(self.conv_1x1_3(out))) # (shape: (batch_size, 256, h/16, w/16))
-        out = self.conv_1x1_4(out) # (shape: (batch_size, num_classes, h/16, w/16))
-
-return out
-"""
-
-__all__ = ['ResNet','resnet101']
-
-
-model_urls = {
-    'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth'
-}
-
-
-def conv3x3(in_planes, out_planes, stride=1):
-    """3x3 convolution with padding"""
+def conv3x3(in_planes, out_planes, stride=1, dilation=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding=1, bias=False)
+                 dilation=dilation, padding=dilation, bias=False)
 
 
 def conv1x1(in_planes, out_planes, stride=1):
-    """1x1 convolution"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
 
-class Bottleneck(nn.Module):
+class AtrousBottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None):
-        super(Bottleneck, self).__init__()
+    def __init__(self, inplanes, planes, stride=1,  downsample=None, dilation=1):
+        super(AtrousBottleneck, self).__init__()
+        self.dilation = dilation
         self.conv1 = conv1x1(inplanes, planes)
         self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = conv3x3(planes, planes, stride)
+        self.conv2 = conv3x3(planes, planes, stride, dilation)
         self.bn2 = nn.BatchNorm2d(planes)
         self.conv3 = conv1x1(planes, planes * self.expansion)
         self.bn3 = nn.BatchNorm2d(planes * self.expansion)
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
+        
+        
 
     def forward(self, x):
         identity = x
@@ -207,83 +122,89 @@ class Bottleneck(nn.Module):
         out = self.relu(out)
 
         return out
+    
 
 
-class ResNet(nn.Module):
+# ### ASPP
 
-    def __init__(self, block, layers, num_classes=1000, zero_init_residual=False):
-        super(ResNet, self).__init__()
-        self.inplanes = 64
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
-                               bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(block, 64, layers[0])
-        self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(512 * block.expansion, num_classes)
+class ASPP(nn.Module):
+    def __init__(self):
+        super(ASPP, self).__init__()
+        self.conv1 = conv1x1(2048, 256)
+        self.conv2 = conv3x3(2048, 256, dilation=12)
+        self.conv3 = conv3x3(2048, 256, dilation=24)
+        self.conv4 = conv3x3(2048, 256, dilation=36)
+        
+        # Operations for last feature map
+        self.gap = nn.AdaptiveAvgPool2d((1, 1))
+        self.conv = conv1x1(2048, 256)
+        self.bn = nn.BatchNorm2d(256)
+    
+    def forward(self, x):
+        # x is feature map
+        out1 = F.relu(self.bn(self.conv1(x)))
+        out2 = F.relu(self.bn(self.conv2(x)))
+        out3 = F.relu(self.bn(self.conv3(x)))
+        out4 = F.relu(self.bn(self.conv4(x)))
 
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
+        out5 = F.relu(self.bn(self.conv(self.gap(x))))
+        out5 = F.interpolate(out5, size=x.shape[-2:], mode="bilinear", align_corners = False)                
+                       
+        out = torch.cat([out1,out2,out3,out4, out5], 1)
+        return out
+        
 
-        # Zero-initialize the last BN in each residual branch,
-        # so that the residual branch starts with zeros, and each residual block behaves like an identity.
-        # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
-        if zero_init_residual:
-            for m in self.modules():
-                if isinstance(m, Bottleneck):
-                    nn.init.constant_(m.bn3.weight, 0)
-                elif isinstance(m, BasicBlock):
-                    nn.init.constant_(m.bn2.weight, 0)
 
-    def _make_layer(self, block, planes, blocks, stride=1):
+
+class Multitask(nn.Module):
+    def __init__(self):
+        super(Multitask, self).__init__()
+        rn101 = models.resnet101()
+        self.truncated_rn101 = nn.Sequential(*rn101.children())[:-4]
+        
+        self.inplanes = 512
+        
+        # Dilation choices of 2 and 4
+        self.layer3 = self._make_layer(AtrousBottleneck, 256, 23, stride=1, dilation=2)
+        self.layer4 = self._make_layer(AtrousBottleneck, 512, 3, stride=1, dilation=4)
+        self.aspp = ASPP()
+        
+    # from torchvision.models.resnet.ResNet
+    def _make_layer(self, block, planes, blocks, stride=1, dilation=1):
         downsample = None
+        
+        # If a stride=2 is passed to the block, input doesn't match the output
+        # We need to downsample so we can add them together
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                conv1x1(self.inplanes, planes * block.expansion, stride),
+                nn.Conv2d(self.inplanes, planes * block.expansion,
+                          kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(planes * block.expansion),
             )
 
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample))
+        layers.append(block(self.inplanes, planes, stride, downsample, dilation))
         self.inplanes = planes * block.expansion
-        for _ in range(1, blocks):
+        for i in range(1, blocks):
             layers.append(block(self.inplanes, planes))
 
         return nn.Sequential(*layers)
-
+        
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
-        x = self.maxpool(x)
-
-        x = self.layer1(x)
-        x = self.layer2(x)
+        x = self.truncated_rn101(x)
         x = self.layer3(x)
         x = self.layer4(x)
-
-        x = self.avgpool(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
-
+        x = self.aspp(x)
         return x
 
 
-[docs]def resnet101(pretrained=False, **kwargs):
-    """Constructs a ResNet-101 model.
 
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['resnet101']))
-    return model
+if __name__ == '__main__':
+# ### Shape test
+    model = Multitask()
+    test = torch.zeros(size=(2,3,256,512))
+    result = model.forward(test)
+    assert(result.shape == (2,1280,32,64))
+
+
+
