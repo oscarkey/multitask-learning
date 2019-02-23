@@ -11,3 +11,6 @@ pillow = "*"
 sacred = "*"
 jupyter = "*"
 torchvision = "*"
+scipy = "*"
+tqdm = "*"
+
