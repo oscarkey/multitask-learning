@@ -17,14 +17,16 @@ def main(root_folder, output_folder):
     for city in cities:
         temp_files = os.listdir(os.path.join(root_folder, city))
         for file_ in tqdm(temp_files):
-            save_resized_file(os.path.join(root_folder, city, file_))
+            save_resized_file(output_folder, os.path.join(root_folder, city, file_))
 
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-output_folder', type=str)
-    parser.add_argument('-height', type=int)
-    parser.add_argument('-width', type=int)
+    #parser.add_argument('-height', type=int)
+    #parser.add_argument('-width', type=int)
     parser.add_argument('-root_folder', type=str)
-    args = parser.parse_args()
+    args = vars(parser.parse_args())
     print(args)
+    main(args['root_folder'], args['output_folder'])
