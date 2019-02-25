@@ -7,7 +7,6 @@ import cityscapes
 
 from PIL import Image
 
-
 class MultitaskLearner(nn.Module):
     def __init__(self, num_classes):
         super(MultitaskLearner, self).__init__()
@@ -29,7 +28,6 @@ if __name__ == '__main__':
     learner = MultitaskLearner(num_classes=30)
 
     for i, data in enumerate(loader):
-        for item in data:
-            print('Shape:', item.shape)
-            print('Result:', learner.forward(item.float()))
+        img, semantic_label, s = data
+        print('Result:', learner.forward(img.float()))
 
