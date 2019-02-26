@@ -65,7 +65,6 @@ class CityscapesDataset(Dataset):
     def _get_file_path_for_index(self, index: int, type: str) -> str:
         path_prefix = self._file_prefixes[index]
         files = glob.glob(f'{path_prefix}*_{type}.png')
-        print(path_prefix, type)
         assert len(files) > 0, 'Expect at least one file for the given type.'
         assert len(files) == 1, 'Only expect one file for the given type.'
         return files[0]

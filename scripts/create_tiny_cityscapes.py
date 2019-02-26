@@ -6,6 +6,9 @@ from tqdm import tqdm
 
 
 def save_resized_file(output_folder, file_path, imsize=[256, 128]):
+    if file_path[-4:] == "json":
+        return 
+
     img = Image.open(file_path)
     resized_image = img.resize(imsize, resample=Image.NEAREST)
     new_path = os.path.join(output_folder,

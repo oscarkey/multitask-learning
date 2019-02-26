@@ -7,8 +7,10 @@ ex = Experiment()
 @ex.config
 def config():
     """Contains the default config values."""
-    batch_size = 128
-
+    batch_size = 8
+    max_iter = 1000
+    height = 128
+    width = 256
 
 @ex.automain
 def main(_run):

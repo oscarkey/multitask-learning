@@ -1,5 +1,6 @@
 from torch import nn
 from torch.nn import Module
+import torch.nn.functional as F
 
 
 def _build_base_decoder():
@@ -34,13 +35,17 @@ class Decoders(Module):
     def forward(self, x):
         """Returns (sem seg, instance seg, depth)."""
         # x: [batch x 1280 x H x W]
+        batch_size = x.shape[0]
         x1 = self.base_semseg(x)
         x1 = self.semsegcls(x1)
+        x1 = F.interpolate(x1, size=(128, 256), mode='bilinear', align_corners=False)
 
         x2 = self.base_insseg(x)
         x2 = self.inssegcls(x2)
+        x2 = F.interpolate(x2, size=(128, 256), mode='bilinear', align_corners=False)
 
         x3 = self.base_depth(x)
         x3 = self.depthcls(x3)
+        x3 = F.interpolate(x3, size=(128, 256), mode='bilinear', align_corners=False)
 
         return x1, x2, x3
