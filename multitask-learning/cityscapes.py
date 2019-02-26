@@ -60,20 +60,19 @@ class CityscapesDataset(Dataset):
 
         instance_file = self._get_file_path_for_index(index, 'instanceIds')
         instance_image = Image.open(instance_file)
-        instance_vecs, instance_mask = self._compute_centroid_vectors(instance_image)
+        instance_vecs, instance_mask = self._compute_centroid_vectors(np.asarray(instance_image))
 
         # We load the images as H x W x channel, but we need channel x H x W.
         axis_order = (2, 0, 1)
 
-        return (np.transpose(np.asarray(Image.open(image_file), axis_order)),
-                np.transpose(np.asarray(Image.open(label_file), axis_order)),
+        return (np.transpose(np.asarray(Image.open(image_file)), axis_order),
+                np.asarray(Image.open(label_file)),
                 np.transpose(instance_vecs, axis_order),
                 instance_mask)
 
     def _get_file_path_for_index(self, index: int, type: str) -> str:
         path_prefix = self._file_prefixes[index]
         files = glob.glob(f'{path_prefix}*_{type}.png')
-        print(f'{path_prefix}*_{type}.png')
         assert len(files) > 0, 'Expect at least one file for the given type.'
         assert len(files) == 1, 'Only expect one file for the given type.'
         return files[0]
