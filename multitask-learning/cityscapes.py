@@ -8,7 +8,6 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
-import torchvision.transforms as transforms
 
 class CityscapesDataset(Dataset):
     """A Dataset which loads the Cityscapes dataset from disk.
@@ -41,7 +40,9 @@ class CityscapesDataset(Dataset):
 
         for (path, dirs, files) in os.walk(root_dir):
             for file in files:
-                file_prefixes.add(CityscapesDataset._get_file_prefix(path, file))
+                _, ext = os.path.splitext(file)
+                if ext == '.png':
+                    file_prefixes.add(CityscapesDataset._get_file_prefix(path, file))
 
         return list(file_prefixes)
 
@@ -56,11 +57,18 @@ class CityscapesDataset(Dataset):
     def __getitem__(self, index: int):
         image_file = self._get_file_path_for_index(index, 'leftImg8bit')
         label_file = self._get_file_path_for_index(index, 'labelIds')
+
         instance_file = self._get_file_path_for_index(index, 'instanceIds')
-        axis_order = (2,0,1)
+        instance_image = Image.open(instance_file)
+        instance_vecs, instance_mask = self._compute_centroid_vectors(np.asarray(instance_image))
+
+        # We load the images as H x W x channel, but we need channel x H x W.
+        axis_order = (2, 0, 1)
+
         return (np.transpose(np.asarray(Image.open(image_file)), axis_order),
                 np.asarray(Image.open(label_file)),
-                np.asarray(Image.open(instance_file)))
+                np.transpose(instance_vecs, axis_order),
+                instance_mask)
 
     def _get_file_path_for_index(self, index: int, type: str) -> str:
         path_prefix = self._file_prefixes[index]
@@ -68,6 +76,38 @@ class CityscapesDataset(Dataset):
         assert len(files) > 0, 'Expect at least one file for the given type.'
         assert len(files) == 1, 'Only expect one file for the given type.'
         return files[0]
+
+    @staticmethod
+    def _compute_centroid_vectors(instance_image):
+        """For each pixel, calculate the vector from that pixel to the centre of its instance.
+
+        :return a pair of a matrix containing the distance vector to every pixel, and a mask
+        identifying which pixels are associated with an instance
+        """
+        # Each pixel in the image is of one of two formats:
+        # 1) If the pixel does not belong to an instance:
+        #    The id of the class the pixel belongs to
+        # 2) If the pixel does belong to an instance:
+        #    id x 1000 + instance id
+
+        # For each instance, find all pixels associated with it and compute the centre.
+        # Add an extra dimension for each pixel containing the coordinates of the associated centre.
+        centroids = np.zeros(instance_image.shape + (2,))
+        for value in np.unique(instance_image):
+            xs, ys = np.where(instance_image == value)
+            centroids[xs, ys] = np.array((np.floor(np.mean(xs)), np.floor(np.mean(ys))))
+
+        # Calculate the distance from the x,y coordinates of the pixel to the coordinates of the
+        # centre of its associated instance.
+        vecs = np.zeros(instance_image.shape + (2,))
+        g1, g2 = np.meshgrid(range(instance_image.shape[1]), range(instance_image.shape[0]))
+        vecs[:, :, 0] = g1
+        vecs[:, :, 1] = g2
+        vecs = vecs - centroids
+
+        mask = np.ma.masked_where(instance_image >= 1000, instance_image)
+
+        return vecs, mask
 
     def __len__(self):
         return len(self._file_prefixes)
@@ -78,7 +118,7 @@ def get_loader_from_dir(root_dir: str, config):
 
     Will load any data file in any sub directory under the root directory.
     """
-    
+
     return get_loader(CityscapesDataset(root_dir), config)
 
 
@@ -92,4 +132,4 @@ def get_loader(dataset: Dataset, config):
 if __name__ == '__main__':
     root = '/Users/oscar/Downloads/gtFine_trainvaltest/gtFine/train/'
     test = CityscapesDataset(root)
-    print(test[0])
+    print(test[1])
