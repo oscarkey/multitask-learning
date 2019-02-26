@@ -40,7 +40,9 @@ class CityscapesDataset(Dataset):
 
         for (path, dirs, files) in os.walk(root_dir):
             for file in files:
-                file_prefixes.add(CityscapesDataset._get_file_prefix(path, file))
+                _, ext = os.path.splitext(file)
+                if ext == '.png':
+                    file_prefixes.add(CityscapesDataset._get_file_prefix(path, file))
 
         return list(file_prefixes)
 
