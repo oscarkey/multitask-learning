@@ -30,7 +30,7 @@ class Decoders(Module):
         kernel_size = (1, 1)
         self.semsegcls = nn.Conv2d(256, self.num_classes, kernel_size)
         self.inssegcls = nn.Conv2d(256, 2, kernel_size)
-        self.depthcls = nn.Conv2d(256, 2, kernel_size)
+        self.depthcls = nn.Conv2d(256, 1, kernel_size)
 
     def forward(self, x):
         """Returns (sem seg, instance seg, depth)."""
