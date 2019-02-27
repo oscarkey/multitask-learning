@@ -35,7 +35,7 @@ class MultiTaskLoss(nn.Module):
         return self.cross_entropy(semseg_input, semseg_target)
 
     def instance_segmentation_loss(self, instance_input, instance_target, instance_mask):
-        instance_mask = torch.ByteTensor(instance_mask)
+        instance_mask = instance_mask.byte()
         masked_target = torch.masked_select(instance_target, instance_mask)
 
         masked_input = torch.masked_select(instance_input, instance_mask)

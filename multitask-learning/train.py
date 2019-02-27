@@ -19,10 +19,14 @@ class MultitaskLearner(nn.Module):
 def main(_run):
     train_loader = cityscapes.get_loader_from_dir(_run.config['root_dir_train'], _run.config)
     validation_loader = cityscapes.get_loader_from_dir(_run.config['root_dir_validation'], _run.config)
+
+
+
     learner = MultitaskLearner(_run.config['num_classes'])
 
-    if _run.config['gpu']:
-        learner.cuda()
+
+    device = "cuda:0" if _run.config['gpu'] and torch.cuda.is_available() else "cpu"
+    learner.to(device)
 
     criterion = MultiTaskLoss(_run.config['loss_type'], _run.config['loss_weights'])
 
@@ -46,6 +50,8 @@ def main(_run):
         # training loop
         for i, data in enumerate(train_loader, 0):
             inputs, semantic_labels, instance_centroid, instance_mask = data
+
+            inputs, semantic_labels, instance_centroid, instance_mask = inputs.to(device), semantic_labels.to(device), instance_centroid.to(device), instance_mask.to(device)  
 
             # zero the parameter gradients
             optimizer.zero_grad()
