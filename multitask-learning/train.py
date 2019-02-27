@@ -16,8 +16,9 @@ class MultitaskLearner(nn.Module):
         return self.decoder(self.encoder(x))
 
 
-def train(_run):
-    loader = cityscapes.get_loader_from_dir(_run.config['root_dir'], _run.config)
+def main(_run):
+    train_loader = cityscapes.get_loader_from_dir(_run.config['root_dir_train'], _run.config)
+    validation_loader = cityscapes.get_loader_from_dir(_run.config['root_dir_validation'], _run.config)
     learner = MultitaskLearner(_run.config['num_classes'])
 
     criterion = MultiTaskLoss(_run.config['loss_type'], _run.config['loss_weights'])
