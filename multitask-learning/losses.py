@@ -34,11 +34,13 @@ class MultiTaskLoss(nn.Module):
         return self.cross_entropy(semseg_input, semseg_target)
 
     def instance_segmentation_loss(self, instance_input, instance_target, instance_mask):
-        masked_input = torch.masked_selected(instance_input, instance_mask)
-        masked_target = torch.masked_selected(instance_target, instance_mask)
-        return self.l1_loss(masked_input, masked_target)
+        instance_mask = torch.ByteTensor(instance_mask)
+        masked_target = torch.masked_select(instance_target, instance_mask)
 
-    def depth_loss(self):
+        masked_input = torch.masked_select(instance_input, instance_mask)
+        return self.l1_loss(masked_input, masked_target.float())
+
+    def depth_loss(self, depth_input, depth_target):
         return 0
 
     def calculate_total_loss(self, *losses):
