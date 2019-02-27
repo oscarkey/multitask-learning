@@ -42,14 +42,15 @@ def train(_run):
 
         running_loss = 0.0
         for i, data in enumerate(loader, 0):
-            inputs, semantic_labels, instance_labels = data
+            inputs, semantic_labels, instance_centroid, instance_mask = data
 
             # zero the parameter gradients
             optimizer.zero_grad()
 
             # forward + backward + optimize
             output_semantic, output_instance, output_depth = learner(inputs.float())
-            loss = criterion(output_semantic, semantic_labels.long())
+            loss = criterion((output_semantic, output_instance, output_depth),
+                              semantic_labels.long(), instance_centroid, instance_mask)
             loss.backward()
             optimizer.step()
 
