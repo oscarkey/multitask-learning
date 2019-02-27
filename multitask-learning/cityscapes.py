@@ -106,7 +106,8 @@ class CityscapesDataset(Dataset):
         vecs = vecs - centroids
 
         mask = np.ma.masked_where(instance_image >= 1000, instance_image)
-
+        mask = np.asarray(mask.mask, dtype=np.uint8)
+        mask = np.stack((mask, mask))
         return vecs, mask
 
     def __len__(self):
