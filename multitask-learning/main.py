@@ -13,6 +13,8 @@ def config():
     num_classes=20
     height = 128 #TODO: pass through to model
     width = 256 #TODO: pass through to model
+    loss_type = 'fixed'
+    loss_weights = (1, 0, 0)
 
 
 @ex.automain

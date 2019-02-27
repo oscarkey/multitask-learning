@@ -1,5 +1,6 @@
 from decoders import Decoders
 from encoder import Encoder
+from losses import MultiTaskLoss
 
 import torch
 import torch.nn as nn
@@ -24,14 +25,14 @@ def train(_run):
     loader = cityscapes.get_loader_from_dir(_run.params['root_dir'], _run.params)
     learner = MultitaskLearner(_run.params['num_classes'])
 
-    criterion = nn.CrossEntropyLoss(ignore_index=255)
+    criterion = nn.MultiTaskLoss(_run.params['loss_type'], _run.params['loss_weights'])
 
     initial_learning_rate = 2.5e-3
 
     for epoch in range(_run.params['max_iter']):  # loop over the dataset multiple times
 
         #polynomial learning rate decay
-        learning_rate = initial_learning_rate*(1-epoch/max_iter)**0.9
+        learning_rate = initial_learning_rate*(1-epoch/_run.params['max_iter'])**0.9
 
         optimizer = torch.optim.SGD(learner.parameters(), lr=learning_rate, momentum=0.9, nesterov=True, weight_decay=1e4)
 
