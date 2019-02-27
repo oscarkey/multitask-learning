@@ -28,6 +28,7 @@ class MultiTaskLoss(nn.Module):
         self.loss_weights = loss_weights
 
         self.l1_loss = nn.L1Loss(size_average=True)
+        # Classes that we don't care about are set to 255.
         self.cross_entropy = nn.CrossEntropyLoss(ignore_index=255)
 
     def semantic_segmentation_loss(self, semseg_input, semseg_target):
