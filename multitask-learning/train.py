@@ -39,7 +39,9 @@ def main(_run):
         lr_scheduler.step()
 
         running_loss = 0.0
-        for i, data in enumerate(loader, 0):
+
+        # training loop
+        for i, data in enumerate(train_loader, 0):
             inputs, semantic_labels, instance_centroid, instance_mask = data
 
             # zero the parameter gradients
@@ -54,6 +56,22 @@ def main(_run):
 
             # print statistics
             running_loss += loss.item()
+            # if i % 2000 == 1999:    # print every 2000 mini-batches
+            print('[%d, %5d] loss: %.3f' %
+                  (epoch + 1, i + 1, running_loss))
+            running_loss = 0.0
+
+        # validation loop
+        for i, data in enumerate(validation_loader, 0):
+            inputs, semantic_labels, instance_centroid, instance_mask = data
+
+            # forward + backward + optimize
+            output_semantic, output_instance, output_depth = learner(inputs.float())
+            val_loss = criterion((output_semantic, output_instance, output_depth),
+                                  semantic_labels.long(), instance_centroid, instance_mask)
+
+            # print statistics
+            running_loss += val_loss.item()
             # if i % 2000 == 1999:    # print every 2000 mini-batches
             print('[%d, %5d] loss: %.3f' %
                   (epoch + 1, i + 1, running_loss))
