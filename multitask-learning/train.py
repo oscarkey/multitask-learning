@@ -51,15 +51,18 @@ def main(_run):
         for i, data in enumerate(train_loader, 0):
             inputs, semantic_labels, instance_centroid, instance_mask = data
 
-            inputs, semantic_labels, instance_centroid, instance_mask = inputs.to(device), semantic_labels.to(device), instance_centroid.to(device), instance_mask.to(device)  
+            inputs = inputs.to(device)
+            semantic_labels  = semantic_labels.to(device)
+            instance_centroid = instance_centroid.to(device)
+            instance_mask = instance_mask.to(device)  
 
             # zero the parameter gradients
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            output_semantic, output_instance, output_depth = learner(inputs.float())
+            output_semantic, output_instance, output_depth = learner(inputs)
             loss = criterion((output_semantic, output_instance, output_depth),
-                             semantic_labels.long(), instance_centroid, instance_mask)
+                             semantic_labels, instance_centroid, instance_mask)
             loss.backward()
             optimizer.step()
 

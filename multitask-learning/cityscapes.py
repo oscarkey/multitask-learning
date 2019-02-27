@@ -65,8 +65,8 @@ class CityscapesDataset(Dataset):
         # We load the images as H x W x channel, but we need channel x H x W.
         axis_order = (2, 0, 1)
 
-        return (np.transpose(np.asarray(Image.open(image_file)), axis_order),
-                np.asarray(Image.open(label_file)),
+        return (np.transpose(np.asarray(Image.open(image_file), dtype=np.float32)/255*2-1, axis_order),
+                np.asarray(Image.open(label_file), dtype=np.long),
                 np.transpose(instance_vecs, axis_order),
                 instance_mask)
 
