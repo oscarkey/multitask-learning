@@ -19,15 +19,16 @@ class MultitaskLearner(nn.Module):
         return self.decoder(self.encoder(x))
 
 
-def train(root_dir, max_iter, num_classes, batch_size):
-    loader = cityscapes.get_loader_from_dir(root_dir, {'batch_size': batch_size})
-    learner = MultitaskLearner(num_classes=num_classes)
+def train(_run):
+
+    loader = cityscapes.get_loader_from_dir(_run.params['root_dir'], _run.params)
+    learner = MultitaskLearner(_run.params['num_classes'])
 
     criterion = nn.CrossEntropyLoss(ignore_index=255)
 
     initial_learning_rate = 2.5e-3
 
-    for epoch in range(max_iter):  # loop over the dataset multiple times
+    for epoch in range(_run.params['max_iter']):  # loop over the dataset multiple times
 
         #polynomial learning rate decay
         learning_rate = initial_learning_rate*(1-epoch/max_iter)**0.9

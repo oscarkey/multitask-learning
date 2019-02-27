@@ -21,4 +21,4 @@ def train_model(root_dir, max_iter, num_classes, batch_size):
 @ex.automain
 def main(_run):
     # TODO: train, then test or whatever
-    train_model()
+    train_model(_run)
