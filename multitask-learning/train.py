@@ -30,8 +30,8 @@ def train(_run):
     initial_learning_rate = 2.5e-3
 
     optimizer = torch.optim.SGD(learner.parameters(), lr=initial_learning_rate, momentum=0.9, nesterov=True, weight_decay=1e4)
-    lr_lambda = lambda x: initial_learning_rate * (1 - epoch / _run.config['max_iter']) ** 0.9
-    lr_scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda, last_epoch=_run.config['max_iter'])
+    lr_lambda = lambda x: initial_learning_rate * (1 - x / _run.config['max_iter']) ** 0.9
+    lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
 
 
 
