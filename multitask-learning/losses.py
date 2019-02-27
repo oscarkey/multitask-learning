@@ -53,7 +53,7 @@ class MultiTaskLoss(nn.Module):
         else:
             raise ValueError
 
-    def forward(self, predicted, target):
+    def forward(self, predicted, *target):
         semseg_pred, instance_pred, depth_pred = predicted
         # MISSING depth target
         semseg_target, instance_target, instance_mask = target
