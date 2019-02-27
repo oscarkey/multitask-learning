@@ -22,17 +22,17 @@ class MultitaskLearner(nn.Module):
 
 def train(_run):
 
-    loader = cityscapes.get_loader_from_dir(_run.params['root_dir'], _run.params)
-    learner = MultitaskLearner(_run.params['num_classes'])
+    loader = cityscapes.get_loader_from_dir(_run.config['root_dir'], _run.config)
+    learner = MultitaskLearner(_run.config['num_classes'])
 
-    criterion = nn.MultiTaskLoss(_run.params['loss_type'], _run.params['loss_weights'])
+    criterion = MultiTaskLoss(_run.config['loss_type'], _run.config['loss_weights'])
 
     initial_learning_rate = 2.5e-3
 
-    for epoch in range(_run.params['max_iter']):  # loop over the dataset multiple times
+    for epoch in range(_run.config['max_iter']):  # loop over the dataset multiple times
 
         #polynomial learning rate decay
-        learning_rate = initial_learning_rate*(1-epoch/_run.params['max_iter'])**0.9
+        learning_rate = initial_learning_rate*(1-epoch/_run.config['max_iter'])**0.9
 
         optimizer = torch.optim.SGD(learner.parameters(), lr=learning_rate, momentum=0.9, nesterov=True, weight_decay=1e4)
 
