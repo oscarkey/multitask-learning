@@ -13,6 +13,8 @@ jupyter = "*"
 torchvision = "*"
 scipy = "*"
 tqdm = "*"
+pymongo = "*"
+dnspython = "*"
 
 [dev-packages]
 pylint = "*"

@@ -1,8 +1,15 @@
 """Contains config and Sacred main entry point."""
 from sacred import Experiment
 import train
+from sacred.observers import MongoObserver
 
 ex = Experiment()
+
+mongo_observer = MongoObserver.create(
+    url='mongodb+srv://multitask-learning:GJHtmxWrAvZ9pTunNAtH@cluster0-elau5.azure.mongodb.net/test?retryWrites=true',
+    db_name='multitask-learning'
+)
+ex.observers.append(mongo_observer)
 
 @ex.config
 def config():
