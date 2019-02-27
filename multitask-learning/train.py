@@ -21,6 +21,9 @@ def main(_run):
     validation_loader = cityscapes.get_loader_from_dir(_run.config['root_dir_validation'], _run.config)
     learner = MultitaskLearner(_run.config['num_classes'])
 
+    if _run.config['gpu']:
+        learner.cuda()
+
     criterion = MultiTaskLoss(_run.config['loss_type'], _run.config['loss_weights'])
 
     initial_learning_rate = 2.5e-3

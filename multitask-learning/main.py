@@ -24,6 +24,12 @@ def config():
     width = 256  # TODO: pass through to model
     loss_type = 'fixed'
     loss_weights = (1, 0, 0)
+    gpu = False
+
+
+@ex.named_config
+def server_config():
+    gpu = True
 
 
 @ex.automain
