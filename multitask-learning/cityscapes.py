@@ -58,6 +58,10 @@ class CityscapesDataset(Dataset):
         image_file = self._get_file_path_for_index(index, 'leftImg8bit')
         label_file = self._get_file_path_for_index(index, 'labelIds')
 
+        image_array = np.asarray(Image.open(image_file), dtype=np.float32)
+        # Rescale the image from [0,255] to [0,1].
+        image_array = image_array / 255 * 2 - 1
+
         instance_file = self._get_file_path_for_index(index, 'instanceIds')
         instance_image = Image.open(instance_file)
         instance_vecs, instance_mask = self._compute_centroid_vectors(np.asarray(instance_image))
@@ -65,7 +69,7 @@ class CityscapesDataset(Dataset):
         # We load the images as H x W x channel, but we need channel x H x W.
         axis_order = (2, 0, 1)
 
-        return (np.transpose(np.asarray(Image.open(image_file), dtype=np.float32)/255*2-1, axis_order),
+        return (np.transpose(image_array, axis_order),
                 np.asarray(Image.open(label_file), dtype=np.long),
                 np.transpose(instance_vecs, axis_order),
                 instance_mask)
