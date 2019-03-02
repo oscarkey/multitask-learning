@@ -61,6 +61,10 @@ class CityscapesDataset(Dataset):
         image_array = np.asarray(Image.open(image_file), dtype=np.float32)
         # Rescale the image from [0,255] to [0,1].
         image_array = image_array / 255 * 2 - 1
+        assert len(image_array.shape) == 3, 'image_array should have 3 dimensions'+ image_file
+
+        label_array = np.asarray(Image.open(label_file), dtype=np.long)
+        assert len(label_array.shape) == 2, 'label_array should have 2 dimensions'+ label_file
 
         instance_file = self._get_file_path_for_index(index, 'instanceIds')
         instance_image = Image.open(instance_file)
@@ -70,7 +74,7 @@ class CityscapesDataset(Dataset):
         axis_order = (2, 0, 1)
 
         return (np.transpose(image_array, axis_order),
-                np.asarray(Image.open(label_file), dtype=np.long),
+                label_array,
                 np.transpose(instance_vecs, axis_order),
                 instance_mask)
 

@@ -2,10 +2,19 @@
 import train
 from sacred import Experiment
 from sacred.observers import MongoObserver
+from sacred.observers import FileStorageObserver
 
 ex = Experiment()
 
-
+mongo = False
+if mongo == True:
+    mongo_observer = MongoObserver.create(
+        url='mongodb+srv://multitask-learning:GJHtmxWrAvZ9pTunNAtH@cluster0-elau5.azure.mongodb.net/test?retryWrites=true',
+        db_name='multitask-learning'
+    )
+    ex.observers.append(mongo_observer)
+else:
+    ex.observers.append(FileStorageObserver.create('multitask_results'))
 
 @ex.config
 def config():
@@ -30,12 +39,7 @@ def server_config():
 
 @ex.automain
 def main(_run):
-    if _run.config['mongo'] == True:
-        mongo_observer = MongoObserver.create(
-            url='mongodb+srv://multitask-learning:GJHtmxWrAvZ9pTunNAtH@cluster0-elau5.azure.mongodb.net/test?retryWrites=true',
-            db_name='multitask-learning'
-        )
-        ex.observers.append(mongo_observer)
+
 
     # TODO: train, then test or whatever
     train.main(_run)

@@ -43,11 +43,19 @@ def main(_run):
         # polynomial learning rate decay
         lr_scheduler.step()
 
+        num_training_batches = 0
+
         running_loss = 0.0
+        training_semantic_loss = 0
+        training_instance_loss = 0
+        training_depth_loss = 0
 
         # training loop
         for i, data in enumerate(train_loader, 0):
             inputs, semantic_labels, instance_centroid, instance_mask = data
+
+            # keep count of number of batches
+            num_training_batches += 1
 
             inputs = inputs.to(device)
             semantic_labels = semantic_labels.to(device)
@@ -59,7 +67,7 @@ def main(_run):
 
             # forward + backward + optimize
             output_semantic, output_instance, output_depth = learner(inputs)
-            loss, task_losses = criterion((output_semantic, output_instance, output_depth),
+            loss, task_loss = criterion((output_semantic, output_instance, output_depth),
                              semantic_labels, instance_centroid, instance_mask)
             loss.backward()
             optimizer.step()
@@ -71,10 +79,35 @@ def main(_run):
                   (epoch + 1, i + 1, running_loss))
             running_loss = 0.0
 
+            training_semantic_loss += task_loss[0].item()
+            training_instance_loss += task_loss[1].item()
+            # may have to add item()
+            training_depth_loss += task_loss[2]
+
+
+        # save statistics to Sacred
+        _run.log_scalar('training_semantic_loss',training_semantic_loss/num_training_batches,epoch)
+        print('training_semantic_loss',training_semantic_loss/num_training_batches,epoch)
+        _run.log_scalar('training_instance_loss',training_instance_loss/num_training_batches,epoch)
+        print('training_instance_loss',training_instance_loss/num_training_batches,epoch)
+        _run.log_scalar('training_depth_loss',training_depth_loss/num_training_batches,epoch)
+        print('training_depth_loss',training_depth_loss/num_training_batches,epoch)
+
+        val_semantic_loss = 0
+        val_instance_loss = 0
+        val_depth_loss = 0
+        val_iou=0
+
+        num_val_batches = 0
+
+
         # validation loop
         with torch.no_grad(): # exclude gradients
             for i, data in enumerate(validation_loader, 0):
                 inputs, semantic_labels, instance_centroid, instance_mask = data
+
+                # keep count of number of batches
+                num_val_batches += 1
 
                 # forward + backward + optimize
                 output_semantic, output_instance, output_depth = learner(inputs.float())
@@ -87,7 +120,9 @@ def main(_run):
                 iou = 0 # calculated for each class separately and averaged over all classes
                 max_args = torch.argmax(output_semantic, dim=1) # find the predicted class for each pixel
 
-                for batch in range(_run.config['batch_size']):
+                # TODO: this batch size might break
+                batch_size = semantic_labels.shape[0]
+                for batch in range(batch_size):
                     iou_dict = {str(i): {'intersection': 0, 'union': 0} for i in range(_run.config['num_classes'])}
                     for height in range(128): # TODO: get height and width from main.py
                         for width in range(256):
@@ -106,7 +141,7 @@ def main(_run):
                     for key, dict in iou_dict.items():
                         if dict['union'] != 0:
                             iou += dict['intersection'] / (dict['union']* _run.config['num_classes'])
-                iou = iou / _run.config['batch_size']
+                iou = iou / batch_size
 
                 # instance mean error
                 instance_error = val_task_loss[1].item()
@@ -124,3 +159,20 @@ def main(_run):
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss))
                 running_loss = 0.0
+
+                val_semantic_loss += val_task_loss[0].item()
+                val_instance_loss += val_task_loss[1].item()
+                # may have to add item()
+                val_depth_loss += val_task_loss[2]
+                val_iou += iou
+
+        # save statistics to Sacred
+        _run.log_scalar('val_semantic_loss',val_semantic_loss/num_val_batches,epoch)
+        print('val_semantic_loss', val_semantic_loss/num_val_batches)
+        _run.log_scalar('val_instance_loss',val_instance_loss/num_val_batches,epoch)
+        print('val_instance_loss',val_instance_loss/num_val_batches,epoch)
+        _run.log_scalar('val_depth_loss',val_depth_loss/num_val_batches,epoch)
+        print('val_depth_loss',val_depth_loss/num_val_batches,epoch)
+
+        _run.log_scalar('val_iou', val_iou/num_val_batches,epoch)
+        print('val_iou', val_iou/num_val_batches,epoch)
