@@ -27,7 +27,7 @@ class MultiTaskLoss(nn.Module):
         self.loss_type = loss_type
         self.loss_weights = loss_weights
 
-        self.l1_loss = nn.L1Loss(size_average=True)
+        self.l1_loss = nn.L1Loss(reduction='mean')
         # Classes that we don't care about are set to 255.
         self.cross_entropy = nn.CrossEntropyLoss(ignore_index=255)
 

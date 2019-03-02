@@ -62,13 +62,13 @@ class CityscapesDataset(Dataset):
         # Rescale the image from [0,255] to [0,1].
         image_array = image_array / 255 * 2 - 1
         assert len(image_array.shape) == 3, 'image_array should have 3 dimensions'+ image_file
-
         label_array = np.asarray(Image.open(label_file), dtype=np.long)
         assert len(label_array.shape) == 2, 'label_array should have 2 dimensions'+ label_file
-
         instance_file = self._get_file_path_for_index(index, 'instanceIds')
         instance_image = Image.open(instance_file)
-        instance_vecs, instance_mask = self._compute_centroid_vectors(np.asarray(instance_image))
+        instance_array = np.asarray(instance_image, dtype=np.float32)
+        assert len(instance_array.shape) == 2, 'instance_array should have 2 dimensions'+ instance_file
+        instance_vecs, instance_mask = self._compute_centroid_vectors(instance_array)
 
         # We load the images as H x W x channel, but we need channel x H x W.
         axis_order = (2, 0, 1)
@@ -112,9 +112,14 @@ class CityscapesDataset(Dataset):
         vecs[:, :, 0] = g1
         vecs[:, :, 1] = g2
         vecs = vecs - centroids
-
         mask = np.ma.masked_where(instance_image >= 1000, instance_image)
-        mask = np.asarray(mask.mask, dtype=np.uint8)
+
+        # To catch instances where the mask is all false
+        if len(mask.mask.shape) > 1:
+            mask = np.asarray(mask.mask, dtype=np.uint8)
+        else:
+            assert mask.mask == False, 'mask is all True'
+            mask = np.zeros((128,256), dtype=np.uint8)
         mask = np.stack((mask, mask))
         return vecs, mask
 

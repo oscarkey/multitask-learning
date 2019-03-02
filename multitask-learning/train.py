@@ -52,6 +52,7 @@ def main(_run):
 
         # training loop
         for i, data in enumerate(train_loader, 0):
+
             inputs, semantic_labels, instance_centroid, instance_mask = data
 
             # keep count of number of batches
@@ -83,8 +84,7 @@ def main(_run):
             training_instance_loss += task_loss[1].item()
             # may have to add item()
             training_depth_loss += task_loss[2]
-
-
+        
         # save statistics to Sacred
         _run.log_scalar('training_semantic_loss',training_semantic_loss/num_training_batches,epoch)
         print('training_semantic_loss',training_semantic_loss/num_training_batches,epoch)
