@@ -42,6 +42,7 @@ class MultiTaskLoss(nn.Module):
         return self.l1_loss(masked_input, masked_target.float())
 
     def depth_loss(self, depth_input, depth_target):
+        # TODO
         return 0
 
     def calculate_total_loss(self, *losses):
@@ -65,4 +66,5 @@ class MultiTaskLoss(nn.Module):
                                                            instance_mask)
         depth_loss = self.depth_loss(depth_pred, 0)
 
-        return self.calculate_total_loss(semseg_loss, instanceseg_loss, depth_loss)
+
+        return self.calculate_total_loss(semseg_loss, instanceseg_loss, depth_loss), (semseg_loss, instanceseg_loss, depth_loss)
