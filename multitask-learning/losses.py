@@ -12,20 +12,24 @@ class MultiTaskLoss(nn.Module):
     2) 'learned': we learn the losses, not implemented...
     """
 
-    def __init__(self, loss_type, loss_weights=None):
+    def __init__(self, loss_type, loss_weights, enabled_tasks=(True, True, True)):
         """Creates a new instance.
 
         :param loss_type Either 'fixed' or 'learned'
-        :param loss_weights If 'fixed' then a 3 tuple (semantic seg weight, instance seg weight,
-        depth weight), if 'learned' then None.
+        :param loss_weights A 3 tuple of (semantic seg weight, instance seg weight,
+        depth weight). If 'fixed' then these should be floats, if 'learned' then they should be
+        torch Parameters.
         """
         super().__init__()
 
-        assert ((loss_type == 'learned' and loss_weights is None)
-                or loss_type == 'fixed' and len(loss_weights) == 3)
+        assert len(loss_weights) == 3
+        assert len(enabled_tasks) == 3
+        assert ((loss_type == 'learned' and isinstance(loss_weights[0], nn.parameter.Parameter))
+                or (loss_type == 'fixed' and isinstance(loss_weights[0], float)))
 
         self.loss_type = loss_type
         self.loss_weights = loss_weights
+        self.enabled_tasks = enabled_tasks
 
         self.l1_loss = nn.L1Loss(reduction='mean')
         # Classes that we don't care about are set to 255.
@@ -46,14 +50,32 @@ class MultiTaskLoss(nn.Module):
         return 0
 
     def calculate_total_loss(self, *losses):
+        sem_loss, inst_loss, depth_loss = losses
+        sem_weight, inst_weight, depth_weight = self.loss_weights
+        sem_enabled, inst_enabled, depth_enabled = self.enabled_tasks
+
+        loss = 0
+
         if self.loss_type == 'fixed':
-            return sum([loss * weight for loss, weight in zip(losses, self.loss_weights)])
+            if sem_enabled:
+                loss += sem_weight * sem_loss
+            if inst_enabled:
+                loss += inst_weight * inst_loss
+            if depth_enabled:
+                depth_enabled += depth_weight * depth_loss
 
         elif self.loss_type == 'learned':
-            raise NotImplementedError
+            if sem_enabled:
+                loss += torch.exp(-sem_weight) * sem_loss + 0.5 * sem_weight
+            if inst_enabled:
+                loss += 0.5 * (torch.exp(-inst_weight) * inst_loss + inst_weight)
+            if depth_enabled:
+                depth_enabled += 0.5 * (torch.exp(-depth_weight) * depth_loss + depth_weight)
 
         else:
             raise ValueError
+
+        return loss
 
     def forward(self, predicted, *target):
         semseg_pred, instance_pred, depth_pred = predicted
@@ -66,5 +88,6 @@ class MultiTaskLoss(nn.Module):
                                                            instance_mask)
         depth_loss = self.depth_loss(depth_pred, 0)
 
+        total_loss = self.calculate_total_loss(semseg_loss, instanceseg_loss, depth_loss)
 
-        return self.calculate_total_loss(semseg_loss, instanceseg_loss, depth_loss), (semseg_loss, instanceseg_loss, depth_loss)
+        return total_loss, (semseg_loss, instanceseg_loss, depth_loss)
