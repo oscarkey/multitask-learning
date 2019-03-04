@@ -30,8 +30,8 @@ def config():
     width = 256  # TODO: pass through to model
     # One of 'fixed' or 'learned'.
     loss_type = 'fixed'
-    loss_weights = (0.5, 0.5, 0.0)
-    enabled_tasks = (True, True, False)
+    loss_weights = (1.0, 0.0, 0.0)
+    enabled_tasks = (True, False, False)
     gpu = False
     mongo = False
 

@@ -122,6 +122,11 @@ def main(_run):
             for i, data in enumerate(validation_loader, 0):
                 inputs, semantic_labels, instance_centroid, instance_mask = data
 
+                inputs = inputs.to(device)
+                semantic_labels = semantic_labels.to(device)
+                instance_centroid = instance_centroid.to(device)
+                instance_mask = instance_mask.to(device)
+
                 # keep count of number of batches
                 num_val_batches += 1
 
