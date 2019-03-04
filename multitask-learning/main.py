@@ -23,6 +23,7 @@ def config():
     max_iter = 1000
     root_dir_train = 'example-tiny-cityscapes'
     root_dir_validation = 'example-tiny-cityscapes' # TODO: add validation set
+    root_dir_test = 'example-tiny-cityscapes' # TODO: add test set
     num_classes = 20
     height = 128  # TODO: pass through to model
     width = 256  # TODO: pass through to model
