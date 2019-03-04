@@ -15,6 +15,7 @@ scipy = "*"
 tqdm = "*"
 pymongo = "*"
 dnspython = "*"
+bokeh = "*"
 
 [dev-packages]
 pylint = "*"
