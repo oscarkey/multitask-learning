@@ -1,15 +1,20 @@
 """Contains config and Sacred main entry point."""
+import sys
+
 import train
 from sacred import Experiment
+from sacred.arg_parser import get_config_updates
 from sacred.observers import FileStorageObserver
 from sacred.observers import MongoObserver
 
 ex = Experiment()
 
+config_updates, _ = get_config_updates(sys.argv)
+
 mongo_digital_ocean_server = 'mongodb://multitask-learning:***REMOVED***@134.209.21.201/admin?retryWrites=true'
 
-mongo = False
-if mongo == True:
+# Disable saving to mongo using "with save_to_db=False"
+if ("save_to_db" not in config_updates) or config_updates["save_to_db"]:
     mongo_observer = MongoObserver.create(
         url=mongo_digital_ocean_server,
         db_name='multitask-learning'
@@ -25,8 +30,8 @@ def config():
     batch_size = 3
     max_iter = 1000
     root_dir_train = 'example-tiny-cityscapes'
-    root_dir_validation = 'example-tiny-cityscapes' # TODO: add validation set
-    root_dir_test = 'example-tiny-cityscapes' # TODO: add test set
+    root_dir_validation = 'example-tiny-cityscapes'  # TODO: add validation set
+    root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
     num_classes = 20
     height = 128  # TODO: pass through to model
     width = 256  # TODO: pass through to model
@@ -36,6 +41,7 @@ def config():
     enabled_tasks = (True, False, False)
     gpu = False
     mongo = False
+    save_to_db = True
 
 
 @ex.named_config
