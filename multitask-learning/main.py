@@ -6,10 +6,12 @@ from sacred.observers import MongoObserver
 
 ex = Experiment()
 
+mongo_digital_ocean_server = 'mongodb://multitask-learning:***REMOVED***@134.209.21.201/admin?retryWrites=true'
+
 mongo = False
 if mongo == True:
     mongo_observer = MongoObserver.create(
-        url='mongodb+srv://multitask-learning:GJHtmxWrAvZ9pTunNAtH@cluster0-elau5.azure.mongodb.net/test?retryWrites=true',
+        url=mongo_digital_ocean_server,
         db_name='multitask-learning'
     )
     ex.observers.append(mongo_observer)
