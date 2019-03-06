@@ -6,7 +6,6 @@ from sacred import Experiment
 from sacred.arg_parser import get_config_updates
 from sacred.observers import FileStorageObserver
 from sacred.observers import MongoObserver
-
 ex = Experiment()
 
 config_updates, _ = get_config_updates(sys.argv)

@@ -56,6 +56,7 @@ def main(_run):
 
         # polynomial learning rate decay
         lr_scheduler.step()
+        print(f'Learning rate: {lr_scheduler.get_lr()}')
 
         num_training_batches = 0
 
@@ -146,26 +147,26 @@ def main(_run):
                 # TODO: this batch size might break
                 batch_size = semantic_labels.shape[0]
                 for batch in range(batch_size):
-                    iou_dict = {str(i): {'intersection': 0, 'union': 0} for i in
-                                range(_run.config['num_classes'])}
+                    ious = [{'intersection': 0, 'union': 0} for i in
+                                range(_run.config['num_classes'])]
                     for height in range(128):  # TODO: get height and width from main.py
                         for width in range(256):
                             gt_class = semantic_labels.long()[batch][height][width].item()
                             predicted_class = max_args[batch][height][width].item()
                             if predicted_class == gt_class:
                                 # Add to intersection and union
-                                iou_dict[str(gt_class)]['intersection'] += 1
-                                iou_dict[str(gt_class)]['union'] += 1
+                                ious[gt_class]['intersection'] += 1
+                                ious[gt_class]['union'] += 1
                             else:
                                 # Add only to the union of each
-                                iou_dict[str(predicted_class)]['union'] += 1
+                                ious[predicted_class]['union'] += 1
                                 if gt_class != 255:
-                                    iou_dict[str(gt_class)]['union'] += 1
+                                    ious[gt_class]['union'] += 1
                     # Average across all classes
-                    for key, dict in iou_dict.items():
-                        if dict['union'] != 0:
-                            iou += dict['intersection'] / (
-                                    dict['union'] * _run.config['num_classes'])
+                    for params in ious:
+                        if params['union'] != 0:
+                            iou += params['intersection'] / (
+                                    params['union'] * _run.config['num_classes'])
                 iou = iou / batch_size
 
                 # instance mean error
