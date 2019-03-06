@@ -140,34 +140,15 @@ def main(_run):
                 # calculate accuracy measures
 
                 # segmentation IoU
-                iou = 0  # calculated for each class separately and averaged over all classes
-                max_args = torch.argmax(output_semantic,
-                                        dim=1)  # find the predicted class for each pixel
+                batch_iou = 0
 
                 # TODO: this batch size might break
                 batch_size = semantic_labels.shape[0]
-                for batch in range(batch_size):
-                    ious = [{'intersection': 0, 'union': 0} for i in
-                                range(_run.config['num_classes'])]
-                    for height in range(128):  # TODO: get height and width from main.py
-                        for width in range(256):
-                            gt_class = semantic_labels.long()[batch][height][width].item()
-                            predicted_class = max_args[batch][height][width].item()
-                            if predicted_class == gt_class:
-                                # Add to intersection and union
-                                ious[gt_class]['intersection'] += 1
-                                ious[gt_class]['union'] += 1
-                            else:
-                                # Add only to the union of each
-                                ious[predicted_class]['union'] += 1
-                                if gt_class != 255:
-                                    ious[gt_class]['union'] += 1
-                    # Average across all classes
-                    for params in ious:
-                        if params['union'] != 0:
-                            iou += params['intersection'] / (
-                                    params['union'] * _run.config['num_classes'])
-                iou = iou / batch_size
+                for image_index in range(batch_size):
+                    batch_iou += _compute_image_iou(
+                        semantic_labels[image_index],
+                        output_semantic[image_index],
+                        _run.config['num_classes'])
 
                 # instance mean error
                 instance_error = val_task_loss[1].item()
@@ -175,7 +156,7 @@ def main(_run):
                 # inverse depth mean error
                 depth_error = val_task_loss[2]
 
-                print('Batch iou %', iou * 100)
+                print('Batch iou %', batch_iou * 100)
                 print('Batch instance_error', instance_error)
                 print('Batch depth_error', depth_error)
 
@@ -190,7 +171,7 @@ def main(_run):
                 val_instance_loss += val_task_loss[1].item()
                 # may have to add item()
                 val_depth_loss += val_task_loss[2]
-                val_iou += iou
+                val_iou += batch_iou / batch_size
 
         # save statistics to Sacred
         _run.log_scalar('val_semantic_loss', val_semantic_loss / num_val_batches, epoch)
@@ -209,3 +190,47 @@ def main(_run):
         print('weight_instance_loss', learner.get_loss_params()[1].item(), epoch)
         _run.log_scalar('weight_depth_loss', learner.get_loss_params()[2].item(), epoch)
         print('weight_depth_loss', learner.get_loss_params()[2].item(), epoch)
+
+
+def _compute_image_iou(truth, output_softmax, num_classes: int):
+    # Convert the softmax to the id of the class.
+    output_classes = torch.argmax(output_softmax, dim=0)
+
+    iou = 0.0
+    for c in range(num_classes):
+        # Create tensors with 1 for every pixel labelled with this class, and 0 otherwise. We then
+        # add these tensors. The result has 2 for the intersection, and 1 or 2 for the union.
+
+        truth_for_class = torch.where(
+            truth == c,
+            torch.ones_like(truth, dtype=torch.int),
+            torch.zeros_like(truth, dtype=torch.int))
+
+        output_for_class = torch.where(
+            output_classes == c,
+            torch.ones_like(output_classes, dtype=torch.int),
+            torch.zeros_like(output_classes, dtype=torch.int))
+
+        result = truth_for_class + output_for_class
+        # View in 1D as bincount only supports 1D.
+        counts = torch.bincount(result.view(-1))
+
+        if counts.size(0) == 1:
+            # Only zeros, no pixels of this class in either the truth or the output.
+            intersection = 0
+            union = 0
+        elif counts.size(0) == 2:
+            # If there was no intersection then no elements of result will have value 2, thus the
+            # bincount will only have length 2.
+            intersection = torch.tensor(0)
+            union = counts[1]
+        elif counts.size(0) == 3:
+            intersection = counts[2]
+            union = counts[1] + counts[2]
+        else:
+            raise ValueError(f'Wrong number of bins {counts}')
+
+        if union > 0:
+            iou += intersection.item() / union.item()
+
+    return iou / num_classes
