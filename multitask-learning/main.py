@@ -39,7 +39,7 @@ def config():
     loss_type = 'fixed'
     loss_weights = (1.0, 0.0, 0.0)
     enabled_tasks = (True, False, False)
-    gpu = False
+    gpu = True
     mongo = False
     save_to_db = True
 
