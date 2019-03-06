@@ -40,7 +40,6 @@ def config():
     loss_weights = (1.0, 0.0, 0.0)
     enabled_tasks = (True, False, False)
     gpu = True
-    mongo = False
     save_to_db = True
 
 
