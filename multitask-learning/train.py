@@ -42,7 +42,7 @@ def main(_run):
 
     criterion = MultiTaskLoss(_run.config['loss_type'], loss_weights, _run.config['enabled_tasks'])
 
-    initial_learning_rate = 2.5e-3
+    initial_learning_rate = _run.config['initial_learning_rate']
 
     optimizer = torch.optim.SGD(learner.parameters(),
                                 lr=initial_learning_rate,
@@ -56,7 +56,7 @@ def main(_run):
 
         # polynomial learning rate decay
         lr_scheduler.step()
-        print(f'Learning rate: {lr_scheduler.get_lr()}')
+        #print(f'Learning rate: {lr_scheduler.get_lr()}')
 
         num_training_batches = 0
 
@@ -90,7 +90,7 @@ def main(_run):
             # print statistics
             running_loss += loss.item()
             # if i % 2000 == 1999:    # print every 2000 mini-batches
-            print('[%d, %5d] loss: %.3f' %
+            print('[%d, %5d] Training loss: %.3f' %
                   (epoch + 1, i + 1, running_loss))
             running_loss = 0.0
 
@@ -103,13 +103,13 @@ def main(_run):
         _run.log_scalar('training_semantic_loss',
                         training_semantic_loss / num_training_batches,
                         epoch)
-        print('training_semantic_loss', training_semantic_loss / num_training_batches, epoch)
+        #print('training_semantic_loss', training_semantic_loss / num_training_batches, epoch)
         _run.log_scalar('training_instance_loss',
                         training_instance_loss / num_training_batches,
                         epoch)
-        print('training_instance_loss', training_instance_loss / num_training_batches, epoch)
+        #print('training_instance_loss', training_instance_loss / num_training_batches, epoch)
         _run.log_scalar('training_depth_loss', training_depth_loss / num_training_batches, epoch)
-        print('training_depth_loss', training_depth_loss / num_training_batches, epoch)
+        #print('training_depth_loss', training_depth_loss / num_training_batches, epoch)
 
         val_semantic_loss = 0
         val_instance_loss = 0
@@ -156,14 +156,14 @@ def main(_run):
                 # inverse depth mean error
                 depth_error = val_task_loss[2]
 
-                print('Batch iou %', batch_iou * 100)
-                print('Batch instance_error', instance_error)
-                print('Batch depth_error', depth_error)
+                #print('Batch iou %', batch_iou * 100)
+                #print('Batch instance_error', instance_error)
+                #print('Batch depth_error', depth_error)
 
                 # print statistics
                 running_loss += val_loss.item()
                 # if i % 2000 == 1999:    # print every 2000 mini-batches
-                print('[%d, %5d] loss: %.3f' %
+                print('[%d, %5d] Validation loss: %.3f' %
                       (epoch + 1, i + 1, running_loss))
                 running_loss = 0.0
 
@@ -175,21 +175,22 @@ def main(_run):
 
         # save statistics to Sacred
         _run.log_scalar('val_semantic_loss', val_semantic_loss / num_val_batches, epoch)
-        print('val_semantic_loss', val_semantic_loss / num_val_batches)
+        #_run.run_logger.debug('val_semantic_loss', val_semantic_loss / num_val_batches)
         _run.log_scalar('val_instance_loss', val_instance_loss / num_val_batches, epoch)
-        print('val_instance_loss', val_instance_loss / num_val_batches, epoch)
+        #_run.run_logger.debug('val_instance_loss', val_instance_loss / num_val_batches, epoch)
         _run.log_scalar('val_depth_loss', val_depth_loss / num_val_batches, epoch)
-        print('val_depth_loss', val_depth_loss / num_val_batches, epoch)
+        #_run.run_logger.debug('val_depth_loss', val_depth_loss / num_val_batches, epoch)
 
         _run.log_scalar('val_iou', val_iou / num_val_batches, epoch)
-        print('val_iou', val_iou / num_val_batches, epoch)
+        #_run.run_logger.debug('val_iou', val_iou / num_val_batches, epoch)
 
-        _run.log_scalar('weight_semantic_loss', learner.get_loss_params()[0].item(), epoch)
-        print('weight_semantic_loss', learner.get_loss_params()[0].item(), epoch)
-        _run.log_scalar('weight_instance_loss', learner.get_loss_params()[1].item(), epoch)
-        print('weight_instance_loss', learner.get_loss_params()[1].item(), epoch)
-        _run.log_scalar('weight_depth_loss', learner.get_loss_params()[2].item(), epoch)
-        print('weight_depth_loss', learner.get_loss_params()[2].item(), epoch)
+        if _run.config['loss_type'] == 'learned':
+            _run.log_scalar('weight_semantic_loss', learner.get_loss_params()[0].item(), epoch)
+            print('Weight: semantic loss', learner.get_loss_params()[0].item(), epoch)
+            _run.log_scalar('weight_instance_loss', learner.get_loss_params()[1].item(), epoch)
+            print('Weight: instance loss', learner.get_loss_params()[1].item(), epoch)
+            _run.log_scalar('weight_depth_loss', learner.get_loss_params()[2].item(), epoch)
+            print('Weight: depth loss', learner.get_loss_params()[2].item(), epoch)
 
 
 def _compute_image_iou(truth, output_softmax, num_classes: int):

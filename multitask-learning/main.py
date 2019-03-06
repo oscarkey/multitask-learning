@@ -32,6 +32,7 @@ def config():
     root_dir_validation = 'example-tiny-cityscapes'  # TODO: add validation set
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
     num_classes = 20
+    initial_learning_rate = 2.5e-3
     height = 128  # TODO: pass through to model
     width = 256  # TODO: pass through to model
     # One of 'fixed' or 'learned'.
