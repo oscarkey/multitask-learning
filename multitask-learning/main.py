@@ -47,6 +47,9 @@ def config():
 @ex.named_config
 def server_config():
     gpu = True
+    root_dir_train = '/home/aml8/tiny_cityscapes_train'
+    root_dir_validation = '/home/aml8/tiny_cityscapes_train'
+    root_dir_test = '/home/aml8/tiny_cityscapes_train'
 
 
 @ex.automain
