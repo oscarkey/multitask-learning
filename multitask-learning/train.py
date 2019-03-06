@@ -56,7 +56,7 @@ def main(_run):
 
         # polynomial learning rate decay
         lr_scheduler.step()
-        #print(f'Learning rate: {lr_scheduler.get_lr()}')
+        # print(f'Learning rate: {lr_scheduler.get_lr()}')
 
         num_training_batches = 0
 
@@ -103,94 +103,103 @@ def main(_run):
         _run.log_scalar('training_semantic_loss',
                         training_semantic_loss / num_training_batches,
                         epoch)
-        #print('training_semantic_loss', training_semantic_loss / num_training_batches, epoch)
+        # print('training_semantic_loss', training_semantic_loss / num_training_batches, epoch)
         _run.log_scalar('training_instance_loss',
                         training_instance_loss / num_training_batches,
                         epoch)
-        #print('training_instance_loss', training_instance_loss / num_training_batches, epoch)
+        # print('training_instance_loss', training_instance_loss / num_training_batches, epoch)
         _run.log_scalar('training_depth_loss', training_depth_loss / num_training_batches, epoch)
-        #print('training_depth_loss', training_depth_loss / num_training_batches, epoch)
+        # print('training_depth_loss', training_depth_loss / num_training_batches, epoch)
 
-        val_semantic_loss = 0
-        val_instance_loss = 0
-        val_depth_loss = 0
-        val_iou = 0
+        _validate(
+            _run=_run,
+            device=device,
+            validation_loader=validation_loader,
+            learner=learner,
+            criterion=criterion,
+            epoch=epoch
+        )
 
-        num_val_batches = 0
 
-        # validation loop
-        with torch.no_grad():  # exclude gradients
-            for i, data in enumerate(validation_loader, 0):
-                inputs, semantic_labels, instance_centroid, instance_mask = data
+def _validate(_run, device, validation_loader, learner, criterion, epoch):
+    val_semantic_loss = 0
+    val_instance_loss = 0
+    val_depth_loss = 0
+    val_iou = 0
 
-                inputs = inputs.to(device)
-                semantic_labels = semantic_labels.to(device)
-                instance_centroid = instance_centroid.to(device)
-                instance_mask = instance_mask.to(device)
+    num_val_batches = 0
 
-                # keep count of number of batches
-                num_val_batches += 1
+    # validation loop
+    with torch.no_grad():  # exclude gradients
+        for i, data in enumerate(validation_loader, 0):
+            inputs, semantic_labels, instance_centroid, instance_mask = data
 
-                # forward + backward + optimize
-                output_semantic, output_instance, output_depth = learner(inputs.float())
-                val_loss, val_task_loss = criterion(
-                    (output_semantic, output_instance, output_depth),
-                    semantic_labels.long(), instance_centroid, instance_mask)
+            inputs = inputs.to(device)
+            semantic_labels = semantic_labels.to(device)
+            instance_centroid = instance_centroid.to(device)
+            instance_mask = instance_mask.to(device)
 
-                # calculate accuracy measures
+            # keep count of number of batches
+            num_val_batches += 1
 
-                # segmentation IoU
-                batch_iou = 0
+            # forward + backward + optimize
+            output_semantic, output_instance, output_depth = learner(inputs.float())
+            val_loss, val_task_loss = criterion(
+                (output_semantic, output_instance, output_depth),
+                semantic_labels.long(), instance_centroid, instance_mask)
 
-                # TODO: this batch size might break
-                batch_size = semantic_labels.shape[0]
-                for image_index in range(batch_size):
-                    batch_iou += _compute_image_iou(
-                        semantic_labels[image_index],
-                        output_semantic[image_index],
-                        _run.config['num_classes'])
+            # calculate accuracy measures
 
-                # instance mean error
-                instance_error = val_task_loss[1].item()
+            # segmentation IoU
+            batch_iou = 0
 
-                # inverse depth mean error
-                depth_error = val_task_loss[2]
+            # TODO: this batch size might break
+            batch_size = semantic_labels.shape[0]
+            for image_index in range(batch_size):
+                batch_iou += _compute_image_iou(
+                    semantic_labels[image_index],
+                    output_semantic[image_index],
+                    _run.config['num_classes'])
 
-                #print('Batch iou %', batch_iou * 100)
-                #print('Batch instance_error', instance_error)
-                #print('Batch depth_error', depth_error)
+            # instance mean error
+            instance_error = val_task_loss[1].item()
 
-                # print statistics
-                running_loss += val_loss.item()
-                # if i % 2000 == 1999:    # print every 2000 mini-batches
-                print('[%d, %5d] Validation loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss))
-                running_loss = 0.0
+            # inverse depth mean error
+            depth_error = val_task_loss[2]
 
-                val_semantic_loss += val_task_loss[0].item()
-                val_instance_loss += val_task_loss[1].item()
-                # may have to add item()
-                val_depth_loss += val_task_loss[2]
-                val_iou += batch_iou / batch_size
+            # print('Batch iou %', batch_iou * 100)
+            # print('Batch instance_error', instance_error)
+            # print('Batch depth_error', depth_error)
 
-        # save statistics to Sacred
-        _run.log_scalar('val_semantic_loss', val_semantic_loss / num_val_batches, epoch)
-        #_run.run_logger.debug('val_semantic_loss', val_semantic_loss / num_val_batches)
-        _run.log_scalar('val_instance_loss', val_instance_loss / num_val_batches, epoch)
-        #_run.run_logger.debug('val_instance_loss', val_instance_loss / num_val_batches, epoch)
-        _run.log_scalar('val_depth_loss', val_depth_loss / num_val_batches, epoch)
-        #_run.run_logger.debug('val_depth_loss', val_depth_loss / num_val_batches, epoch)
+            # Print every 2000 mini-batches
+            # if i % 2000 == 1999:
+            print('[%d, %5d] Validation loss: %.3f' %
+                  (epoch + 1, i + 1, val_loss.item()))
 
-        _run.log_scalar('val_iou', val_iou / num_val_batches, epoch)
-        #_run.run_logger.debug('val_iou', val_iou / num_val_batches, epoch)
+            val_semantic_loss += val_task_loss[0].item()
+            val_instance_loss += val_task_loss[1].item()
+            # may have to add item()
+            val_depth_loss += val_task_loss[2]
+            val_iou += batch_iou / batch_size
 
-        if _run.config['loss_type'] == 'learned':
-            _run.log_scalar('weight_semantic_loss', learner.get_loss_params()[0].item(), epoch)
-            print('Weight: semantic loss', learner.get_loss_params()[0].item(), epoch)
-            _run.log_scalar('weight_instance_loss', learner.get_loss_params()[1].item(), epoch)
-            print('Weight: instance loss', learner.get_loss_params()[1].item(), epoch)
-            _run.log_scalar('weight_depth_loss', learner.get_loss_params()[2].item(), epoch)
-            print('Weight: depth loss', learner.get_loss_params()[2].item(), epoch)
+    # save statistics to Sacred
+    _run.log_scalar('val_semantic_loss', val_semantic_loss / num_val_batches, epoch)
+    # _run.run_logger.debug('val_semantic_loss', val_semantic_loss / num_val_batches)
+    _run.log_scalar('val_instance_loss', val_instance_loss / num_val_batches, epoch)
+    # _run.run_logger.debug('val_instance_loss', val_instance_loss / num_val_batches, epoch)
+    _run.log_scalar('val_depth_loss', val_depth_loss / num_val_batches, epoch)
+    # _run.run_logger.debug('val_depth_loss', val_depth_loss / num_val_batches, epoch)
+
+    _run.log_scalar('val_iou', val_iou / num_val_batches, epoch)
+    # _run.run_logger.debug('val_iou', val_iou / num_val_batches, epoch)
+
+    if _run.config['loss_type'] == 'learned':
+        _run.log_scalar('weight_semantic_loss', learner.get_loss_params()[0].item(), epoch)
+        print('Weight: semantic loss', learner.get_loss_params()[0].item(), epoch)
+        _run.log_scalar('weight_instance_loss', learner.get_loss_params()[1].item(), epoch)
+        print('Weight: instance loss', learner.get_loss_params()[1].item(), epoch)
+        _run.log_scalar('weight_depth_loss', learner.get_loss_params()[2].item(), epoch)
+        print('Weight: depth loss', learner.get_loss_params()[2].item(), epoch)
 
 
 def _compute_image_iou(truth, output_softmax, num_classes: int):
