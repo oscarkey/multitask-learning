@@ -226,7 +226,7 @@ def _compute_image_iou(truth, output_softmax, num_classes: int):
         # We expect values 0, 1, 2 for no object, one object and both objects respectively.
         counts = torch.bincount(result.view(-1), minlength=3)
 
-        assert counts.size(0) == 3, f'Wrong number of bits: {counts}'
+        assert counts.size(0) == 3, f'Wrong number of bins: {counts}'
 
         intersection = counts[2].item()
         union = counts[1].item() + counts[2].item()
