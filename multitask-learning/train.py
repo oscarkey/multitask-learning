@@ -223,24 +223,15 @@ def _compute_image_iou(truth, output_softmax, num_classes: int):
 
         result = truth_for_class + output_for_class
         # View in 1D as bincount only supports 1D.
-        counts = torch.bincount(result.view(-1))
+        # We expect values 0, 1, 2 for no object, one object and both objects respectively.
+        counts = torch.bincount(result.view(-1), minlength=3)
 
-        if counts.size(0) == 1:
-            # Only zeros, no pixels of this class in either the truth or the output.
-            intersection = 0
-            union = 0
-        elif counts.size(0) == 2:
-            # If there was no intersection then no elements of result will have value 2, thus the
-            # bincount will only have length 2.
-            intersection = torch.tensor(0)
-            union = counts[1]
-        elif counts.size(0) == 3:
-            intersection = counts[2]
-            union = counts[1] + counts[2]
-        else:
-            raise ValueError(f'Wrong number of bins {counts}')
+        assert counts.size(0) == 3, f'Wrong number of bits: {counts}'
+
+        intersection = counts[2].item()
+        union = counts[1].item() + counts[2].item()
 
         if union > 0:
-            iou += intersection.item() / union.item()
+            iou += intersection / union
 
     return iou / num_classes
