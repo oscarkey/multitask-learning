@@ -1,3 +1,5 @@
+import tempfile
+
 import cityscapes
 import torch
 import torch.nn as nn
@@ -121,6 +123,9 @@ def main(_run):
                 epoch=epoch
             )
 
+        if _run.config['model_save_epochs'] != 0 and epoch % _run.config['model_save_epochs'] == 0:
+            _save_model(_run, learner, epoch)
+
 
 def _validate(_run, device, validation_loader, learner, criterion, epoch):
     val_semantic_loss = 0
@@ -236,3 +241,10 @@ def _compute_image_iou(truth, output_softmax, num_classes: int):
             iou += intersection / union
 
     return iou / num_classes
+
+
+def _save_model(_run, model, epoch: int):
+    with tempfile.NamedTemporaryFile() as file:
+        torch.save(model.state_dict(), file.name)
+        _run.add_artifact(file.name, f'model_epoch_{epoch}')
+        _run.run_logger.info(f'Saved model to sacred.')
