@@ -128,7 +128,9 @@ def main(_run):
                 epoch=epoch
             )
 
-        if _run.config['model_save_epochs'] != 0 and epoch % _run.config['model_save_epochs'] == 0:
+        if (_run.config['model_save_epochs'] != 0
+                and epoch % _run.config['model_save_epochs'] == 0
+                and epoch > 0):
             _save_model(_run, learner, epoch)
 
 
