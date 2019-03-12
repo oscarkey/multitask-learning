@@ -41,7 +41,7 @@ def config():
     enabled_tasks = (True, False, False)
     gpu = True
     save_to_db = True
-
+    enable_validation = True
 
 @ex.named_config
 def server_config():

@@ -111,14 +111,15 @@ def main(_run):
         _run.log_scalar('training_depth_loss', training_depth_loss / num_training_batches, epoch)
         # print('training_depth_loss', training_depth_loss / num_training_batches, epoch)
 
-        _validate(
-            _run=_run,
-            device=device,
-            validation_loader=validation_loader,
-            learner=learner,
-            criterion=criterion,
-            epoch=epoch
-        )
+        if _run.config['enable_validation']:
+            _validate(
+                _run=_run,
+                device=device,
+                validation_loader=validation_loader,
+                learner=learner,
+                criterion=criterion,
+                epoch=epoch
+            )
 
 
 def _validate(_run, device, validation_loader, learner, criterion, epoch):
