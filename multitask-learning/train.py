@@ -118,7 +118,7 @@ def main(_run):
         _run.log_scalar('training_depth_loss', training_depth_loss / num_training_batches, epoch)
         # print('training_depth_loss', training_depth_loss / num_training_batches, epoch)
 
-        if _run.config['enable_validation']:
+        if _run.config['validate_epochs'] != 0 and epoch % _run.config['validate_epochs'] == 0:
             _validate(
                 _run=_run,
                 device=device,

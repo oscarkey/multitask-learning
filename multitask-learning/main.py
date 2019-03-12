@@ -41,7 +41,8 @@ def config():
     enabled_tasks = (True, False, False)
     gpu = True
     save_to_db = True
-    enable_validation = True
+    # Set to 0 to disable validation.
+    validate_epochs = 1
     # Set to 0 to disable saving the model.
     model_save_epochs = 0
     use_adam = False
