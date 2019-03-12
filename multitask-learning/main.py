@@ -1,22 +1,22 @@
 """Contains config and Sacred main entry point."""
 import sys
 
+import checkpointing
 import train
 from sacred import Experiment
 from sacred.arg_parser import get_config_updates
 from sacred.observers import FileStorageObserver
 from sacred.observers import MongoObserver
+
 ex = Experiment()
 
 config_updates, _ = get_config_updates(sys.argv)
 
-mongo_digital_ocean_server = 'mongodb://multitask-learning:***REMOVED***@134.209.21.201/admin?retryWrites=true'
-
 # Disable saving to mongo using "with save_to_db=False"
 if ("save_to_db" not in config_updates) or config_updates["save_to_db"]:
     mongo_observer = MongoObserver.create(
-        url=mongo_digital_ocean_server,
-        db_name='multitask-learning'
+        url=checkpointing.server_name,
+        db_name=checkpointing.collection_name
     )
     ex.observers.append(mongo_observer)
 else:
@@ -41,11 +41,12 @@ def config():
     enabled_tasks = (True, False, False)
     gpu = True
     save_to_db = True
-    # Set to 0 to disable validation.
+    # How frequently to run validation. Set to 0 to disable validation.
     validate_epochs = 1
-    # Set to 0 to disable saving the model.
+    # How frequently to checkpoint the model to Sacred. Set to 0 to disable saving the model.
     model_save_epochs = 0
     use_adam = False
+
 
 @ex.named_config
 def server_config():

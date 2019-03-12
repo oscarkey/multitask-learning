@@ -1,5 +1,4 @@
-import tempfile
-
+import checkpointing
 import cityscapes
 import torch
 import torch.nn as nn
@@ -119,7 +118,7 @@ def main(_run):
         # print('training_depth_loss', training_depth_loss / num_training_batches, epoch)
 
         if (_run.config['validate_epochs'] != 0
-                and (epoch + 1) % _run.config['validate_epochs'] == 0) or epoch == 0:
+            and (epoch + 1) % _run.config['validate_epochs'] == 0) or epoch == 0:
             _validate(
                 _run=_run,
                 device=device,
@@ -131,7 +130,7 @@ def main(_run):
 
         if (_run.config['model_save_epochs'] != 0
                 and (epoch + 1) % _run.config['model_save_epochs'] == 0):
-            _save_model(_run, learner, epoch)
+            checkpointing.save_model(_run, learner, epoch)
 
 
 def _validate(_run, device, validation_loader, learner, criterion, epoch):
@@ -248,10 +247,3 @@ def _compute_image_iou(truth, output_softmax, num_classes: int):
             iou += intersection / union
 
     return iou / num_classes
-
-
-def _save_model(_run, model, epoch: int):
-    with tempfile.NamedTemporaryFile() as file:
-        torch.save(model.state_dict(), file.name)
-        _run.add_artifact(file.name, f'model_epoch_{epoch}')
-        _run.run_logger.info(f'Saved model to sacred.')
