@@ -118,7 +118,8 @@ def main(_run):
         _run.log_scalar('training_depth_loss', training_depth_loss / num_training_batches, epoch)
         # print('training_depth_loss', training_depth_loss / num_training_batches, epoch)
 
-        if _run.config['validate_epochs'] != 0 and epoch % _run.config['validate_epochs'] == 0:
+        if (_run.config['validate_epochs'] != 0
+                and (epoch + 1) % _run.config['validate_epochs'] == 0) or epoch == 0:
             _validate(
                 _run=_run,
                 device=device,
@@ -129,8 +130,7 @@ def main(_run):
             )
 
         if (_run.config['model_save_epochs'] != 0
-                and epoch % _run.config['model_save_epochs'] == 0
-                and epoch > 0):
+                and (epoch + 1) % _run.config['model_save_epochs'] == 0):
             _save_model(_run, learner, epoch)
 
 
