@@ -108,7 +108,7 @@ class CityscapesDataset(Dataset):
         # Calculate the distance from the x,y coordinates of the pixel to the coordinates of the
         # centre of its associated instance.
         coordinates = np.zeros(instance_image.shape + (2,))
-        g1, g2 = np.meshgrid(range(instance_image.shape[1]), range(instance_image.shape[0]))
+        g1, g2 = np.mgrid[range(instance_image.shape[0]), range(instance_image.shape[1])]
         coordinates[:, :, 0] = g1
         coordinates[:, :, 1] = g2
         vecs = centroids - coordinates
