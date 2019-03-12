@@ -46,18 +46,20 @@ def main(_run):
 
     initial_learning_rate = _run.config['initial_learning_rate']
 
-    optimizer = torch.optim.SGD(learner.parameters(),
-                                lr=initial_learning_rate,
-                                momentum=0.9,
-                                nesterov=True,
-                                weight_decay=1e4)
+    if _run.config['use_adam']:
+        optimizer = torch.optim.Adam(learner.parameters())
+    else:
+        optimizer = torch.optim.SGD(learner.parameters(),
+                                    lr=initial_learning_rate,
+                                    momentum=0.9,
+                                    nesterov=True,
+                                    weight_decay=1e4)
     lr_lambda = lambda x: (1 - x / _run.config['max_iter']) ** 0.9
     lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
 
     for epoch in range(_run.config['max_iter']):  # loop over the dataset multiple times
 
         # polynomial learning rate decay
-        lr_scheduler.step()
         # print(f'Learning rate: {lr_scheduler.get_lr()}')
 
         num_training_batches = 0
@@ -70,6 +72,9 @@ def main(_run):
         # training loop
         for i, data in enumerate(train_loader, 0):
             inputs, semantic_labels, instance_centroid, instance_mask = data
+
+            if not _run.config['use_adam']:
+                lr_scheduler.step()
 
             # keep count of number of batches
             num_training_batches += 1

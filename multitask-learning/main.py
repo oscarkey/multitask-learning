@@ -44,6 +44,7 @@ def config():
     enable_validation = True
     # Set to 0 to disable saving the model.
     model_save_epochs = 0
+    use_adam = False
 
 @ex.named_config
 def server_config():
