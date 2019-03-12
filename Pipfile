@@ -16,6 +16,7 @@ tqdm = "*"
 pymongo = "*"
 dnspython = "*"
 bokeh = "*"
+notebook = "*"
 
 [dev-packages]
 pylint = "*"
