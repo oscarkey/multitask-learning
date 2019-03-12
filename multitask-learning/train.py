@@ -245,5 +245,7 @@ def _compute_image_iou(truth, output_softmax, num_classes: int):
 
         if union > 0:
             iou += intersection / union
+        else:
+            iou += 1
 
     return iou / num_classes
