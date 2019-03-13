@@ -1,12 +1,18 @@
 import checkpointing
 import cityscapes
 import torch
-import torch.nn as nn
 from losses import MultiTaskLoss
 from model import MultitaskLearner
 
+
 def main(_run):
-    train_loader = cityscapes.get_loader_from_dir(_run.config['root_dir_train'], _run.config)
+    if _run.config['random_crop_train']:
+        train_transform = cityscapes.RandomCrop((256,256))
+    else:
+        train_transform = cityscapes.NoopTransform()
+    train_loader = cityscapes.get_loader_from_dir(
+        _run.config['root_dir_train'], _run.config, transform=train_transform)
+
     validation_loader = cityscapes.get_loader_from_dir(_run.config['root_dir_validation'],
                                                        _run.config)
 
