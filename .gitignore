@@ -1,6 +1,11 @@
 .idea
 
 cityscapes
+tiny_cityscapes_train
+tiny_cityscapes_val
+tiny_cityscapes_test
+
+multitask_results
 
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
