@@ -1,6 +1,6 @@
-from torch import nn
-from torch.nn import Module
+import torch
 import torch.nn.functional as F
+from torch import nn
 
 
 def _build_base_decoder():
@@ -16,11 +16,12 @@ def _build_base_decoder():
     )
 
 
-class Decoders(Module):
+class Decoders(nn.Module):
     """Module which contains all three decoders."""
 
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, output_size=(128, 256)):
         super().__init__()
+        self.output_size = output_size
         self.num_classes = num_classes
 
         self.base_semseg = _build_base_decoder()
@@ -38,14 +39,24 @@ class Decoders(Module):
         batch_size = x.shape[0]
         x1 = self.base_semseg(x)
         x1 = self.semsegcls(x1)
-        x1 = F.interpolate(x1, size=(128, 256), mode='bilinear', align_corners=False)
+        x1 = F.interpolate(x1, size=self.output_size, mode='bilinear', align_corners=False)
 
         x2 = self.base_insseg(x)
         x2 = self.inssegcls(x2)
-        x2 = F.interpolate(x2, size=(128, 256), mode='bilinear', align_corners=False)
+        x2 = F.interpolate(x2, size=self.output_size, mode='bilinear', align_corners=False)
 
         x3 = self.base_depth(x)
         x3 = self.depthcls(x3)
-        x3 = F.interpolate(x3, size=(128, 256), mode='bilinear', align_corners=False)
+        x3 = F.interpolate(x3, size=self.output_size, mode='bilinear', align_corners=False)
 
         return x1, x2, x3
+
+
+if __name__ == '__main__':
+# ### Shape test
+    output_size=(123,432)
+    model = Decoders(num_classes=20, output_size=output_size)
+    test = torch.zeros(size=(2,1280,256,256))
+    result = model.forward(test)
+    assert result[0].shape == (2,20,*output_size), f"output shape is {result[0].shape}"
+

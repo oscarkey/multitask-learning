@@ -222,9 +222,9 @@ class Encoder(nn.Module):
 if __name__ == '__main__':
 # ### Shape test
     model = Encoder()
-    test = torch.zeros(size=(2,3,256,512))
+    test = torch.zeros(size=(2,3,256,256))
     result = model.forward(test)
-    assert(result.shape == (2,1280,32,64))
+    assert result.shape == (2,1280,*test.shape[:-2]/8), f"output shape is {result.shape}"
 
 
 
