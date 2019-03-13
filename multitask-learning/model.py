@@ -21,6 +21,9 @@ class MultitaskLearner(nn.Module):
     def get_loss_params(self):
         """Returns sem_log_var, inst_log_var, depth_log_var"""
         return self.sem_log_var, self.inst_log_var, self.depth_log_var
+    
+    def set_output_size(self, size):
+        self.decoders.output_size = size
 
 
 if __name__ == '__main__':
