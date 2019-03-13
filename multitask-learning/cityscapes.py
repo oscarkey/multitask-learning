@@ -30,13 +30,30 @@ class RandomCrop(object):
         self.output_size = output_size
 
     def __call__(self, image):
-        h, w = image.shape[:2]
+        h, w = self._get_shape(image)
         new_h, new_w = self.output_size
 
         top = np.random.randint(0, h - new_h)
         left = np.random.randint(0, w - new_w)
 
-        return image[top: top + new_h, left: left + new_w]
+        # Check if we have a channel dimension or not.
+        if len(image.shape) == 2:
+            return image[top: top + new_h, left: left + new_w]
+        elif len(image.shape) == 3:
+            return image[:, top: top + new_h, left: left + new_w]
+        else:
+            raise ValueError
+
+    @staticmethod
+    def _get_shape(image):
+        """Gets the shape of the image, ignoring the channel dimension if it has one."""
+        if len(image.shape) == 2:
+            return image.shape
+        elif len(image.shape) == 3:
+            # First dimension is the channel dimension.
+            return image.shape[1:]
+        else:
+            raise ValueError('Wrong shape: ' + image.shape)
 
 
 class CityscapesDataset(Dataset):
@@ -90,10 +107,10 @@ class CityscapesDataset(Dataset):
 
         image_file = self._get_file_path_for_index(index, 'leftImg8bit')
         image_array = np.asarray(Image.open(image_file), dtype=np.float32)
+        image_array = np.transpose(image_array, axis_order)
         image_array = self._transform(image_array)
         # Rescale the image from [0,255] to [0,1].
         image_array = image_array / 255 * 2 - 1
-        image_array = np.transpose(image_array, axis_order)
         assert len(image_array.shape) == 3, 'image_array should have 3 dimensions' + image_file
 
         label_file = self._get_file_path_for_index(index, 'labelIds')
@@ -105,10 +122,10 @@ class CityscapesDataset(Dataset):
         instance_array = np.asarray(Image.open(instance_file), dtype=np.float32)
         assert len(instance_array.shape) == 2, 'instance_array should have 2 dimensions' + instance_file
         instance_vecs, instance_mask = self._compute_centroid_vectors(instance_array)
-        instance_vecs = self._transform(instance_vecs)
-        instance_mask = self._transform(instance_mask)
         # We don't need to transpose the mask as it has no channels.
         instance_vecs = np.transpose(instance_vecs, axis_order)
+        instance_vecs = self._transform(instance_vecs)
+        instance_mask = self._transform(instance_mask)
 
         return image_array, label_array, instance_vecs, instance_mask
 
