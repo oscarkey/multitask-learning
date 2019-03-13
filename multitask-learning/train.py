@@ -7,7 +7,7 @@ from model import MultitaskLearner
 
 def main(_run):
     if _run.config['random_crop_train']:
-        train_transform = cityscapes.RandomCrop((256,256))
+        train_transform = cityscapes.RandomCrop((256, 256))
     else:
         train_transform = cityscapes.NoopTransform()
     train_loader = cityscapes.get_loader_from_dir(
@@ -15,6 +15,12 @@ def main(_run):
 
     validation_loader = cityscapes.get_loader_from_dir(_run.config['root_dir_validation'],
                                                        _run.config)
+
+    assert len(train_loader.dataset) >= 3, f'Must have at least 3 train images ' \
+        f'(had {len(train_loader.dataset)})'
+    if _run.config['validate_epochs'] >= 1:
+        assert len(validation_loader.dataset) >= 3, f'Must have at least 3 validation images ' \
+            f'(had {len(validation_loader.dataset)})'
 
     learner = MultitaskLearner(_run.config['num_classes'], _run.config['loss_weights'])
 
@@ -208,7 +214,7 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
 def _compute_image_iou(truth, output_softmax, num_classes: int):
     # Convert the softmax to the id of the class.
     output_classes = torch.argmax(output_softmax, dim=0)
-    
+
     class_count = 0
     iou = 0.0
     for c in range(num_classes):
