@@ -55,11 +55,11 @@ def main(_run):
         training_instance_loss = 0
         training_depth_loss = 0
 
-        if _run.config['random_crop_train']:
-            learner.set_output_size((256,256))
         # training loop
         for i, data in enumerate(train_loader, 0):
             inputs, semantic_labels, instance_centroid, instance_mask = data
+
+            learner.set_output_size(inputs.shape[2:])
 
             if not _run.config['use_adam']:
                 lr_scheduler.step()
@@ -132,9 +132,10 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
 
     # validation loop
     with torch.no_grad():  # exclude gradients
-        learner.set_output_size((128,256))
         for i, data in enumerate(validation_loader, 0):
             inputs, semantic_labels, instance_centroid, instance_mask = data
+
+            learner.set_output_size(inputs.shape[2:])
 
             inputs = inputs.to(device)
             semantic_labels = semantic_labels.to(device)
