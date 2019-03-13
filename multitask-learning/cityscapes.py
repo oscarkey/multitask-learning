@@ -140,6 +140,7 @@ def get_loader(dataset: Dataset, config):
     return torch.utils.data.DataLoader(
         dataset,
         batch_size=config['batch_size'],
+        num_workers=config['dataloader_workers'],
         shuffle=False)
 
 

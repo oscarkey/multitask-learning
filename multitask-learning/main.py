@@ -46,6 +46,7 @@ def config():
     # How frequently to checkpoint the model to Sacred. Set to 0 to disable saving the model.
     model_save_epochs = 0
     use_adam = False
+    dataloader_workers=4
 
 
 @ex.named_config
@@ -54,6 +55,7 @@ def server_config():
     root_dir_train = '/home/aml8/tiny_cityscapes_train'
     root_dir_validation = '/home/aml8/tiny_cityscapes_train'
     root_dir_test = '/home/aml8/tiny_cityscapes_train'
+    dataloader_workers=6
 
 
 @ex.automain
