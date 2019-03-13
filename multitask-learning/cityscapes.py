@@ -33,6 +33,9 @@ class RandomCrop(object):
         h, w = self._get_shape(image)
         new_h, new_w = self.output_size
 
+        assert new_h <= h, 'Crop taller than original'
+        assert new_w <= w, 'Crop wider than original'
+
         top = np.random.randint(0, h - new_h)
         left = np.random.randint(0, w - new_w)
 
