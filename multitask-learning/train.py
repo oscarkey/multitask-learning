@@ -208,7 +208,8 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
 def _compute_image_iou(truth, output_softmax, num_classes: int):
     # Convert the softmax to the id of the class.
     output_classes = torch.argmax(output_softmax, dim=0)
-
+    
+    class_count = 0
     iou = 0.0
     for c in range(num_classes):
         # Create tensors with 1 for every pixel labelled with this class, and 0 otherwise. We then
@@ -235,8 +236,7 @@ def _compute_image_iou(truth, output_softmax, num_classes: int):
         union = counts[1].item() + counts[2].item()
 
         if union > 0:
+            class_count += 1
             iou += intersection / union
-        else:
-            iou += 1
 
-    return iou / num_classes
+    return iou / class_count
