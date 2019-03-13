@@ -1,7 +1,6 @@
 # coding: utf-8
 import torch
 import torch.nn as nn
-import torchvision.models as models
 import torch.nn.functional as F
 
 
@@ -17,6 +16,9 @@ def conv1x1(in_planes, out_planes, stride=1):
 
 
 class AtrousBottleneck(nn.Module):
+    """Bottleneck ResNet Module, with the added option to use atrous (dilated) convolution
+    for the 3x3 convolution, given by the dilation parameter.
+    """
     expansion = 4
 
     def __init__(self, inplanes, planes, stride=1,  downsample=None, dilation=1):
@@ -61,6 +63,11 @@ class AtrousBottleneck(nn.Module):
 # ### ASPP
 
 class ASPP(nn.Module):
+    """Atrous Spatial Pyramid Pooling module as described for DeeplabV3 with output_stride = 8
+    
+    A 1x1 convolution and three 3x3 convolutions with dilation = 12,24,36, all with out_channels=256, are applied in parallel to the input feature map,
+    and concatenated with that feature map convolved down to 256 channels by a 1x1 convolution.
+    """
     def __init__(self):
         super(ASPP, self).__init__()
         self.conv1 = conv1x1(2048, 256)
@@ -71,16 +78,20 @@ class ASPP(nn.Module):
         # Operations for last feature map
         self.gap = nn.AdaptiveAvgPool2d((1, 1))
         self.conv = conv1x1(2048, 256)
-        self.bn = nn.BatchNorm2d(256)
+        self.bn1 = nn.BatchNorm2d(256)
+        self.bn2 = nn.BatchNorm2d(256)
+        self.bn3 = nn.BatchNorm2d(256)
+        self.bn4 = nn.BatchNorm2d(256)
+        self.bn5 = nn.BatchNorm2d(256)
     
     def forward(self, x):
         # x is feature map
-        out1 = F.relu(self.bn(self.conv1(x)))
-        out2 = F.relu(self.bn(self.conv2(x)))
-        out3 = F.relu(self.bn(self.conv3(x)))
-        out4 = F.relu(self.bn(self.conv4(x)))
+        out1 = F.relu(self.bn1(self.conv1(x)))
+        out2 = F.relu(self.bn2(self.conv2(x)))
+        out3 = F.relu(self.bn3(self.conv3(x)))
+        out4 = F.relu(self.bn4(self.conv4(x)))
 
-        out5 = F.relu(self.bn(self.conv(self.gap(x))))
+        out5 = F.relu(self.bn5(self.conv(self.gap(x))))
         out5 = F.interpolate(out5, size=x.shape[-2:], mode="bilinear", align_corners = False)                
                        
         out = torch.cat([out1,out2,out3,out4, out5], 1)
@@ -158,10 +169,14 @@ class Encoder(nn.Module):
 
     def __init__(self):
         super(Encoder, self).__init__()
-        rn101 = models.resnet101()
-        self.truncated_rn101 = nn.Sequential(*rn101.children())[:-4]
-        
-        self.inplanes = 512
+        self.inplanes = 64
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
+                               bias=False)
+        self.bn1 = nn.BatchNorm2d(64)
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.layer1 = self._make_layer(AtrousBottleneck, 64, 3)
+        self.layer2 = self._make_layer(AtrousBottleneck, 128, 4, stride=2)
         
         # Dilation choices of 2 and 4
         self.layer3 = self._make_layer(AtrousBottleneck, 256, 23, stride=1, dilation=2)
@@ -190,7 +205,13 @@ class Encoder(nn.Module):
         return nn.Sequential(*layers)
         
     def forward(self, x):
-        x = self.truncated_rn101(x)
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
         x = self.aspp(x)
