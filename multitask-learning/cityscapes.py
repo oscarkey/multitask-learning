@@ -26,7 +26,6 @@ class RandomCrop(object):
     """
 
     def __init__(self, output_size: (int, int)):
-        assert isinstance(output_size, tuple)
         assert len(output_size) == 2
         self.output_size = output_size
 
