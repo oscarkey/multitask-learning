@@ -1,12 +1,13 @@
 """Contains config and Sacred main entry point."""
 import sys
 
-import checkpointing
-import train
 from sacred import Experiment
 from sacred.arg_parser import get_config_updates
 from sacred.observers import FileStorageObserver
 from sacred.observers import MongoObserver
+
+import checkpointing
+import train
 
 ex = Experiment()
 
@@ -37,8 +38,8 @@ def config():
     width = 256  # TODO: pass through to model
     # One of 'fixed' or 'learned'.
     loss_type = 'fixed'
-    loss_weights = (1.0, 0.0, 0.0)
-    enabled_tasks = (True, False, False)
+    loss_weights = (1.0, 1.0, 0.0)
+    enabled_tasks = (True, True, False)
     gpu = True
     save_to_db = True
     # How frequently to run validation. Set to 0 to disable validation.

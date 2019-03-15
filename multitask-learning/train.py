@@ -1,6 +1,7 @@
 import checkpointing
 import cityscapes
 import torch
+import torch.nn.functional as F
 from losses import MultiTaskLoss
 from model import MultitaskLearner
 
@@ -76,9 +77,8 @@ def main(_run):
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            output_semantic, output_instance, output_depth = learner(inputs)
-            loss, task_loss = criterion((output_semantic, output_instance, output_depth),
-                                        semantic_labels, instance_centroid, instance_mask)
+            output = learner(inputs)
+            loss, task_loss = criterion(output, semantic_labels, instance_centroid, instance_mask)
             loss.backward()
             optimizer.step()
 
@@ -88,6 +88,18 @@ def main(_run):
             print('[%d, %5d] Training loss: %.3f' %
                   (epoch + 1, i + 1, running_loss))
             running_loss = 0.0
+
+            logvars = learner.get_loss_params()
+            print(f'Task logvars: {logvars[0].item(), logvars[1].item()}')
+
+            # compute gradient of an output pixel with respect to input
+            # for class 0
+            #inputs.requires_grad = True
+            #learner.zero_grad()
+            #output, _, _ = learner(inputs)
+            #output = F.softmax(output, dim=1)
+            #output[0, 0, 0, 0].backward(retain_graph=True)
+            #print(inputs.grad)
 
             training_semantic_loss += task_loss[0].item()
             training_instance_loss += task_loss[1].item()
@@ -174,7 +186,7 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
             # print('Batch instance_error', instance_error)
             # print('Batch depth_error', depth_error)
 
-            # Print every 2000 mini-batches
+            #Print every 2000 mini-batches
             # if i % 2000 == 1999:
             print('[%d, %5d] Validation loss: %.3f' %
                   (epoch + 1, i + 1, val_loss.item()))

@@ -33,6 +33,9 @@ class RandomCrop(object):
         h, w = self._get_shape(image)
         new_h, new_w = self.output_size
 
+        assert h > new_h,  f"h < new_h: {h, w, new_h, new_w, image.shape}"
+        assert w > new_w,  f"w < new_w: {h, w, new_h, new_w, image.shape}"
+
         top = np.random.randint(0, h - new_h)
         left = np.random.randint(0, w - new_w)
 
@@ -170,7 +173,7 @@ class CityscapesDataset(Dataset):
             mask = np.asarray(mask.mask, dtype=np.uint8)
         else:
             assert mask.mask == False, 'mask is all True'
-            mask = np.zeros((128, 256), dtype=np.uint8)
+            mask = np.zeros(instance_image.shape, dtype=np.uint8)
         mask = np.stack((mask, mask))
         return vecs, mask
 

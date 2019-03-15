@@ -45,7 +45,11 @@ class MultiTaskLoss(nn.Module):
         target = instance_target.float() * instance_mask
         mult_loss = self.l1_loss(instance_input * instance_mask, target)
         num_nonzero = torch.nonzero(target).size(0)
-        mult_loss /= num_nonzero
+        if num_nonzero > 0:
+            mult_loss /= num_nonzero
+        else:
+            mult_loss = torch.zeros_like(mult_loss)
+
         return mult_loss
 
     def depth_loss(self, depth_input, depth_target):
