@@ -172,7 +172,7 @@ class CityscapesDataset(Dataset):
         if len(mask.mask.shape) > 1:
             mask = np.asarray(mask.mask, dtype=np.uint8)
         else:
-            assert mask.mask == False, 'mask is all True'
+            assert mask.mask is False, 'mask is all True'
             mask = np.zeros(instance_image.shape, dtype=np.uint8)
         mask = np.stack((mask, mask))
         return vecs, mask
