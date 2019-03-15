@@ -47,7 +47,8 @@ def config():
     # How frequently to checkpoint the model to Sacred. Set to 0 to disable saving the model.
     model_save_epochs = 0
     use_adam = False
-    dataloader_workers = 4
+    # If num workers > 0 then dataloader caching won't work.
+    dataloader_workers = 0
     # Whether to randomly crop the training data, only works when training on full size images.
     random_crop_train = False
 

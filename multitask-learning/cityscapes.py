@@ -2,6 +2,7 @@
 
 import glob
 import os
+from functools import lru_cache
 
 import numpy as np
 import torch
@@ -105,32 +106,57 @@ class CityscapesDataset(Dataset):
         return os.path.join(directory, prefix)
 
     def __getitem__(self, index: int):
-        # We load the images as H x W x channel, but we need channel x H x W.
-        axis_order = (2, 0, 1)
-
-        image_file = self._get_file_path_for_index(index, 'leftImg8bit')
-        image_array = np.asarray(Image.open(image_file), dtype=np.float32)
-        image_array = np.transpose(image_array, axis_order)
+        image_array = self._get_image_array(index)
         image_array = self._transform(image_array)
-        # Rescale the image from [0,255] to [0,1].
-        image_array = image_array / 255 * 2 - 1
-        assert len(image_array.shape) == 3, 'image_array should have 3 dimensions' + image_file
 
-        label_file = self._get_file_path_for_index(index, 'labelIds')
-        label_array = np.asarray(Image.open(label_file), dtype=np.int64)
+        label_array = self._get_label_array(index)
         label_array = self._transform(label_array)
-        assert len(label_array.shape) == 2, 'label_array should have 2 dimensions' + label_file
 
-        instance_file = self._get_file_path_for_index(index, 'instanceIds')
-        instance_array = np.asarray(Image.open(instance_file), dtype=np.float32)
-        assert len(instance_array.shape) == 2, 'instance_array should have 2 dimensions' + instance_file
-        instance_vecs, instance_mask = self._compute_centroid_vectors(instance_array)
-        # We don't need to transpose the mask as it has no channels.
-        instance_vecs = np.transpose(instance_vecs, axis_order)
+        instance_vecs, instance_mask = self._get_instance_vecs_and_mask(index)
         instance_vecs = self._transform(instance_vecs)
         instance_mask = self._transform(instance_mask)
 
+        if index == 0:
+            print('image_array cache: ' + str(self._get_image_array.cache_info()))
+            print('label_array cache: ' + str(self._get_label_array.cache_info()))
+            print('instance_vecs cache: ' + str(self._get_instance_vecs_and_mask.cache_info()))
+
         return image_array, label_array, instance_vecs, instance_mask
+
+    @lru_cache(maxsize=None)
+    def _get_image_array(self, index: int):
+        image_file = self._get_file_path_for_index(index, 'leftImg8bit')
+        image_array = np.asarray(Image.open(image_file), dtype=np.float32)
+
+        # We load the images as H x W x channel, but we need channel x H x W.
+        image_array = np.transpose(image_array, (2, 0, 1))
+
+        # Rescale the image from [0,255] to [0,1].
+        image_array = image_array / 255 * 2 - 1
+
+        assert len(image_array.shape) == 3, 'image_array should have 3 dimensions' + image_file
+        return image_array
+
+    @lru_cache(maxsize=None)
+    def _get_label_array(self, index: int):
+        label_file = self._get_file_path_for_index(index, 'labelIds')
+        label_array = np.asarray(Image.open(label_file), dtype=np.int64)
+        assert len(label_array.shape) == 2, 'label_array should have 2 dimensions' + label_file
+        return label_array
+
+    @lru_cache(maxsize=None)
+    def _get_instance_vecs_and_mask(self, index: int):
+        instance_file = self._get_file_path_for_index(index, 'instanceIds')
+        instance_array = np.asarray(Image.open(instance_file), dtype=np.float32)
+        assert len(instance_array.shape) == 2, 'instance_array should have 2 dimensions' + instance_file
+
+        instance_vecs, instance_mask = self._compute_centroid_vectors(instance_array)
+
+        # We load the images as H x W x channel, but we need channel x H x W.
+        # We don't need to transpose the mask as it has no channels.
+        instance_vecs = np.transpose(instance_vecs, (2, 0, 1))
+
+        return instance_vecs, instance_mask
 
     def _get_file_path_for_index(self, index: int, type: str) -> str:
         path_prefix = self._file_prefixes[index]
