@@ -51,6 +51,7 @@ def config():
     dataloader_workers = 0
     # Whether to randomly crop the training data, only works when training on full size images.
     random_crop_train = False
+    crop_size = (256, 256)
 
 @ex.named_config
 def server_config():
