@@ -17,6 +17,8 @@ pymongo = "*"
 dnspython = "*"
 bokeh = "*"
 notebook = "*"
+# Use dev version of sklearn to get OPTICS.
+scikit-learn = "*"
 
 [dev-packages]
 pylint = "*"
