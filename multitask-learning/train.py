@@ -8,7 +8,7 @@ from model import MultitaskLearner
 
 def main(_run):
     if _run.config['random_crop_train']:
-        assert len(_run.confg['crop_size']) == 2, 'Wrong crop size' + _run.confg['crop_size']
+        assert len(_run.config['crop_size']) == 2, 'Wrong crop size' + _run.config['crop_size']
         train_transform = cityscapes.RandomCrop(_run.confg['crop_size'])
     else:
         train_transform = cityscapes.NoopTransform()
