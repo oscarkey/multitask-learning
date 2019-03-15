@@ -196,9 +196,10 @@ class CityscapesDataset(Dataset):
         # To catch instances where the mask is all false
         if len(mask.mask.shape) > 1:
             mask = np.asarray(mask.mask, dtype=np.uint8)
-        else:
-            assert mask.mask is False, 'mask is all True'
+        elif mask.mask is False:
             mask = np.zeros(instance_image.shape, dtype=np.uint8)
+        else:
+            mask = np.ones(instance_image.shape, dtype=np.uint8)
         mask = np.stack((mask, mask))
         return vecs, mask
 
