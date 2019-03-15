@@ -33,8 +33,8 @@ class RandomCrop(object):
         h, w = self._get_shape(image)
         new_h, new_w = self.output_size
 
-        assert h > new_h,  f"h < new_h: {h, w, new_h, new_w, image.shape}"
-        assert w > new_w,  f"w < new_w: {h, w, new_h, new_w, image.shape}"
+        assert h > new_h, f"h < new_h: {h, w, new_h, new_w, image.shape}"
+        assert w > new_w, f"w < new_w: {h, w, new_h, new_w, image.shape}"
 
         top = np.random.randint(0, h - new_h)
         left = np.random.randint(0, w - new_w)
@@ -217,11 +217,8 @@ def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
 
 
 def get_loader(dataset: Dataset, config):
-    return torch.utils.data.DataLoader(
-        dataset,
-        batch_size=config['batch_size'],
-        num_workers=config['dataloader_workers'],
-        shuffle=False)
+    return torch.utils.data.DataLoader(dataset, batch_size=config['batch_size'],
+        num_workers=config['dataloader_workers'], shuffle=False)
 
 
 if __name__ == '__main__':

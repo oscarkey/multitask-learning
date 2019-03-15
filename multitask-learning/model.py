@@ -1,11 +1,12 @@
 import torch
 import torch.nn as nn
 
-from encoder import Encoder
 from decoders import Decoders
+from encoder import Encoder
+
 
 class MultitaskLearner(nn.Module):
-    def __init__(self, num_classes, loss_weights, output_size=(128,256)):
+    def __init__(self, num_classes, loss_weights, output_size=(128, 256)):
         super(MultitaskLearner, self).__init__()
         self.encoder = Encoder()
         self.decoders = Decoders(num_classes, output_size)
@@ -21,15 +22,14 @@ class MultitaskLearner(nn.Module):
     def get_loss_params(self):
         """Returns sem_log_var, inst_log_var, depth_log_var"""
         return self.sem_log_var, self.inst_log_var, self.depth_log_var
-    
+
     def set_output_size(self, size):
         self.decoders.output_size = size
 
 
 if __name__ == '__main__':
-# ### Shape test
-    model = MultitaskLearner(num_classes=20, loss_weights=(1,0,0))
-    test = torch.zeros(size=(2,3,256,256))
+    # ### Shape test
+    model = MultitaskLearner(num_classes=20, loss_weights=(1, 0, 0))
+    test = torch.zeros(size=(2, 3, 256, 256))
     result = model.forward(test)
-    assert result[0].shape == (2,20,128,256), f"output shape is {result[0].shape}"
-
+    assert result[0].shape == (2, 20, 128, 256), f"output shape is {result[0].shape}"

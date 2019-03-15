@@ -5,15 +5,8 @@ from torch import nn
 
 def _build_base_decoder():
     """Builds the base decoder shared by all three decoder types."""
-    return nn.Sequential(
-        nn.Conv2d(
-            in_channels=1280,
-            out_channels=256,
-            kernel_size=(1, 1),
-            stride=1),
-        nn.BatchNorm2d(num_features=256),
-        nn.ReLU()
-    )
+    return nn.Sequential(nn.Conv2d(in_channels=1280, out_channels=256, kernel_size=(1, 1), stride=1),
+        nn.BatchNorm2d(num_features=256), nn.ReLU())
 
 
 class Decoders(nn.Module):
@@ -53,10 +46,9 @@ class Decoders(nn.Module):
 
 
 if __name__ == '__main__':
-# ### Shape test
-    output_size=(123,432)
+    # ### Shape test
+    output_size = (123, 432)
     model = Decoders(num_classes=20, output_size=output_size)
-    test = torch.zeros(size=(2,1280,256,256))
+    test = torch.zeros(size=(2, 1280, 256, 256))
     result = model.forward(test)
-    assert result[0].shape == (2,20,*output_size), f"output shape is {result[0].shape}"
-
+    assert result[0].shape == (2, 20, *output_size), f"output shape is {result[0].shape}"

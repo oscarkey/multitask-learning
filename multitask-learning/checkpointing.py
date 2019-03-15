@@ -1,7 +1,5 @@
 import tempfile
-from typing import Tuple, Dict
 
-import pymongo
 import torch
 
 server_name = 'mongodb://multitask-learning:***REMOVED***@134.209.21.201/admin?retryWrites=true'

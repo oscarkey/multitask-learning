@@ -15,10 +15,7 @@ config_updates, _ = get_config_updates(sys.argv)
 
 # Disable saving to mongo using "with save_to_db=False"
 if ("save_to_db" not in config_updates) or config_updates["save_to_db"]:
-    mongo_observer = MongoObserver.create(
-        url=checkpointing.server_name,
-        db_name=checkpointing.collection_name
-    )
+    mongo_observer = MongoObserver.create(url=checkpointing.server_name, db_name=checkpointing.collection_name)
     ex.observers.append(mongo_observer)
 else:
     ex.observers.append(FileStorageObserver.create('multitask_results'))
@@ -52,6 +49,7 @@ def config():
     # Whether to randomly crop the training data, only works when training on full size images.
     random_crop_train = False
     crop_size = (256, 256)
+
 
 @ex.named_config
 def server_config():

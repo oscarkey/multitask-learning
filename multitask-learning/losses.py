@@ -24,8 +24,8 @@ class MultiTaskLoss(nn.Module):
 
         assert len(loss_weights) == 3
         assert len(enabled_tasks) == 3
-        assert ((loss_type == 'learned' and isinstance(loss_weights[0], nn.parameter.Parameter))
-                or (loss_type == 'fixed' and isinstance(loss_weights[0], float)))
+        assert ((loss_type == 'learned' and isinstance(loss_weights[0], nn.parameter.Parameter)) or (
+                    loss_type == 'fixed' and isinstance(loss_weights[0], float)))
 
         self.loss_type = loss_type
         self.loss_weights = loss_weights
@@ -41,7 +41,7 @@ class MultiTaskLoss(nn.Module):
 
     def instance_segmentation_loss(self, instance_input, instance_target, instance_mask):
         instance_mask = instance_mask.float()
-        
+
         target = instance_target.float() * instance_mask
         mult_loss = self.l1_loss(instance_input * instance_mask, target)
         num_nonzero = torch.nonzero(target).size(0)
@@ -90,9 +90,7 @@ class MultiTaskLoss(nn.Module):
         semseg_target, instance_target, instance_mask = target
 
         semseg_loss = self.semantic_segmentation_loss(semseg_pred, semseg_target)
-        instanceseg_loss = self.instance_segmentation_loss(instance_pred,
-                                                           instance_target,
-                                                           instance_mask)
+        instanceseg_loss = self.instance_segmentation_loss(instance_pred, instance_target, instance_mask)
         depth_loss = self.depth_loss(depth_pred, 0)
 
         total_loss = self.calculate_total_loss(semseg_loss, instanceseg_loss, depth_loss)

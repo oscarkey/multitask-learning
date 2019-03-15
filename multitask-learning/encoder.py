@@ -7,8 +7,8 @@ import torch.nn.functional as F
 # code in this cell mostly from torchvision/models/resnet.py
 
 def conv3x3(in_planes, out_planes, stride=1, dilation=1):
-    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-                 dilation=dilation, padding=dilation, bias=False)
+    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, dilation=dilation, padding=dilation,
+                     bias=False)
 
 
 def conv1x1(in_planes, out_planes, stride=1):
@@ -21,7 +21,7 @@ class AtrousBottleneck(nn.Module):
     """
     expansion = 4
 
-    def __init__(self, inplanes, planes, stride=1,  downsample=None, dilation=1):
+    def __init__(self, inplanes, planes, stride=1, downsample=None, dilation=1):
         super(AtrousBottleneck, self).__init__()
         self.dilation = dilation
         self.conv1 = conv1x1(inplanes, planes)
@@ -33,8 +33,6 @@ class AtrousBottleneck(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
-        
-        
 
     def forward(self, x):
         identity = x
@@ -57,7 +55,6 @@ class AtrousBottleneck(nn.Module):
         out = self.relu(out)
 
         return out
-    
 
 
 # ### ASPP
@@ -68,13 +65,14 @@ class ASPP(nn.Module):
     A 1x1 convolution and three 3x3 convolutions with dilation = 12,24,36, all with out_channels=256, are applied in parallel to the input feature map,
     and concatenated with that feature map convolved down to 256 channels by a 1x1 convolution.
     """
+
     def __init__(self):
         super(ASPP, self).__init__()
         self.conv1 = conv1x1(2048, 256)
         self.conv2 = conv3x3(2048, 256, dilation=12)
         self.conv3 = conv3x3(2048, 256, dilation=24)
         self.conv4 = conv3x3(2048, 256, dilation=36)
-        
+
         # Operations for last feature map
         self.gap = nn.AdaptiveAvgPool2d((1, 1))
         self.conv = conv1x1(2048, 256)
@@ -83,7 +81,7 @@ class ASPP(nn.Module):
         self.bn3 = nn.BatchNorm2d(256)
         self.bn4 = nn.BatchNorm2d(256)
         self.bn5 = nn.BatchNorm2d(256)
-    
+
     def forward(self, x):
         # x is feature map
         out1 = F.relu(self.bn1(self.conv1(x)))
@@ -92,12 +90,10 @@ class ASPP(nn.Module):
         out4 = F.relu(self.bn4(self.conv4(x)))
 
         out5 = F.relu(self.bn5(self.conv(self.gap(x))))
-        out5 = F.interpolate(out5, size=x.shape[-2:], mode="bilinear", align_corners = False)                
-                       
-        out = torch.cat([out1,out2,out3,out4, out5], 1)
-        return out
-        
+        out5 = F.interpolate(out5, size=x.shape[-2:], mode="bilinear", align_corners=False)
 
+        out = torch.cat([out1, out2, out3, out4, out5], 1)
+        return out
 
 
 class Encoder(nn.Module):
@@ -170,31 +166,28 @@ class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
         self.inplanes = 64
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
-                               bias=False)
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(AtrousBottleneck, 64, 3)
         self.layer2 = self._make_layer(AtrousBottleneck, 128, 4, stride=2)
-        
+
         # Dilation choices of 2 and 4
         self.layer3 = self._make_layer(AtrousBottleneck, 256, 23, stride=1, dilation=2)
         self.layer4 = self._make_layer(AtrousBottleneck, 512, 3, stride=1, dilation=4)
         self.aspp = ASPP()
-        
+
     # from torchvision.models.resnet.ResNet
     def _make_layer(self, block, planes, blocks, stride=1, dilation=1):
         downsample = None
-        
+
         # If a stride=2 is passed to the block, input doesn't match the output
         # We need to downsample so we can add them together
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
-                nn.Conv2d(self.inplanes, planes * block.expansion,
-                          kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(planes * block.expansion),
-            )
+                nn.Conv2d(self.inplanes, planes * block.expansion, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(planes * block.expansion), )
 
         layers = []
         layers.append(block(self.inplanes, planes, stride, downsample, dilation))
@@ -203,7 +196,7 @@ class Encoder(nn.Module):
             layers.append(block(self.inplanes, planes))
 
         return nn.Sequential(*layers)
-        
+
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
@@ -218,13 +211,9 @@ class Encoder(nn.Module):
         return x
 
 
-
 if __name__ == '__main__':
-# ### Shape test
+    # ### Shape test
     model = Encoder()
-    test = torch.zeros(size=(2,3,256,256))
+    test = torch.zeros(size=(2, 3, 256, 256))
     result = model.forward(test)
-    assert result.shape == (2,1280,*test.shape[:-2]/8), f"output shape is {result.shape}"
-
-
-
+    assert result.shape == (2, 1280, *test.shape[:-2] / 8), f"output shape is {result.shape}"
