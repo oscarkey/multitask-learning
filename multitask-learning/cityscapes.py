@@ -29,23 +29,30 @@ class RandomCrop(object):
         assert len(output_size) == 2
         self.output_size = output_size
 
-    def __call__(self, image):
-        h, w = self._get_shape(image)
+    def __call__(self, images):
+        h, w = self._get_shape(images[0])
         new_h, new_w = self.output_size
 
-        assert h > new_h, f"h < new_h: {h, w, new_h, new_w, image.shape}"
-        assert w > new_w, f"w < new_w: {h, w, new_h, new_w, image.shape}"
+        assert h > new_h, f"h < new_h: {h, w, new_h, new_w, images[0].shape}"
+        assert w > new_w, f"w < new_w: {h, w, new_h, new_w, images[0].shape}"
 
         top = np.random.randint(0, h - new_h)
         left = np.random.randint(0, w - new_w)
 
-        # Check if we have a channel dimension or not.
-        if len(image.shape) == 2:
-            return image[top: top + new_h, left: left + new_w]
-        elif len(image.shape) == 3:
-            return image[:, top: top + new_h, left: left + new_w]
-        else:
-            raise ValueError
+        results = []
+        for image in images:
+            # Check if we have a channel dimension or not.
+            if len(image.shape) == 2:
+                assert image.shape[0] == h, f'Image has wrong shape {image.shape[0]} {h}'
+                assert image.shape[1] == w, f'Image has wrong shape {image.shape[1]} {w}'
+                results.append(image[top: top + new_h, left: left + new_w])
+            elif len(image.shape) == 3:
+                assert image.shape[1] == h, f'Image has wrong shape {image.shape[1]} {h}'
+                assert image.shape[2] == w, f'Image has wrong shape {image.shape[2]} {w}'
+                results.append(image[:, top: top + new_h, left: left + new_w])
+            else:
+                raise ValueError
+        return results
 
     @staticmethod
     def _get_shape(image):
@@ -106,21 +113,15 @@ class CityscapesDataset(Dataset):
 
     def __getitem__(self, index: int):
         image_array = self._get_image_array(index)
-        image_array = self._transform(image_array)
-
         label_array = self._get_label_array(index)
-        label_array = self._transform(label_array)
-
         instance_vecs, instance_mask = self._get_instance_vecs_and_mask(index)
-        instance_vecs = self._transform(instance_vecs)
-        instance_mask = self._transform(instance_mask)
 
         if index == 0:
             print('image_array cache: ' + str(self._get_image_array.cache_info()))
             print('label_array cache: ' + str(self._get_label_array.cache_info()))
             print('instance_vecs cache: ' + str(self._get_instance_vecs_and_mask.cache_info()))
 
-        return image_array, label_array, instance_vecs, instance_mask
+        return self._transform([image_array, label_array, instance_vecs, instance_mask])
 
     @lru_cache(maxsize=None)
     def _get_image_array(self, index: int):
