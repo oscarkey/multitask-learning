@@ -66,6 +66,25 @@ class RandomCrop(object):
             raise ValueError('Wrong shape: ' + image.shape)
 
 
+class RandomHorizontalFlip(object):
+    """Flips the tensor horizontally with probability 1/2.
+
+    This should be applied after all numpy operations as it converts the input to a tensor."""
+
+    def __call__(self, images):
+        if np.random.rand() < 0.5:
+            return [self._flip(image) for image in images]
+        else:
+            return [torch.tensor(image) for image in images]
+
+    @staticmethod
+    def _flip(image):
+        # The shape may be (C,H,W) or (H,W), so count from the right.
+        axis = len(image.shape) - 1
+        # Torch does not support numpy flip, so convert the image to a tensor.
+        return torch.flip(torch.tensor(image), dims=(axis,))
+
+
 class CityscapesDataset(Dataset):
     """A Dataset which loads the Cityscapes dataset from disk.
 
@@ -219,7 +238,7 @@ def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
 
 def get_loader(dataset: Dataset, config):
     return torch.utils.data.DataLoader(dataset, batch_size=config['batch_size'],
-        num_workers=config['dataloader_workers'], shuffle=False)
+                                       num_workers=config['dataloader_workers'], shuffle=False)
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 import torch
+from torchvision.transforms import transforms
 
 import checkpointing
 import cityscapes
@@ -7,9 +8,10 @@ from model import MultitaskLearner
 
 
 def main(_run):
-    if _run.config['random_crop_train']:
+    if _run.config['train_augment']:
         assert len(_run.config['crop_size']) == 2, 'Wrong crop size' + _run.config['crop_size']
-        train_transform = cityscapes.RandomCrop(_run.config['crop_size'])
+        train_transform = transforms.Compose(
+            [cityscapes.RandomCrop(_run.config['crop_size']), cityscapes.RandomHorizontalFlip()])
     else:
         train_transform = cityscapes.NoopTransform()
     train_loader = cityscapes.get_loader_from_dir(_run.config['root_dir_train'], _run.config, transform=train_transform)
@@ -117,7 +119,7 @@ def main(_run):
 
         if (_run.config['validate_epochs'] != 0 and (epoch + 1) % _run.config['validate_epochs'] == 0) or epoch == 0:
             _validate(_run=_run, device=device, validation_loader=validation_loader, learner=learner,
-                criterion=criterion, epoch=epoch)
+                      criterion=criterion, epoch=epoch)
 
         if (_run.config['model_save_epochs'] != 0 and (epoch + 1) % _run.config['model_save_epochs'] == 0):
             checkpointing.save_model(_run, learner, epoch)
@@ -149,7 +151,7 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
             # forward + backward + optimize
             output_semantic, output_instance, output_depth = learner(inputs.float())
             val_loss, val_task_loss = criterion((output_semantic, output_instance, output_depth),
-                semantic_labels.long(), instance_centroid, instance_mask)
+                                                semantic_labels.long(), instance_centroid, instance_mask)
 
             # calculate accuracy measures
 
@@ -160,7 +162,7 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
             batch_size = semantic_labels.shape[0]
             for image_index in range(batch_size):
                 batch_iou += _compute_image_iou(semantic_labels[image_index], output_semantic[image_index],
-                    _run.config['num_classes'])
+                                                _run.config['num_classes'])
 
             # instance mean error
             instance_error = val_task_loss[1].item()
@@ -213,10 +215,10 @@ def _compute_image_iou(truth, output_softmax, num_classes: int):
         # add these tensors. The result has 2 for the intersection, and 1 or 2 for the union.
 
         truth_for_class = torch.where(truth == c, torch.ones_like(truth, dtype=torch.int),
-            torch.zeros_like(truth, dtype=torch.int))
+                                      torch.zeros_like(truth, dtype=torch.int))
 
         output_for_class = torch.where(output_classes == c, torch.ones_like(output_classes, dtype=torch.int),
-            torch.zeros_like(output_classes, dtype=torch.int))
+                                       torch.zeros_like(output_classes, dtype=torch.int))
 
         result = truth_for_class + output_for_class
         # View in 1D as bincount only supports 1D.

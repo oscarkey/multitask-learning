@@ -46,8 +46,8 @@ def config():
     use_adam = False
     # If num workers > 0 then dataloader caching won't work.
     dataloader_workers = 0
-    # Whether to randomly crop the training data, only works when training on full size images.
-    random_crop_train = False
+    # Whether to randomly crop and flip the training data, only works when training on full size images.
+    train_augment = False
     crop_size = (256, 256)
 
 
