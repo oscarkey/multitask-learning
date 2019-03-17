@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+import torch.utils.model_zoo as model_zoo
 from decoders import Decoders
 from encoder import Encoder
 
@@ -8,7 +8,11 @@ from encoder import Encoder
 class MultitaskLearner(nn.Module):
     def __init__(self, num_classes, loss_weights, output_size=(128, 256)):
         super(MultitaskLearner, self).__init__()
-        self.encoder = Encoder()
+        encoder = Encoder()
+        # Use ImageNet pre-trained weights for the ResNet-like layers of the encoder
+        state_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet101-5d3b4d8f.pth')
+        encoder.load_state_dict(state_dict, strict=False)
+        self.encoder = encoder
         self.decoders = Decoders(num_classes, output_size)
 
         self.sem_log_var = nn.Parameter(torch.tensor(loss_weights[0], dtype=torch.float))
