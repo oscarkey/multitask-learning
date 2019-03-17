@@ -5,7 +5,7 @@ from torch import nn
 
 def _build_base_decoder():
     """Builds the base decoder shared by all three decoder types."""
-    return nn.Sequential(nn.Conv2d(in_channels=1280, out_channels=256, kernel_size=(1, 1), stride=1),
+    return nn.Sequential(nn.Conv2d(in_channels=1280, out_channels=256, kernel_size=(3, 3), stride=1),
         nn.BatchNorm2d(num_features=256), nn.ReLU())
 
 
