@@ -144,14 +144,19 @@ class CityscapesDataset(Dataset):
 
     @lru_cache(maxsize=None)
     def _get_image_array(self, index: int):
+        imagenet_mean =  np.reshape([0.485, 0.456, 0.406], (3,1,1))
+        imagenet_std = np.reshape([0.229, 0.224, 0.225], (3,1,1))
+
         image_file = self._get_file_path_for_index(index, 'leftImg8bit')
         image_array = np.asarray(Image.open(image_file), dtype=np.float32)
 
         # We load the images as H x W x channel, but we need channel x H x W.
         image_array = np.transpose(image_array, (2, 0, 1))
 
-        # Rescale the image from [0,255] to [0,1].
-        image_array = image_array / 255 * 2 - 1
+        # Rescale the image using imagenet stats
+        image_array /= 255.0 
+        image_array -= imagenet_mean
+        image_array /= imagenet_std
 
         assert len(image_array.shape) == 3, 'image_array should have 3 dimensions' + image_file
         return image_array
