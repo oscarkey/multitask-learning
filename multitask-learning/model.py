@@ -30,10 +30,19 @@ class MultitaskLearner(nn.Module):
     def set_output_size(self, size):
         self.decoders.output_size = size
 
-
 if __name__ == '__main__':
     # ### Shape test
-    model = MultitaskLearner(num_classes=20, loss_weights=(1, 0, 0))
+    model0 = MultitaskLearner(num_classes=20, loss_weights=(1, 0, 0))
     test = torch.zeros(size=(2, 3, 256, 256))
-    result = model.forward(test)
+    result = model0.forward(test)
     assert result[0].shape == (2, 20, 128, 256), f"output shape is {result[0].shape}"
+
+    # Check the weights have been properly loaded
+    model1 = MultitaskLearner(num_classes=20, loss_weights=(1, 1, 0))
+    model_state_dict = model1.state_dict()
+    pretrained_state_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet101-5d3b4d8f.pth')
+    for key in pretrained_state_dict.keys():
+        model_key = 'encoder.'+str(key)
+        if model_key in model_state_dict:
+            assert torch.eq(pretrained_state_dict[key], model_state_dict[model_key]).all()
+            print(key)
