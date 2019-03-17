@@ -52,6 +52,56 @@ def config():
 
 
 @ex.named_config
+def tiny_cityscapes_crops():
+    """Crops of 64x64 from Tiny Cityscapes train, with random flipping, validated on Tiny Cityscales val"""
+    batch_size = 8
+    crop_size = (64, 64)
+    max_iter = 50000
+    root_dir_train = '/data/home/aml8/tiny_cityscapes_train'
+    root_dir_validation = '/data/home/aml8/tiny_cityscapes_val'
+    root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
+    num_classes = 20
+    initial_learning_rate = 2.5e-3
+   # One of 'fixed' or 'learned'.
+    loss_type = 'learned'
+    loss_weights = (1.0, 1.0, 0.0)
+    enabled_tasks = (True, True, False)
+    # How frequently to run validation. Set to 0 to disable validation.
+    validate_epochs = 1
+    # How frequently to checkpoint the model to Sacred. Set to 0 to disable saving the model.
+    model_save_epochs = 0
+    use_adam = False
+    # If num workers > 0 then dataloader caching won't work.
+    dataloader_workers = 0
+    # Whether to randomly crop and flip the training data, only works when training on full size images.
+    train_augment = True
+
+@ex.named_config
+def cityscapes_crops():
+    """Crops of 256x256 Cityscapes, with random flipping, validated on Tiny Cityscales val"""
+    crop_size = (256, 256)
+    batch_size = 8
+    max_iter = 50000
+    root_dir_train = '/data/home/aml8/cityscapes/train'
+    root_dir_validation = '/data/home/aml8/tiny_cityscapes_val'
+    root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
+    num_classes = 20
+    initial_learning_rate = 2.5e-3
+   # One of 'fixed' or 'learned'.
+    loss_type = 'learned'
+    loss_weights = (1.0, 1.0, 0.0)
+    enabled_tasks = (True, True, False)
+    # How frequently to run validation. Set to 0 to disable validation.
+    validate_epochs = 1
+    # How frequently to checkpoint the model to Sacred. Set to 0 to disable saving the model.
+    model_save_epochs = 0
+    use_adam = False
+    # If num workers > 0 then dataloader caching won't work.
+    dataloader_workers = 0
+    # Whether to randomly crop and flip the training data, only works when training on full size images.
+    train_augment = True
+
+@ex.named_config
 def server_config():
     gpu = True
     root_dir_train = '/home/aml8/tiny_cityscapes_train'
