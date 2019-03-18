@@ -134,14 +134,14 @@ class CityscapesDataset(Dataset):
     def __getitem__(self, index: int):
         image_array = self._get_image_array(index)
         label_array = self._get_label_array(index)
-        depth_array, depth_mask = self._get_depth_array(index)
         instance_vecs, instance_mask = self._get_instance_vecs_and_mask(index)
+        depth_array, depth_mask = self._get_depth_array(index)
 
         if index == 0:
             print('image_array cache: ' + str(self._get_image_array.cache_info()))
             print('label_array cache: ' + str(self._get_label_array.cache_info()))
-            print('depth cache: ' + str(self._get_depth_array.cache_info()))
             print('instance_vecs cache: ' + str(self._get_instance_vecs_and_mask.cache_info()))
+            print('depth cache: ' + str(self._get_depth_array.cache_info()))
 
         return self._transform([image_array, label_array, instance_vecs, instance_mask, depth_array, depth_mask])
 
