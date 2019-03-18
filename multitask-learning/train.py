@@ -95,7 +95,7 @@ def main(_run):
             running_loss = 0.0
 
             logvars = learner.get_loss_params()
-            print(f'Task logvars: {logvars[0].item(), logvars[1].item(), logvars[2]}')
+            print(f'Task logvars: {logvars[0].item(), logvars[1].item(), logvars[2].item()}')
 
             # compute gradient of an output pixel with respect to input
             # for class 0
