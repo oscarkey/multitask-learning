@@ -133,14 +133,16 @@ class CityscapesDataset(Dataset):
     def __getitem__(self, index: int):
         image_array = self._get_image_array(index)
         label_array = self._get_label_array(index)
+        depth_array, depth_mask = self._get_depth_array(index)
         instance_vecs, instance_mask = self._get_instance_vecs_and_mask(index)
 
         if index == 0:
             print('image_array cache: ' + str(self._get_image_array.cache_info()))
             print('label_array cache: ' + str(self._get_label_array.cache_info()))
+            print('depth cache: ' + str(self._get_depth_array.cache_info()))
             print('instance_vecs cache: ' + str(self._get_instance_vecs_and_mask.cache_info()))
 
-        return self._transform([image_array, label_array, instance_vecs, instance_mask])
+        return self._transform([image_array, label_array, instance_vecs, instance_mask, depth_array, depth_mask])
 
     @lru_cache(maxsize=None)
     def _get_image_array(self, index: int):
@@ -154,7 +156,7 @@ class CityscapesDataset(Dataset):
         image_array = np.transpose(image_array, (2, 0, 1))
 
         # Rescale the image using imagenet stats
-        image_array /= 255.0 
+        image_array /= 255.0
         image_array -= imagenet_mean
         image_array /= imagenet_std
 
@@ -167,6 +169,28 @@ class CityscapesDataset(Dataset):
         label_array = np.asarray(Image.open(label_file), dtype=np.int64)
         assert len(label_array.shape) == 2, 'label_array should have 2 dimensions' + label_file
         return label_array
+
+    @lru_cache(maxsize=None)
+    def _get_depth_array(self, index: int):
+        depth_file = self._get_file_path_for_index(index, 'disparity')
+        depth_array = np.asarray(Image.open(depth_file), dtype=np.float32)
+        assert len(depth_array.shape) == 2, 'depth_array should have 2 dimensions' + depth_file
+
+        mask = np.ma.masked_where(depth_array == 0, depth_array)
+
+        depth_array[depth_array > 0] = (depth_array[depth_array > 0] - 1) / 256
+        # https://github.com/mcordts/cityscapesScripts/issues/55
+        baseline = 0.209313
+        focus_length = 2262.52
+        depth_array[depth_array > 0] = depth_array[depth_array>0] / (baseline * focus_length)
+
+        if len(mask.mask.shape) > 1:
+            mask = np.asarray(mask.mask, dtype=np.uint8)
+        elif mask.mask is False:
+            mask = np.zeros(depth_array.shape, dtype=np.uint8)
+        else:
+            mask = np.ones(depth_array.shape, dtype=np.uint8)
+        return depth_array, mask
 
     @lru_cache(maxsize=None)
     def _get_instance_vecs_and_mask(self, index: int):

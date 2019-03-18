@@ -62,7 +62,7 @@ def main(_run):
 
         # training loop
         for i, data in enumerate(train_loader, 0):
-            inputs, semantic_labels, instance_centroid, instance_mask = data
+            inputs, semantic_labels, instance_centroid, instance_mask, depth, depth_mask = data
 
             learner.set_output_size(inputs.shape[2:])
 
@@ -76,13 +76,15 @@ def main(_run):
             semantic_labels = semantic_labels.to(device)
             instance_centroid = instance_centroid.to(device)
             instance_mask = instance_mask.to(device)
+            depth = depth.to(device)
+            depth_mask = depth_mask.to(device)
 
             # zero the parameter gradients
             optimizer.zero_grad()
 
             # forward + backward + optimize
             output = learner(inputs)
-            loss, task_loss = criterion(output, semantic_labels, instance_centroid, instance_mask)
+            loss, task_loss = criterion(output, semantic_labels, instance_centroid, instance_mask, depth, depth_mask)
             loss.backward()
             optimizer.step()
 
@@ -106,8 +108,7 @@ def main(_run):
 
             training_semantic_loss += task_loss[0].item()
             training_instance_loss += task_loss[1].item()
-            # may have to add item()
-            training_depth_loss += task_loss[2]
+            training_depth_loss += task_loss[2].item()
 
         # save statistics to Sacred
         _run.log_scalar('training_semantic_loss', training_semantic_loss / num_training_batches, epoch)
@@ -136,7 +137,7 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
     # validation loop
     with torch.no_grad():  # exclude gradients
         for i, data in enumerate(validation_loader, 0):
-            inputs, semantic_labels, instance_centroid, instance_mask = data
+            inputs, semantic_labels, instance_centroid, instance_mask, depth, depth_mask = data
 
             learner.set_output_size(inputs.shape[2:])
 
@@ -144,6 +145,8 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
             semantic_labels = semantic_labels.to(device)
             instance_centroid = instance_centroid.to(device)
             instance_mask = instance_mask.to(device)
+            depth = depth.to(device)
+            depth_mask = depth_mask.to(device)
 
             # keep count of number of batches
             num_val_batches += 1
@@ -151,7 +154,7 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
             # forward + backward + optimize
             output_semantic, output_instance, output_depth = learner(inputs.float())
             val_loss, val_task_loss = criterion((output_semantic, output_instance, output_depth),
-                                                semantic_labels.long(), instance_centroid, instance_mask)
+                                                semantic_labels.long(), instance_centroid, instance_mask, depth, depth_mask)
 
             # calculate accuracy measures
 
@@ -168,7 +171,7 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
             instance_error = val_task_loss[1].item()
 
             # inverse depth mean error
-            depth_error = val_task_loss[2]
+            depth_error = val_task_loss[2].item()
 
             # print('Batch iou %', batch_iou * 100)
             # print('Batch instance_error', instance_error)
@@ -180,8 +183,7 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
 
             val_semantic_loss += val_task_loss[0].item()
             val_instance_loss += val_task_loss[1].item()
-            # may have to add item()
-            val_depth_loss += val_task_loss[2]
+            val_depth_loss += val_task_loss[2].item()
             val_iou += batch_iou / batch_size
 
     # save statistics to Sacred

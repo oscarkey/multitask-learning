@@ -52,9 +52,17 @@ class MultiTaskLoss(nn.Module):
 
         return mult_loss
 
-    def depth_loss(self, depth_input, depth_target):
-        # TODO
-        return 0
+    def depth_loss(self, depth_input, depth_target, depth_mask):
+        depth_mask = depth_mask.float()
+        target = depth_target.float() * depth_mask
+        mult_loss = self.l1_loss(depth_input * depth_mask, target)
+        num_nonzero = torch.nonzero(target).size(0)
+        if num_nonzero > 0:
+            mult_loss /= num_nonzero
+        else:
+            mult_loss = torch.zeros_like(mult_loss)
+
+        return mult_loss
 
     def calculate_total_loss(self, *losses):
         sem_loss, inst_loss, depth_loss = losses
@@ -86,12 +94,11 @@ class MultiTaskLoss(nn.Module):
 
     def forward(self, predicted, *target):
         semseg_pred, instance_pred, depth_pred = predicted
-        # MISSING depth target
-        semseg_target, instance_target, instance_mask = target
+        semseg_target, instance_target, instance_mask, depth_target, depth_mask = target
 
         semseg_loss = self.semantic_segmentation_loss(semseg_pred, semseg_target)
         instanceseg_loss = self.instance_segmentation_loss(instance_pred, instance_target, instance_mask)
-        depth_loss = self.depth_loss(depth_pred, 0)
+        depth_loss = self.depth_loss(depth_pred, depth_target, depth_mask)
 
         total_loss = self.calculate_total_loss(semseg_loss, instanceseg_loss, depth_loss)
 
