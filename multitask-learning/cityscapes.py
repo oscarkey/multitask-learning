@@ -39,20 +39,21 @@ class RandomCrop(object):
         top = np.random.randint(0, h - new_h)
         left = np.random.randint(0, w - new_w)
 
-        results = []
-        for image in images:
-            # Check if we have a channel dimension or not.
-            if len(image.shape) == 2:
-                assert image.shape[0] == h, f'Image has wrong shape {image.shape[0]} {h}'
-                assert image.shape[1] == w, f'Image has wrong shape {image.shape[1]} {w}'
-                results.append(image[top: top + new_h, left: left + new_w])
-            elif len(image.shape) == 3:
-                assert image.shape[1] == h, f'Image has wrong shape {image.shape[1]} {h}'
-                assert image.shape[2] == w, f'Image has wrong shape {image.shape[2]} {w}'
-                results.append(image[:, top: top + new_h, left: left + new_w])
-            else:
-                raise ValueError
-        return results
+        return [self._crop(image, left, top, w, h, new_w, new_h) for image in images]
+
+    @staticmethod
+    def _crop(image, left, top, w, h, new_w, new_h):
+        # Check if we have a channel dimension or not.
+        if len(image.shape) == 2:
+            assert image.shape[0] == h, f'Image has wrong shape {image.shape[0]} {h}'
+            assert image.shape[1] == w, f'Image has wrong shape {image.shape[1]} {w}'
+            return image[top: top + new_h, left: left + new_w]
+        elif len(image.shape) == 3:
+            assert image.shape[1] == h, f'Image has wrong shape {image.shape[1]} {h}'
+            assert image.shape[2] == w, f'Image has wrong shape {image.shape[2]} {w}'
+            return image[:, top: top + new_h, left: left + new_w]
+        else:
+            raise ValueError
 
     @staticmethod
     def _get_shape(image):
