@@ -25,7 +25,7 @@ class MultiTaskLoss(nn.Module):
         assert len(loss_weights) == 3
         assert len(enabled_tasks) == 3
         assert ((loss_type == 'learned' and isinstance(loss_weights[0], nn.parameter.Parameter)) or (
-                    loss_type == 'fixed' and isinstance(loss_weights[0], float)))
+                loss_type == 'fixed' and isinstance(loss_weights[0], float)))
 
         self.loss_type = loss_type
         self.loss_weights = loss_weights

@@ -146,8 +146,8 @@ class CityscapesDataset(Dataset):
 
     @lru_cache(maxsize=None)
     def _get_image_array(self, index: int):
-        imagenet_mean =  np.reshape([0.485, 0.456, 0.406], (3,1,1))
-        imagenet_std = np.reshape([0.229, 0.224, 0.225], (3,1,1))
+        imagenet_mean = np.reshape([0.485, 0.456, 0.406], (3, 1, 1))
+        imagenet_std = np.reshape([0.229, 0.224, 0.225], (3, 1, 1))
 
         image_file = self._get_file_path_for_index(index, 'leftImg8bit')
         image_array = np.asarray(Image.open(image_file), dtype=np.float32)
@@ -182,7 +182,7 @@ class CityscapesDataset(Dataset):
         # https://github.com/mcordts/cityscapesScripts/issues/55
         baseline = 0.209313
         focus_length = 2262.52
-        depth_array[depth_array > 0] = depth_array[depth_array>0] / (baseline * focus_length)
+        depth_array[depth_array > 0] = depth_array[depth_array > 0] / (baseline * focus_length)
 
         if len(mask.mask.shape) > 1:
             mask = np.asarray(mask.mask, dtype=np.uint8)

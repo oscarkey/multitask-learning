@@ -154,7 +154,8 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
             # forward + backward + optimize
             output_semantic, output_instance, output_depth = learner(inputs.float())
             val_loss, val_task_loss = criterion((output_semantic, output_instance, output_depth),
-                                                semantic_labels.long(), instance_centroid, instance_mask, depth, depth_mask)
+                                                semantic_labels.long(), instance_centroid, instance_mask, depth,
+                                                depth_mask)
 
             # calculate accuracy measures
 

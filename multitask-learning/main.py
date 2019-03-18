@@ -62,7 +62,7 @@ def tiny_cityscapes_crops():
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
     num_classes = 20
     initial_learning_rate = 2.5e-3
-   # One of 'fixed' or 'learned'.
+    # One of 'fixed' or 'learned'.
     loss_type = 'learned'
     loss_weights = (1.0, 1.0, 0.0)
     enabled_tasks = (True, True, False)
@@ -76,6 +76,7 @@ def tiny_cityscapes_crops():
     # Whether to randomly crop and flip the training data, only works when training on full size images.
     train_augment = True
 
+
 @ex.named_config
 def cityscapes_crops():
     """Crops of 256x256 Cityscapes, with random flipping, validated on Tiny Cityscales val"""
@@ -87,7 +88,7 @@ def cityscapes_crops():
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
     num_classes = 20
     initial_learning_rate = 2.5e-3
-   # One of 'fixed' or 'learned'.
+    # One of 'fixed' or 'learned'.
     loss_type = 'learned'
     loss_weights = (1.0, 1.0, 0.0)
     enabled_tasks = (True, True, False)
@@ -100,6 +101,7 @@ def cityscapes_crops():
     dataloader_workers = 0
     # Whether to randomly crop and flip the training data, only works when training on full size images.
     train_augment = True
+
 
 @ex.named_config
 def server_config():

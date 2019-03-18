@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
+
 from decoders import Decoders
 from encoder import Encoder
 
@@ -30,6 +31,7 @@ class MultitaskLearner(nn.Module):
     def set_output_size(self, size):
         self.decoders.output_size = size
 
+
 if __name__ == '__main__':
     # ### Shape test
     model0 = MultitaskLearner(num_classes=20, loss_weights=(1, 0, 0))
@@ -42,7 +44,7 @@ if __name__ == '__main__':
     model_state_dict = model1.state_dict()
     pretrained_state_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet101-5d3b4d8f.pth')
     for key in pretrained_state_dict.keys():
-        model_key = 'encoder.'+str(key)
+        model_key = 'encoder.' + str(key)
         if model_key in model_state_dict:
             assert torch.eq(pretrained_state_dict[key], model_state_dict[model_key]).all()
             print(key)
