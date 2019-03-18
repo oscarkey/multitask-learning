@@ -77,7 +77,7 @@ class MultiTaskLoss(nn.Module):
             if inst_enabled:
                 loss += inst_weight * inst_loss
             if depth_enabled:
-                depth_enabled += depth_weight * depth_loss
+                loss += depth_weight * depth_loss
 
         elif self.loss_type == 'learned':
             if sem_enabled:
@@ -85,7 +85,7 @@ class MultiTaskLoss(nn.Module):
             if inst_enabled:
                 loss += 0.5 * (torch.exp(-inst_weight) * inst_loss + inst_weight)
             if depth_enabled:
-                depth_enabled += 0.5 * (torch.exp(-depth_weight) * depth_loss + depth_weight)
+                loss += 0.5 * (torch.exp(-depth_weight) * depth_loss + depth_weight)
 
         else:
             raise ValueError
