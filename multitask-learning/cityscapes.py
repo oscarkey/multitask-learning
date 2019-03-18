@@ -138,12 +138,20 @@ class CityscapesDataset(Dataset):
         depth_array, depth_mask = self._get_depth_array(index)
 
         if index == 0:
-            print('image_array cache: ' + str(self._get_image_array.cache_info()))
-            print('label_array cache: ' + str(self._get_label_array.cache_info()))
-            print('instance_vecs cache: ' + str(self._get_instance_vecs_and_mask.cache_info()))
-            print('depth cache: ' + str(self._get_depth_array.cache_info()))
+            self._print_cache_info()
 
         return self._transform([image_array, label_array, instance_vecs, instance_mask, depth_array, depth_mask])
+
+    def _print_cache_info(self):
+        print(f'Data loader cache: hit/miss/size, '
+              f'{self._build_cache_info_string("image", self._get_image_array.cache_info())} '
+              f'{self._build_cache_info_string("label", self._get_label_array.cache_info())} '
+              f'{self._build_cache_info_string("instance", self._get_instance_vecs_and_mask.cache_info())} '
+              f'{self._build_cache_info_string("depth", self._get_depth_array.cache_info())}')
+
+    @staticmethod
+    def _build_cache_info_string(name: str, info):
+        return f'{name} {info.hits}/{info.misses}/{info.currsize}'
 
     @lru_cache(maxsize=None)
     def _get_image_array(self, index: int):
