@@ -92,7 +92,7 @@ class ASPP(nn.Module):
         out5 = F.relu(self.bn5(self.conv(self.gap(x))))
         out5 = F.interpolate(out5, size=x.shape[-2:], mode="bilinear", align_corners=False)
 
-        out = torch.cat([out1, out2, out3, out4, out5], 1)
+        out = torch.cat((out1, out2, out3, out4, out5), dim=1)
         return out
 
 

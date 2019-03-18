@@ -28,8 +28,7 @@ class Decoders(nn.Module):
 
     def forward(self, x):
         """Returns (sem seg, instance seg, depth)."""
-        # x: [batch x 1280 x H x W]
-        batch_size = x.shape[0]
+        # x: [batch x 1280 x H/8 x W/8]
         x1 = self.base_semseg(x)
         x1 = self.semsegcls(x1)
         x1 = F.interpolate(x1, size=self.output_size, mode='bilinear', align_corners=False)
