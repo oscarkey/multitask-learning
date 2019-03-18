@@ -177,7 +177,7 @@ class CityscapesDataset(Dataset):
         depth_array = np.asarray(Image.open(depth_file), dtype=np.float32)
         assert len(depth_array.shape) == 2, 'depth_array should have 2 dimensions' + depth_file
 
-        mask = np.ma.masked_where(depth_array == 0, depth_array)
+        mask = np.ma.masked_where(depth_array != 0, depth_array)
 
         depth_array[depth_array > 0] = (depth_array[depth_array > 0] - 1) / 256
         # https://github.com/mcordts/cityscapesScripts/issues/55
