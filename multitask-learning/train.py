@@ -28,7 +28,7 @@ def main(_run):
     learner = MultitaskLearner(
         num_classes=_run.config['num_classes'],
         loss_uncertainties=_run.config['loss_uncertainties'],
-        pre_train=_run.config['pre_train_encoder'])
+        pre_train_encoder=_run.config['pre_train_encoder'])
 
     device = "cuda:0" if _run.config['gpu'] and torch.cuda.is_available() else "cpu"
     learner.to(device)
@@ -49,6 +49,7 @@ def main(_run):
     else:
         optimizer = torch.optim.SGD(learner.parameters(), lr=initial_learning_rate, momentum=0.9, nesterov=True,
                                     weight_decay=1e4)
+                                    
     lr_lambda = lambda x: (1 - x / _run.config['max_iter']) ** 0.9
     lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
 
@@ -88,7 +89,8 @@ def main(_run):
 
             # forward + backward + optimize
             output = learner(inputs)
-            loss, task_loss = criterion(output, semantic_labels, instance_centroid, instance_mask, depth, depth_mask)
+            loss, task_loss = criterion(output, semantic_labels,
+                                        instance_centroid, instance_mask, depth, depth_mask)
             loss.backward()
             optimizer.step()
 
@@ -114,13 +116,14 @@ def main(_run):
             training_instance_loss += task_loss[1].item()
             training_depth_loss += task_loss[2].item()
 
-        # save statistics to Sacred
-        _run.log_scalar('training_semantic_loss', training_semantic_loss / num_training_batches, epoch)
-        # print('training_semantic_loss', training_semantic_loss / num_training_batches, epoch)
-        _run.log_scalar('training_instance_loss', training_instance_loss / num_training_batches, epoch)
-        # print('training_instance_loss', training_instance_loss / num_training_batches, epoch)
+        # Save statistics to Sacred
+        _run.log_scalar('training_semantic_loss', training_semantic_loss /
+                        num_training_batches, epoch)
+        _run.log_scalar('training_instance_loss', training_instance_loss /
+                        num_training_batches, epoch)
         _run.log_scalar('training_depth_loss', training_depth_loss / num_training_batches, epoch)
-        # print('training_depth_loss', training_depth_loss / num_training_batches, epoch)
+
+        #print(f'Training losses: {training_semantic_loss / num_training_batches, training_instance_loss / num_training_batches, training_depth_loss / num_training_batches}')
 
         if _run.config['validate_epochs'] != 0 and ((epoch + 1) % _run.config['validate_epochs'] == 0 or epoch == 0):
             _validate(_run=_run, device=device, validation_loader=validation_loader, learner=learner,
@@ -138,8 +141,8 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
 
     num_val_batches = 0
 
-    # validation loop
-    with torch.no_grad():  # exclude gradients
+    # Validation loop
+    with torch.no_grad():  # Exclude gradients
         for i, data in enumerate(validation_loader, 0):
             inputs, semantic_labels, instance_centroid, instance_mask, depth, depth_mask = data
 
@@ -152,7 +155,7 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
             depth = depth.to(device)
             depth_mask = depth_mask.to(device)
 
-            # keep count of number of batches
+            # Keep count of number of batches
             num_val_batches += 1
 
             # forward + backward + optimize
@@ -207,28 +210,26 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
 
 
 def _log_loss_uncertainties_and_weights(_run, epoch, learner):
-    # Convert from uncertainty = log (sigma^2) into the actual weights of the losses
     sem_uncertainty = learner.get_loss_params()[0].item()
     inst_uncertainty = learner.get_loss_params()[1].item()
     depth_uncertainty = learner.get_loss_params()[2].item()
 
+    # Convert from uncertainty = log (sigma^2) into the actual weights of the losses
     sem_weight = np.exp(-sem_uncertainty)
     inst_weight = 0.5 * np.exp(-inst_uncertainty)
     depth_weight = 0.5 * np.exp(-depth_uncertainty)
 
     _run.log_scalar('uncertainty_semantic_loss', sem_uncertainty, epoch)
-    print('Uncertainty: semantic loss', sem_uncertainty, epoch)
     _run.log_scalar('uncertainty_instance_loss', inst_uncertainty, epoch)
-    print('Uncertainty: instance loss', inst_uncertainty, epoch)
     _run.log_scalar('uncertainty_depth_loss', depth_uncertainty, epoch)
-    print('Uncertainty: depth loss', depth_uncertainty, epoch)
+
+    print(f'Uncertainties: {sem_uncertainty, inst_uncertainty, depth_uncertainty}')
 
     _run.log_scalar('weight_semantic_loss', sem_weight, epoch)
-    print('Weight: semantic loss', sem_weight, epoch)
     _run.log_scalar('weight_instance_loss', inst_weight, epoch)
-    print('Weight: instance loss', inst_weight, epoch)
     _run.log_scalar('weight_depth_loss', depth_weight, epoch)
-    print('Weight: depth loss', depth_weight, epoch)
+
+    print(f'Weights: {sem_weight, inst_weight, depth_weight}')
 
 
 def _compute_image_iou(truth, output_softmax, num_classes: int):

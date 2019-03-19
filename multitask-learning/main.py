@@ -27,30 +27,24 @@ def config():
     batch_size = 3
     max_iter = 1000
     root_dir_train = 'example-tiny-cityscapes'
-    root_dir_validation = 'example-tiny-cityscapes'  # TODO: add validation set
-    root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
+    root_dir_validation = 'example-tiny-cityscapes'
+    root_dir_test = 'example-tiny-cityscapes'
     num_classes = 20
     initial_learning_rate = 2.5e-3
     height = 128  # TODO: pass through to model
     width = 256  # TODO: pass through to model
-    # One of 'fixed' or 'learned'.
-    loss_type = 'learned'
+    loss_type = 'learned' # One of 'fixed' or 'learned'.
     loss_uncertainties = (1.0, 1.0, 1.0)
     enabled_tasks = (True, True, True)
     gpu = True
     save_to_db = True
-    # How frequently to run validation. Set to 0 to disable validation.
-    validate_epochs = 1
-    # How frequently to checkpoint the model to Sacred. Set to 0 to disable saving the model.
-    model_save_epochs = 0
+    validate_epochs = 1 # How frequently to run validation. Set to 0 to disable validation.
+    model_save_epochs = 0 # How frequently to checkpoint the model to Sacred. Set to 0 to disable saving the model.
     use_adam = True
-    # If num workers > 0 then dataloader caching won't work.
-    dataloader_workers = 0
-    # Whether to randomly crop and flip the training data, only works when training on full size images.
-    train_augment = False
+    dataloader_workers = 0 # If num workers > 0 then dataloader caching won't work.
+    train_augment = False # Whether to randomly crop and flip the training data, only works when training on full size images.
     crop_size = (256, 256)
-    # When true, will download weights for resnet pre-trained on imagenet.
-    pre_train_encoder = True
+    pre_train_encoder = True # When true, will download weights for resnet pre-trained on imagenet.
 
 @ex.named_config
 def tiny_cityscapes_crops():
@@ -61,8 +55,7 @@ def tiny_cityscapes_crops():
     root_dir_train = '/data/home/aml8/tiny_cityscapes_train'
     root_dir_validation = '/data/home/aml8/tiny_cityscapes_val'
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
-    # Whether to randomly crop and flip the training data, only works when training on full size images.
-    train_augment = True
+    train_augment = True # Whether to randomly crop and flip the training data, only works when training on full size images.
 
 
 @ex.named_config
@@ -74,8 +67,7 @@ def cityscapes_crops():
     root_dir_train = '/data/home/aml8/cityscapes/train'
     root_dir_validation = '/data/home/aml8/tiny_cityscapes_val'
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
-    # Whether to randomly crop and flip the training data, only works when training on full size images.
-    train_augment = True
+    train_augment = True # Whether to randomly crop and flip the training data, only works when training on full size images.
 
 
 @ex.named_config
@@ -89,5 +81,5 @@ def server_config():
 
 @ex.automain
 def main(_run):
-    # TODO: train, then test or whatever
     train.main(_run)
+    # TODO: add testing loop
