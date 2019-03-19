@@ -7,13 +7,17 @@ from encoder import Encoder
 
 
 class MultitaskLearner(nn.Module):
-    def __init__(self, num_classes, loss_weights, output_size=(128, 256)):
+    def __init__(self, num_classes, loss_weights, pre_train, output_size=(128, 256)):
         super(MultitaskLearner, self).__init__()
+
         encoder = Encoder()
-        # Use ImageNet pre-trained weights for the ResNet-like layers of the encoder
-        state_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet101-5d3b4d8f.pth')
-        encoder.load_state_dict(state_dict, strict=False)
+        if pre_train:
+            # Use ImageNet pre-trained weights for the ResNet-like layers of the encoder
+            state_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet101-5d3b4d8f.pth')
+            # Strict = False so we ignore incompatibilities between official reset and our resnet.
+            encoder.load_state_dict(state_dict, strict=False)
         self.encoder = encoder
+
         self.decoders = Decoders(num_classes, output_size)
 
         self.sem_log_var = nn.Parameter(torch.tensor(loss_weights[0], dtype=torch.float))

@@ -25,7 +25,10 @@ def main(_run):
         assert len(validation_loader.dataset) >= 3, f'Must have at least 3 validation images ' \
             f'(had {len(validation_loader.dataset)})'
 
-    learner = MultitaskLearner(_run.config['num_classes'], _run.config['loss_weights'])
+    learner = MultitaskLearner(
+        num_classes=_run.config['num_classes'],
+        loss_weights=_run.config['loss_weights'],
+        pre_train=_run.config['pre_train_encoder'])
 
     device = "cuda:0" if _run.config['gpu'] and torch.cuda.is_available() else "cpu"
     learner.to(device)

@@ -49,7 +49,8 @@ def config():
     # Whether to randomly crop and flip the training data, only works when training on full size images.
     train_augment = False
     crop_size = (256, 256)
-
+    # When true, will download weights for resnet pre-trained on imagenet.
+    pre_train_encoder = True
 
 @ex.named_config
 def tiny_cityscapes_crops():
