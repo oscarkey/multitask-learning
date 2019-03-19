@@ -1,6 +1,6 @@
 import torch
 from torchvision.transforms import transforms
-
+import numpy as np
 import checkpointing
 import cityscapes
 from losses import MultiTaskLoss
@@ -199,12 +199,18 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
     # _run.run_logger.debug('val_iou', val_iou / num_val_batches, epoch)
 
     if _run.config['loss_type'] == 'learned':
-        _run.log_scalar('weight_semantic_loss', learner.get_loss_params()[0].item(), epoch)
-        print('Weight: semantic loss', learner.get_loss_params()[0].item(), epoch)
-        _run.log_scalar('weight_instance_loss', learner.get_loss_params()[1].item(), epoch)
-        print('Weight: instance loss', learner.get_loss_params()[1].item(), epoch)
-        _run.log_scalar('weight_depth_loss', learner.get_loss_params()[2].item(), epoch)
-        print('Weight: depth loss', learner.get_loss_params()[2].item(), epoch)
+        # Convert from s = log (sigma^2) into the actual weights of the losses
+        sem_weight, inst_weight, depth_weight = learner.get_loss_params()[0].item(), learner.get_loss_params()[1].item(), learner.get_loss_params()[2].item()
+        actual_sem_weight = np.exp(-sem_weight)
+        actual_inst_weight = 0.5 * np.exp(-inst_weight)
+        actual_depth_weight = 0.5 * np.exp(-depth_weight)
+
+        _run.log_scalar('weight_semantic_loss', actual_sem_weight, epoch)
+        print('Weight: semantic loss', actual_sem_weight, epoch)
+        _run.log_scalar('weight_instance_loss', actual_inst_weight, epoch)
+        print('Weight: instance loss', actual_inst_weight, epoch)
+        _run.log_scalar('weight_depth_loss', actual_depth_weight, epoch)
+        print('Weight: depth loss', actual_depth_weight, epoch)
 
 
 def _compute_image_iou(truth, output_softmax, num_classes: int):
