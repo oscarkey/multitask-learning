@@ -12,23 +12,23 @@ class MultiTaskLoss(nn.Module):
     2) 'learned': we learn the losses, not implemented...
     """
 
-    def __init__(self, loss_type, loss_weights, enabled_tasks=(True, True, True)):
+    def __init__(self, loss_type, loss_uncertainties, enabled_tasks=(True, True, True)):
         """Creates a new instance.
 
         :param loss_type Either 'fixed' or 'learned'
-        :param loss_weights A 3 tuple of (semantic seg weight, instance seg weight,
-        depth weight). If 'fixed' then these should be floats, if 'learned' then they should be
+        :param loss_uncertainties A 3 tuple of (semantic seg uncertainty, instance seg uncertainty,
+        depth uncertainty). If 'fixed' then these should be floats, if 'learned' then they should be
         torch Parameters.
         """
         super().__init__()
 
-        assert len(loss_weights) == 3
+        assert len(loss_uncertainties) == 3
         assert len(enabled_tasks) == 3
-        assert ((loss_type == 'learned' and isinstance(loss_weights[0], nn.parameter.Parameter)) or (
-                loss_type == 'fixed' and isinstance(loss_weights[0], float)))
+        assert ((loss_type == 'learned' and isinstance(loss_uncertainties[0], nn.parameter.Parameter)) or (
+                loss_type == 'fixed' and isinstance(loss_uncertainties[0], float)))
 
         self.loss_type = loss_type
-        self.loss_weights = loss_weights
+        self.loss_uncertainties = loss_uncertainties
         self.enabled_tasks = enabled_tasks
 
         self.l1_loss = nn.L1Loss(reduction='sum')
@@ -66,26 +66,26 @@ class MultiTaskLoss(nn.Module):
 
     def calculate_total_loss(self, *losses):
         sem_loss, inst_loss, depth_loss = losses
-        sem_weight, inst_weight, depth_weight = self.loss_weights
+        sem_uncertainty, inst_uncertainty, depth_uncertainty = self.loss_uncertainties
         sem_enabled, inst_enabled, depth_enabled = self.enabled_tasks
 
         loss = 0
 
         if self.loss_type == 'fixed':
             if sem_enabled:
-                loss += sem_weight * sem_loss
+                loss += sem_uncertainty * sem_loss
             if inst_enabled:
-                loss += inst_weight * inst_loss
+                loss += inst_uncertainty * inst_loss
             if depth_enabled:
-                loss += depth_weight * depth_loss
+                loss += depth_uncertainty * depth_loss
 
         elif self.loss_type == 'learned':
             if sem_enabled:
-                loss += torch.exp(-sem_weight) * sem_loss + 0.5 * sem_weight
+                loss += torch.exp(-sem_uncertainty) * sem_loss + 0.5 * sem_uncertainty
             if inst_enabled:
-                loss += 0.5 * (torch.exp(-inst_weight) * inst_loss + inst_weight)
+                loss += 0.5 * (torch.exp(-inst_uncertainty) * inst_loss + inst_uncertainty)
             if depth_enabled:
-                loss += 0.5 * (torch.exp(-depth_weight) * depth_loss + depth_weight)
+                loss += 0.5 * (torch.exp(-depth_uncertainty) * depth_loss + depth_uncertainty)
 
         else:
             raise ValueError

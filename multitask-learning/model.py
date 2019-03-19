@@ -7,7 +7,7 @@ from encoder import Encoder
 
 
 class MultitaskLearner(nn.Module):
-    def __init__(self, num_classes, loss_weights, pre_train, output_size=(128, 256)):
+    def __init__(self, num_classes, loss_uncertainties, pre_train, output_size=(128, 256)):
         super(MultitaskLearner, self).__init__()
 
         encoder = Encoder()
@@ -20,9 +20,9 @@ class MultitaskLearner(nn.Module):
 
         self.decoders = Decoders(num_classes, output_size)
 
-        self.sem_log_var = nn.Parameter(torch.tensor(loss_weights[0], dtype=torch.float))
-        self.inst_log_var = nn.Parameter(torch.tensor(loss_weights[1], dtype=torch.float))
-        self.depth_log_var = nn.Parameter(torch.tensor(loss_weights[2], dtype=torch.float))
+        self.sem_log_var = nn.Parameter(torch.tensor(loss_uncertainties[0], dtype=torch.float))
+        self.inst_log_var = nn.Parameter(torch.tensor(loss_uncertainties[1], dtype=torch.float))
+        self.depth_log_var = nn.Parameter(torch.tensor(loss_uncertainties[2], dtype=torch.float))
 
     def forward(self, x):
         """Returns sem_seg_output, instance_seg_output, depth_output"""
@@ -38,13 +38,13 @@ class MultitaskLearner(nn.Module):
 
 if __name__ == '__main__':
     # ### Shape test
-    model0 = MultitaskLearner(num_classes=20, loss_weights=(1, 0, 0))
+    model0 = MultitaskLearner(num_classes=20, loss_uncertainties=(1, 0, 0))
     test = torch.zeros(size=(2, 3, 256, 256))
     result = model0.forward(test)
     assert result[0].shape == (2, 20, 128, 256), f"output shape is {result[0].shape}"
 
     # Check the weights have been properly loaded
-    model1 = MultitaskLearner(num_classes=20, loss_weights=(1, 1, 0))
+    model1 = MultitaskLearner(num_classes=20, loss_uncertainties=(1, 1, 0))
     model_state_dict = model1.state_dict()
     pretrained_state_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet101-5d3b4d8f.pth')
     for key in pretrained_state_dict.keys():

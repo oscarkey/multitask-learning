@@ -35,7 +35,7 @@ def config():
     width = 256  # TODO: pass through to model
     # One of 'fixed' or 'learned'.
     loss_type = 'learned'
-    loss_weights = (1.0, 1.0, 1.0)
+    loss_uncertainties = (1.0, 1.0, 1.0)
     enabled_tasks = (True, True, True)
     gpu = True
     save_to_db = True

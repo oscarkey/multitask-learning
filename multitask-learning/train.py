@@ -27,20 +27,20 @@ def main(_run):
 
     learner = MultitaskLearner(
         num_classes=_run.config['num_classes'],
-        loss_weights=_run.config['loss_weights'],
+        loss_uncertainties=_run.config['loss_uncertainties'],
         pre_train=_run.config['pre_train_encoder'])
 
     device = "cuda:0" if _run.config['gpu'] and torch.cuda.is_available() else "cpu"
     learner.to(device)
 
     if _run.config['loss_type'] == 'learned':
-        loss_weights = learner.get_loss_params()
+        loss_uncertainties = learner.get_loss_params()
     elif _run.config['loss_type'] == 'fixed':
-        loss_weights = _run.config['loss_weights']
+        loss_uncertainties = _run.config['loss_uncertainties']
     else:
         raise ValueError(f'Unknown loss_type {_run.config["loss_type"]}')
 
-    criterion = MultiTaskLoss(_run.config['loss_type'], loss_weights, _run.config['enabled_tasks'])
+    criterion = MultiTaskLoss(_run.config['loss_type'], loss_uncertainties, _run.config['enabled_tasks'])
 
     initial_learning_rate = _run.config['initial_learning_rate']
 
@@ -99,7 +99,7 @@ def main(_run):
             running_loss = 0.0
 
             logvars = learner.get_loss_params()
-            print(f'Task logvars: {logvars[0].item(), logvars[1].item(), logvars[2].item()}')
+            print(f'Task uncertainties: {logvars[0].item(), logvars[1].item(), logvars[2].item()}')
 
             # compute gradient of an output pixel with respect to input
             # for class 0
@@ -203,25 +203,32 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
     # _run.run_logger.debug('val_iou', val_iou / num_val_batches, epoch)
 
     if _run.config['loss_type'] == 'learned':
-        _log_loss_weights(_run, epoch, learner)
+        _log_loss_uncertainties_and_weights(_run, epoch, learner)
 
 
-def _log_loss_weights(_run, epoch, learner):
-    # Convert from s = log (sigma^2) into the actual weights of the losses
-    sem_weight = learner.get_loss_params()[0].item()
-    inst_weight = learner.get_loss_params()[1].item()
-    depth_weight = learner.get_loss_params()[2].item()
+def _log_loss_uncertainties_and_weights(_run, epoch, learner):
+    # Convert from uncertainty = log (sigma^2) into the actual weights of the losses
+    sem_uncertainty = learner.get_loss_params()[0].item()
+    inst_uncertainty = learner.get_loss_params()[1].item()
+    depth_uncertainty = learner.get_loss_params()[2].item()
 
-    actual_sem_weight = np.exp(-sem_weight)
-    actual_inst_weight = 0.5 * np.exp(-inst_weight)
-    actual_depth_weight = 0.5 * np.exp(-depth_weight)
+    sem_weight = np.exp(-sem_uncertainty)
+    inst_weight = 0.5 * np.exp(-inst_uncertainty)
+    depth_weight = 0.5 * np.exp(-depth_uncertainty)
 
-    _run.log_scalar('weight_semantic_loss', actual_sem_weight, epoch)
-    print('Weight: semantic loss', actual_sem_weight, epoch)
-    _run.log_scalar('weight_instance_loss', actual_inst_weight, epoch)
-    print('Weight: instance loss', actual_inst_weight, epoch)
-    _run.log_scalar('weight_depth_loss', actual_depth_weight, epoch)
-    print('Weight: depth loss', actual_depth_weight, epoch)
+    _run.log_scalar('uncertainty_semantic_loss', sem_uncertainty, epoch)
+    print('Uncertainty: semantic loss', sem_uncertainty, epoch)
+    _run.log_scalar('uncertainty_instance_loss', inst_uncertainty, epoch)
+    print('Uncertainty: instance loss', inst_uncertainty, epoch)
+    _run.log_scalar('uncertainty_depth_loss', depth_uncertainty, epoch)
+    print('Uncertainty: depth loss', depth_uncertainty, epoch)
+
+    _run.log_scalar('weight_semantic_loss', sem_weight, epoch)
+    print('Weight: semantic loss', sem_weight, epoch)
+    _run.log_scalar('weight_instance_loss', inst_weight, epoch)
+    print('Weight: instance loss', inst_weight, epoch)
+    _run.log_scalar('weight_depth_loss', depth_weight, epoch)
+    print('Weight: depth loss', depth_weight, epoch)
 
 
 def _compute_image_iou(truth, output_softmax, num_classes: int):
