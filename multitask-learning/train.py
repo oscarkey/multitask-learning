@@ -49,7 +49,7 @@ def main(_run):
     else:
         optimizer = torch.optim.SGD(learner.parameters(), lr=initial_learning_rate, momentum=0.9, nesterov=True,
                                     weight_decay=1e4)
-                                    
+
     lr_lambda = lambda x: (1 - x / _run.config['max_iter']) ** 0.9
     lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
 
@@ -65,7 +65,7 @@ def main(_run):
         training_instance_loss = 0
         training_depth_loss = 0
 
-        # training loop
+        # Training loop
         for i, data in enumerate(train_loader, 0):
             inputs, semantic_labels, instance_centroid, instance_mask, depth, depth_mask = data
 
@@ -74,7 +74,7 @@ def main(_run):
             if not _run.config['use_adam']:
                 lr_scheduler.step()
 
-            # keep count of number of batches
+            # Keep count of number of batches
             num_training_batches += 1
 
             inputs = inputs.to(device)
@@ -84,24 +84,22 @@ def main(_run):
             depth = depth.to(device)
             depth_mask = depth_mask.to(device)
 
-            # zero the parameter gradients
+            # Zero the parameter gradients
             optimizer.zero_grad()
 
-            # forward + backward + optimize
+            # Forward + backward + optimize
             output = learner(inputs)
             loss, task_loss = criterion(output, semantic_labels,
                                         instance_centroid, instance_mask, depth, depth_mask)
             loss.backward()
             optimizer.step()
 
-            # print statistics
+            # Print statistics
             running_loss += loss.item()
             # if i % 2000 == 1999:    # print every 2000 mini-batches
-            print('[%d, %5d] Training loss: %.3f' % (epoch + 1, i + 1, running_loss))
-            running_loss = 0.0
-
             logvars = learner.get_loss_params()
-            print(f'Task uncertainties: {logvars[0].item(), logvars[1].item(), logvars[2].item()}')
+            print('[%d, %5d] Training loss: %.3f - (%.3f, %.3f, %.3f)' % (epoch + 1, i + 1, running_loss, logvars[0].item(), logvars[1].item(), logvars[2].item()))
+            running_loss = 0.0
 
             # compute gradient of an output pixel with respect to input
             # for class 0
@@ -158,15 +156,15 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
             # Keep count of number of batches
             num_val_batches += 1
 
-            # forward + backward + optimize
+            # Forward + backward + optimize
             output_semantic, output_instance, output_depth = learner(inputs.float())
             val_loss, val_task_loss = criterion((output_semantic, output_instance, output_depth),
                                                 semantic_labels.long(), instance_centroid, instance_mask, depth,
                                                 depth_mask)
 
-            # calculate accuracy measures
+            # Calculate accuracy measures
 
-            # segmentation IoU
+            # Segmentation IoU
             batch_iou = 0
 
             # TODO: this batch size might break
@@ -223,13 +221,15 @@ def _log_loss_uncertainties_and_weights(_run, epoch, learner):
     _run.log_scalar('uncertainty_instance_loss', inst_uncertainty, epoch)
     _run.log_scalar('uncertainty_depth_loss', depth_uncertainty, epoch)
 
-    print(f'Uncertainties: {sem_uncertainty, inst_uncertainty, depth_uncertainty}')
+    print('Uncertainties: (%.5f, %.5f, %.5f)' % (sem_uncertainty, inst_uncertainty, depth_uncertainty))
 
     _run.log_scalar('weight_semantic_loss', sem_weight, epoch)
     _run.log_scalar('weight_instance_loss', inst_weight, epoch)
     _run.log_scalar('weight_depth_loss', depth_weight, epoch)
 
-    print(f'Weights: {sem_weight, inst_weight, depth_weight}')
+    print('Weights: (%.5f, %.5f, %.5f)' % (sem_weight, inst_weight, depth_weight))
+
+    print()
 
 
 def _compute_image_iou(truth, output_softmax, num_classes: int):
