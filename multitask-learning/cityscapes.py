@@ -245,7 +245,7 @@ class CityscapesDataset(Dataset):
         instance_array = np.asarray(Image.open(instance_file), dtype=np.float32)
         assert len(instance_array.shape) == 2, 'instance_array should have 2 dimensions' + instance_file
 
-        return self._compute_centroid_vectors(instance_array)
+        return compute_centroid_vectors(instance_array)
 
     def _get_precomputed_instances(self, index: int):
         """Loads the precomputed instances from a pickled numpy array."""
