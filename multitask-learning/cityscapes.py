@@ -285,6 +285,11 @@ class CityscapesDataset(Dataset):
         else:
             mask = np.ones(instance_image.shape, dtype=np.uint8)
         mask = np.stack((mask, mask))
+
+        # We load the images as H x W x channel, but we need channel x H x W.
+        # We don't need to transpose the mask as it has no channels.
+        vecs = np.transpose(vecs, (2, 0, 1))
+
         return vecs, mask
 
     def __len__(self):
