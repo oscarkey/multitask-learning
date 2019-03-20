@@ -50,8 +50,8 @@ def main(_run):
         optimizer = torch.optim.SGD(learner.parameters(), lr=initial_learning_rate, momentum=0.9, nesterov=True,
                                     weight_decay=1e4)
 
-    lr_lambda = lambda x: (1 - x / _run.config['max_iter']) ** 0.9
-    lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
+        lr_lambda = lambda x: (1 - x / _run.config['max_iter']) ** 0.9
+        lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
 
     for epoch in range(_run.config['max_iter']):  # loop over the dataset multiple times
 
