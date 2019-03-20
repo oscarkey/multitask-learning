@@ -98,7 +98,7 @@ class CityscapesDataset(Dataset):
     this class for each.
     """
 
-    def __init__(self, root_dir: str, transform=NoopTransform(), cache_only_instances=False, min_available_memory_gb=0,
+    def __init__(self, root_dir: str, transform=NoopTransform(), enable_cache=True, min_available_memory_gb=0,
                  use_precomputed_instances=False):
         self._root_dir = root_dir
         self._transform = transform
@@ -108,10 +108,10 @@ class CityscapesDataset(Dataset):
         assert min_available_memory_gb >= 0, f'min_available_memory_gb must not be negative: {min_available_memory_gb}'
         self._min_available_memory_gb = min_available_memory_gb
 
-        self._cached_get_image = self._cache_if_enabled(self._get_image, enable_cache=not cache_only_instances)
-        self._cached_get_labels = self._cache_if_enabled(self._get_labels, enable_cache=not cache_only_instances)
-        self._cached_get_instances = self._cache_if_enabled(self._get_instances, enable_cache=True)
-        self._cached_get_depth = self._cache_if_enabled(self._get_depth, enable_cache=not cache_only_instances)
+        self._cached_get_image = self._cache_if_enabled(self._get_image, enable_cache=enable_cache)
+        self._cached_get_labels = self._cache_if_enabled(self._get_labels, enable_cache=enable_cache)
+        self._cached_get_instances = self._cache_if_enabled(self._get_instances, enable_cache=enable_cache)
+        self._cached_get_depth = self._cache_if_enabled(self._get_depth, enable_cache=enable_cache)
 
     @staticmethod
     def _find_file_prefixes(root_dir: str) -> [str]:
@@ -317,7 +317,7 @@ def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
     """
 
     return get_loader(
-        CityscapesDataset(root_dir, transform=transform, cache_only_instances=config['cache_only_instances'],
+        CityscapesDataset(root_dir, transform=transform, enable_cache=config['dataloader_cache'],
                           min_available_memory_gb=config['min_available_memory_gb']), config)
 
 
