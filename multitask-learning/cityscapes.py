@@ -261,52 +261,53 @@ class CityscapesDataset(Dataset):
         assert len(files) == 1, 'Only expect one file for the given type.'
         return files[0]
 
-    @staticmethod
-    def _compute_centroid_vectors(instance_image):
-        """For each pixel, calculate the vector from that pixel to the centre of its instance.
-
-        :return a pair of a matrix containing the distance vector to every pixel, and a mask
-        identifying which pixels are associated with an instance
-        """
-        # Each pixel in the image is of one of two formats:
-        # 1) If the pixel does not belong to an instance:
-        #    The id of the class the pixel belongs to
-        # 2) If the pixel does belong to an instance:
-        #    id x 1000 + instance id
-
-        # For each instance, find all pixels associated with it and compute the centre.
-        # Add an extra dimension for each pixel containing the coordinates of the associated centre.
-        centroids = np.zeros(instance_image.shape + (2,))
-        for value in np.unique(instance_image):
-            xs, ys = np.where(instance_image == value)
-            centroids[xs, ys] = np.array((np.floor(np.mean(xs)), np.floor(np.mean(ys))))
-
-        # Calculate the distance from the x,y coordinates of the pixel to the coordinates of the
-        # centre of its associated instance.
-        coordinates = np.zeros(instance_image.shape + (2,))
-        g1, g2 = np.mgrid[range(instance_image.shape[0]), range(instance_image.shape[1])]
-        coordinates[:, :, 0] = g1
-        coordinates[:, :, 1] = g2
-        vecs = centroids - coordinates
-        mask = np.ma.masked_where(instance_image >= 1000, instance_image)
-
-        # To catch instances where the mask is all false
-        if len(mask.mask.shape) > 1:
-            mask = np.asarray(mask.mask, dtype=np.uint8)
-        elif mask.mask is False:
-            mask = np.zeros(instance_image.shape, dtype=np.uint8)
-        else:
-            mask = np.ones(instance_image.shape, dtype=np.uint8)
-        mask = np.stack((mask, mask))
-
-        # We load the images as H x W x channel, but we need channel x H x W.
-        # We don't need to transpose the mask as it has no channels.
-        vecs = np.transpose(vecs, (2, 0, 1))
-
-        return vecs, mask
-
     def __len__(self):
         return len(self._file_prefixes)
+
+
+def compute_centroid_vectors(instance_image: np.ndarray):
+    """For each pixel, calculate the vector from that pixel to the centre of its instance.
+
+    :param instance_image A numpy array of shape (H, W) in the Cityscapes instance format.
+    :return A pair of a matrix containing the distance vector to every pixel, and a mask
+    identifying which pixels are associated with an instance
+    """
+    # Each pixel in the image is of one of two formats:
+    # 1) If the pixel does not belong to an instance:
+    #    The id of the class the pixel belongs to
+    # 2) If the pixel does belong to an instance:
+    #    id x 1000 + instance id
+
+    # For each instance, find all pixels associated with it and compute the centre.
+    # Add an extra dimension for each pixel containing the coordinates of the associated centre.
+    centroids = np.zeros(instance_image.shape + (2,))
+    for value in np.unique(instance_image):
+        xs, ys = np.where(instance_image == value)
+        centroids[xs, ys] = np.array((np.floor(np.mean(xs)), np.floor(np.mean(ys))))
+
+    # Calculate the distance from the x,y coordinates of the pixel to the coordinates of the
+    # centre of its associated instance.
+    coordinates = np.zeros(instance_image.shape + (2,))
+    g1, g2 = np.mgrid[range(instance_image.shape[0]), range(instance_image.shape[1])]
+    coordinates[:, :, 0] = g1
+    coordinates[:, :, 1] = g2
+    vecs = centroids - coordinates
+    mask = np.ma.masked_where(instance_image >= 1000, instance_image)
+
+    # To catch instances where the mask is all false
+    if len(mask.mask.shape) > 1:
+        mask = np.asarray(mask.mask, dtype=np.uint8)
+    elif mask.mask is False:
+        mask = np.zeros(instance_image.shape, dtype=np.uint8)
+    else:
+        mask = np.ones(instance_image.shape, dtype=np.uint8)
+    mask = np.stack((mask, mask))
+
+    # We load the images as H x W x channel, but we need channel x H x W.
+    # We don't need to transpose the mask as it has no channels.
+    vecs = np.transpose(vecs, (2, 0, 1))
+
+    return vecs, mask
 
 
 def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
