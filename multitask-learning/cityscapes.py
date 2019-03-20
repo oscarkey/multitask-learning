@@ -236,21 +236,14 @@ class CityscapesDataset(Dataset):
         return depth_array, mask
 
     def _get_instance_vecs_and_mask(self, index: int):
-        instance_file = self._get_file_path_for_index(index, 'instanceIds')
-        instance_array = np.asarray(Image.open(instance_file), dtype=np.float32)
-        assert len(instance_array.shape) == 2, 'instance_array should have 2 dimensions' + instance_file
-
-        instance_vecs, instance_mask = self._compute_centroid_vectors(instance_array)
-
-        # We load the images as H x W x channel, but we need channel x H x W.
-        # We don't need to transpose the mask as it has no channels.
-        instance_vecs = np.transpose(instance_vecs, (2, 0, 1))
-
+        instance_file = self._get_file_path_for_index(index, 'instanceMask', ext='png.npy')
+        instance = np.load(instance_file).item()
+        instance_vecs, instance_mask = instance['vec'], instance['mask']
         return instance_vecs, instance_mask
 
-    def _get_file_path_for_index(self, index: int, type: str) -> str:
+    def _get_file_path_for_index(self, index: int, type: str, ext='png') -> str:
         path_prefix = self._file_prefixes[index]
-        files = glob.glob(f'{path_prefix}*_{type}.png')
+        files = glob.glob(f'{path_prefix}*_{type}.{ext}')
         assert len(files) > 0, 'Expect at least one file for the given type.'
         assert len(files) == 1, 'Only expect one file for the given type.'
         return files[0]
