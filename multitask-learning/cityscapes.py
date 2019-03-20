@@ -94,13 +94,22 @@ class CityscapesDataset(Dataset):
     This is conveniently the naming scheme of the data available from the Cityscapes website.
 
     As Cityscapes already splits the data into train/val/test, you may want to create an instance of
-    this class for each (though maybe we want different splits...).
+    this class for each.
     """
 
-    def __init__(self, root_dir: str, transform=NoopTransform()):
+    def __init__(self, root_dir: str, transform=NoopTransform(), cache_only_instances=False):
         self._root_dir = root_dir
         self._transform = transform
         self._file_prefixes = self._find_file_prefixes(root_dir)
+
+        self._cached_get_image_array = self._cache_if_enabled(self._get_image_array,
+                                                              enable_cache=not cache_only_instances)
+        self._cached_get_label_array = self._cache_if_enabled(self._get_label_array,
+                                                              enable_cache=not cache_only_instances)
+        self._cached_get_instance_vecs_and_mask = self._cache_if_enabled(self._get_instance_vecs_and_mask,
+                                                                         enable_cache=True)
+        self._cached_get_depth_array = self._cache_if_enabled(self._get_depth_array,
+                                                              enable_cache=not cache_only_instances)
 
     @staticmethod
     def _find_file_prefixes(root_dir: str) -> [str]:
@@ -132,10 +141,10 @@ class CityscapesDataset(Dataset):
         return os.path.join(directory, prefix)
 
     def __getitem__(self, index: int):
-        image_array = self._get_image_array(index)
-        label_array = self._get_label_array(index)
-        instance_vecs, instance_mask = self._get_instance_vecs_and_mask(index)
-        depth_array, depth_mask = self._get_depth_array(index)
+        image_array = self._cached_get_image_array(index)
+        label_array = self._cached_get_label_array(index)
+        instance_vecs, instance_mask = self._cached_get_instance_vecs_and_mask(index)
+        depth_array, depth_mask = self._cached_get_depth_array(index)
 
         if index == 0:
             self._print_cache_info()
@@ -144,16 +153,28 @@ class CityscapesDataset(Dataset):
 
     def _print_cache_info(self):
         print(f'Data loader cache: hit/miss/size, '
-              f'{self._build_cache_info_string("image", self._get_image_array.cache_info())} '
-              f'{self._build_cache_info_string("label", self._get_label_array.cache_info())} '
-              f'{self._build_cache_info_string("instance", self._get_instance_vecs_and_mask.cache_info())} '
-              f'{self._build_cache_info_string("depth", self._get_depth_array.cache_info())}')
+              f'{self._build_cache_info_string("image", self._cached_get_image_array.cache_info())} '
+              f'{self._build_cache_info_string("label", self._cached_get_label_array.cache_info())} '
+              f'{self._build_cache_info_string("instance", self._cached_get_instance_vecs_and_mask.cache_info())} '
+              f'{self._build_cache_info_string("depth", self._cached_get_depth_array.cache_info())}')
 
     @staticmethod
     def _build_cache_info_string(name: str, info):
         return f'{name} {info.hits}/{info.misses}/{info.currsize}'
 
-    @lru_cache(maxsize=None)
+    @staticmethod
+    def _cache_if_enabled(func, enable_cache: bool):
+        """Returns a wrapper around the given function, which caches calls to the function if caching is enabled."""
+        if enable_cache:
+            @lru_cache(maxsize=None)
+            def _wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+        else:
+            @lru_cache(maxsize=0)
+            def _wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+        return _wrapper
+
     def _get_image_array(self, index: int):
         imagenet_mean = np.reshape([0.485, 0.456, 0.406], (3, 1, 1))
         imagenet_std = np.reshape([0.229, 0.224, 0.225], (3, 1, 1))
@@ -172,14 +193,12 @@ class CityscapesDataset(Dataset):
         assert len(image_array.shape) == 3, 'image_array should have 3 dimensions' + image_file
         return image_array
 
-    @lru_cache(maxsize=None)
     def _get_label_array(self, index: int):
         label_file = self._get_file_path_for_index(index, 'labelIds')
         label_array = np.asarray(Image.open(label_file), dtype=np.int64)
         assert len(label_array.shape) == 2, 'label_array should have 2 dimensions' + label_file
         return label_array
 
-    @lru_cache(maxsize=None)
     def _get_depth_array(self, index: int):
         depth_file = self._get_file_path_for_index(index, 'disparity')
         depth_array = np.asarray(Image.open(depth_file), dtype=np.float32)
@@ -201,7 +220,6 @@ class CityscapesDataset(Dataset):
             mask = np.ones(depth_array.shape, dtype=np.uint8)
         return depth_array, mask
 
-    @lru_cache(maxsize=None)
     def _get_instance_vecs_and_mask(self, index: int):
         instance_file = self._get_file_path_for_index(index, 'instanceIds')
         instance_array = np.asarray(Image.open(instance_file), dtype=np.float32)
@@ -271,7 +289,8 @@ def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
     Will load any data file in any sub directory under the root directory.
     """
 
-    return get_loader(CityscapesDataset(root_dir, transform=transform), config)
+    return get_loader(
+        CityscapesDataset(root_dir, transform=transform, cache_only_instances=config['cache_only_instances']), config)
 
 
 def get_loader(dataset: Dataset, config):
