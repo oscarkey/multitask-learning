@@ -44,6 +44,8 @@ def config():
     dataloader_workers = 0  # If num workers > 0 then dataloader caching won't work.
     # When True the data loader will only cache instance labels, useful if we are running out of memory.
     cache_only_instances = False
+    # When True the data loader will load precomputed instance vectors from the .npy files.
+    use_precomputed_instances = False
     # Whether to randomly crop and flip the training data, only works when training on full size images.
     train_augment = False
     crop_size = (256, 256)

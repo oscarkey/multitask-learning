@@ -98,22 +98,20 @@ class CityscapesDataset(Dataset):
     this class for each.
     """
 
-    def __init__(self, root_dir: str, transform=NoopTransform(), cache_only_instances=False, min_available_memory_gb=0):
+    def __init__(self, root_dir: str, transform=NoopTransform(), cache_only_instances=False, min_available_memory_gb=0,
+                 use_precomputed_instances=False):
         self._root_dir = root_dir
         self._transform = transform
         self._file_prefixes = self._find_file_prefixes(root_dir)
+        self._use_precomputed_instances = use_precomputed_instances
 
         assert min_available_memory_gb >= 0, f'min_available_memory_gb must not be negative: {min_available_memory_gb}'
         self._min_available_memory_gb = min_available_memory_gb
 
-        self._cached_get_image = self._cache_if_enabled(self._get_image,
-                                                        enable_cache=not cache_only_instances)
-        self._cached_get_labels = self._cache_if_enabled(self._get_labels,
-                                                         enable_cache=not cache_only_instances)
-        self._cached_get_instances = self._cache_if_enabled(self._get_instances,
-                                                            enable_cache=True)
-        self._cached_get_depth = self._cache_if_enabled(self._get_depth,
-                                                        enable_cache=not cache_only_instances)
+        self._cached_get_image = self._cache_if_enabled(self._get_image, enable_cache=not cache_only_instances)
+        self._cached_get_labels = self._cache_if_enabled(self._get_labels, enable_cache=not cache_only_instances)
+        self._cached_get_instances = self._cache_if_enabled(self._get_instances, enable_cache=True)
+        self._cached_get_depth = self._cache_if_enabled(self._get_depth, enable_cache=not cache_only_instances)
 
     @staticmethod
     def _find_file_prefixes(root_dir: str) -> [str]:
@@ -236,6 +234,21 @@ class CityscapesDataset(Dataset):
         return depth_array, mask
 
     def _get_instances(self, index: int):
+        if self._use_precomputed_instances:
+            return self._get_precomputed_instances(index)
+        else:
+            return self._load_and_compute_instances(index)
+
+    def _load_and_compute_instances(self, index: int):
+        """Loads the instance file from cityscapes, and then computes the instances."""
+        instance_file = self._get_file_path_for_index(index, 'instanceIds')
+        instance_array = np.asarray(Image.open(instance_file), dtype=np.float32)
+        assert len(instance_array.shape) == 2, 'instance_array should have 2 dimensions' + instance_file
+
+        return self._compute_centroid_vectors(instance_array)
+
+    def _get_precomputed_instances(self, index: int):
+        """Loads the precomputed instances from a pickled numpy array."""
         instance_file = self._get_file_path_for_index(index, 'instanceMask', ext='png.npy')
         instance = np.load(instance_file).item()
         instance_vecs, instance_mask = instance['vec'], instance['mask']
