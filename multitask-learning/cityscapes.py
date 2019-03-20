@@ -5,6 +5,7 @@ import os
 from functools import lru_cache
 
 import numpy as np
+import psutil
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
@@ -97,10 +98,13 @@ class CityscapesDataset(Dataset):
     this class for each.
     """
 
-    def __init__(self, root_dir: str, transform=NoopTransform(), cache_only_instances=False):
+    def __init__(self, root_dir: str, transform=NoopTransform(), cache_only_instances=False, min_available_memory_gb=0):
         self._root_dir = root_dir
         self._transform = transform
         self._file_prefixes = self._find_file_prefixes(root_dir)
+
+        assert min_available_memory_gb >= 0, f'min_available_memory_gb must not be negative: {min_available_memory_gb}'
+        self._min_available_memory_gb = min_available_memory_gb
 
         self._cached_get_image_array = self._cache_if_enabled(self._get_image_array,
                                                               enable_cache=not cache_only_instances)
@@ -141,6 +145,8 @@ class CityscapesDataset(Dataset):
         return os.path.join(directory, prefix)
 
     def __getitem__(self, index: int):
+        self._check_available_memory()
+
         image_array = self._cached_get_image_array(index)
         label_array = self._cached_get_label_array(index)
         instance_vecs, instance_mask = self._cached_get_instance_vecs_and_mask(index)
@@ -150,6 +156,15 @@ class CityscapesDataset(Dataset):
             self._print_cache_info()
 
         return self._transform([image_array, label_array, instance_vecs, instance_mask, depth_array, depth_mask])
+
+    def _check_available_memory(self):
+        if self._min_available_memory_gb == 0:
+            return
+
+        available_gb = psutil.virtual_memory().available / 1024 / 1024 / 1024
+        if available_gb < self._min_available_memory_gb:
+            raise ValueError(f'Available memory was too low '
+                             f'(available:{available_gb:.2f}gb req:{self._min_available_memory_gb:.2f}gb)')
 
     def _print_cache_info(self):
         print(f'Data loader cache: hit/miss/size, '
@@ -290,7 +305,8 @@ def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
     """
 
     return get_loader(
-        CityscapesDataset(root_dir, transform=transform, cache_only_instances=config['cache_only_instances']), config)
+        CityscapesDataset(root_dir, transform=transform, cache_only_instances=config['cache_only_instances'],
+                          min_available_memory_gb=config['min_available_memory_gb']), config)
 
 
 def get_loader(dataset: Dataset, config):

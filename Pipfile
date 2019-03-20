@@ -19,6 +19,7 @@ bokeh = "*"
 notebook = "*"
 # Use dev version of sklearn to get OPTICS.
 scikit-learn = "*"
+psutil = "*"
 
 [dev-packages]
 pylint = "*"

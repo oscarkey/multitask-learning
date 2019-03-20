@@ -48,6 +48,10 @@ def config():
     train_augment = False
     crop_size = (256, 256)
     pre_train_encoder = True  # When true, will download weights for resnet pre-trained on imagenet.
+    # If total available memory is lower than this threshold, we crash rather than loading more data.
+    # This avoids using all the memory on the server and getting it stuck.
+    # Set to 0 to disable the check.
+    min_available_memory_gb = 0
 
 
 @ex.named_config
