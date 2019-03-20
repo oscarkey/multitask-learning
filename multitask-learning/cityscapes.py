@@ -106,14 +106,14 @@ class CityscapesDataset(Dataset):
         assert min_available_memory_gb >= 0, f'min_available_memory_gb must not be negative: {min_available_memory_gb}'
         self._min_available_memory_gb = min_available_memory_gb
 
-        self._cached_get_image_array = self._cache_if_enabled(self._get_image_array,
-                                                              enable_cache=not cache_only_instances)
-        self._cached_get_label_array = self._cache_if_enabled(self._get_label_array,
-                                                              enable_cache=not cache_only_instances)
-        self._cached_get_instance_vecs_and_mask = self._cache_if_enabled(self._get_instance_vecs_and_mask,
-                                                                         enable_cache=True)
-        self._cached_get_depth_array = self._cache_if_enabled(self._get_depth_array,
-                                                              enable_cache=not cache_only_instances)
+        self._cached_get_image = self._cache_if_enabled(self._get_image,
+                                                        enable_cache=not cache_only_instances)
+        self._cached_get_labels = self._cache_if_enabled(self._get_labels,
+                                                         enable_cache=not cache_only_instances)
+        self._cached_get_instances = self._cache_if_enabled(self._get_instances,
+                                                            enable_cache=True)
+        self._cached_get_depth = self._cache_if_enabled(self._get_depth,
+                                                        enable_cache=not cache_only_instances)
 
     @staticmethod
     def _find_file_prefixes(root_dir: str) -> [str]:
@@ -147,10 +147,10 @@ class CityscapesDataset(Dataset):
     def __getitem__(self, index: int):
         self._check_available_memory()
 
-        image_array = self._cached_get_image_array(index)
-        label_array = self._cached_get_label_array(index)
-        instance_vecs, instance_mask = self._cached_get_instance_vecs_and_mask(index)
-        depth_array, depth_mask = self._cached_get_depth_array(index)
+        image_array = self._cached_get_image(index)
+        label_array = self._cached_get_labels(index)
+        instance_vecs, instance_mask = self._cached_get_instances(index)
+        depth_array, depth_mask = self._cached_get_depth(index)
 
         if index == 0:
             self._print_cache_info()
@@ -168,10 +168,10 @@ class CityscapesDataset(Dataset):
 
     def _print_cache_info(self):
         print(f'Data loader cache: hit/miss/size, '
-              f'{self._build_cache_info_string("image", self._cached_get_image_array.cache_info())} '
-              f'{self._build_cache_info_string("label", self._cached_get_label_array.cache_info())} '
-              f'{self._build_cache_info_string("instance", self._cached_get_instance_vecs_and_mask.cache_info())} '
-              f'{self._build_cache_info_string("depth", self._cached_get_depth_array.cache_info())}')
+              f'{self._build_cache_info_string("image", self._cached_get_image.cache_info())} '
+              f'{self._build_cache_info_string("label", self._cached_get_labels.cache_info())} '
+              f'{self._build_cache_info_string("instance", self._cached_get_instances.cache_info())} '
+              f'{self._build_cache_info_string("depth", self._cached_get_depth.cache_info())}')
 
     @staticmethod
     def _build_cache_info_string(name: str, info):
@@ -190,7 +190,7 @@ class CityscapesDataset(Dataset):
                 return func(*args, **kwargs)
         return _wrapper
 
-    def _get_image_array(self, index: int):
+    def _get_image(self, index: int):
         imagenet_mean = np.reshape([0.485, 0.456, 0.406], (3, 1, 1))
         imagenet_std = np.reshape([0.229, 0.224, 0.225], (3, 1, 1))
 
@@ -208,13 +208,13 @@ class CityscapesDataset(Dataset):
         assert len(image_array.shape) == 3, 'image_array should have 3 dimensions' + image_file
         return image_array
 
-    def _get_label_array(self, index: int):
+    def _get_labels(self, index: int):
         label_file = self._get_file_path_for_index(index, 'labelIds')
         label_array = np.asarray(Image.open(label_file), dtype=np.int64)
         assert len(label_array.shape) == 2, 'label_array should have 2 dimensions' + label_file
         return label_array
 
-    def _get_depth_array(self, index: int):
+    def _get_depth(self, index: int):
         depth_file = self._get_file_path_for_index(index, 'disparity')
         depth_array = np.asarray(Image.open(depth_file), dtype=np.float32)
         assert len(depth_array.shape) == 2, 'depth_array should have 2 dimensions' + depth_file
@@ -235,7 +235,7 @@ class CityscapesDataset(Dataset):
             mask = np.ones(depth_array.shape, dtype=np.uint8)
         return depth_array, mask
 
-    def _get_instance_vecs_and_mask(self, index: int):
+    def _get_instances(self, index: int):
         instance_file = self._get_file_path_for_index(index, 'instanceMask', ext='png.npy')
         instance = np.load(instance_file).item()
         instance_vecs, instance_mask = instance['vec'], instance['mask']
