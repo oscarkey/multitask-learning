@@ -26,7 +26,8 @@ def main(_run):
             f'(had {len(validation_loader.dataset)})'
 
     learner = MultitaskLearner(num_classes=_run.config['num_classes'],
-        loss_uncertainties=_run.config['loss_uncertainties'], pre_train_encoder=_run.config['pre_train_encoder'])
+                               loss_uncertainties=_run.config['loss_uncertainties'],
+                               pre_train_encoder=_run.config['pre_train_encoder'])
 
     device = "cuda:0" if _run.config['gpu'] and torch.cuda.is_available() else "cpu"
     learner.to(device)
@@ -40,13 +41,11 @@ def main(_run):
 
     criterion = MultiTaskLoss(_run.config['loss_type'], loss_uncertainties, _run.config['enabled_tasks'])
 
-    initial_learning_rate = _run.config['initial_learning_rate']
-
     if _run.config['use_adam']:
-        optimizer = torch.optim.Adam(learner.parameters())
+        optimizer = torch.optim.Adam(learner.parameters(), lr=_run.config['learning_rate'])
     else:
-        optimizer = torch.optim.SGD(learner.parameters(), lr=initial_learning_rate, momentum=0.9, nesterov=True,
-                                    weight_decay=1e4)
+        optimizer = torch.optim.SGD(learner.parameters(), lr=_run.config['initial_learning_rate'], momentum=0.9,
+                                    nesterov=True, weight_decay=1e4)
 
         lr_lambda = lambda x: (1 - x / _run.config['max_iter']) ** 0.9
         lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
@@ -96,7 +95,7 @@ def main(_run):
             # if i % 2000 == 1999:    # print every 2000 mini-batches
             logvars = learner.get_loss_params()
             print('[%d, %5d] Training loss: %.3f - (%.3f, %.3f, %.3f)' % (
-            epoch + 1, i + 1, running_loss, logvars[0].item(), logvars[1].item(), logvars[2].item()))
+                epoch + 1, i + 1, running_loss, logvars[0].item(), logvars[1].item(), logvars[2].item()))
             running_loss = 0.0
 
             # compute gradient of an output pixel with respect to input
