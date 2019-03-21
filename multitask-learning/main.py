@@ -41,6 +41,8 @@ def config():
     validate_epochs = 1  # How frequently to run validation. Set to 0 to disable validation.
     model_save_epochs = 0  # How frequently to checkpoint the model to Sacred. Set to 0 to disable saving the model.
     use_adam = True
+    # The learning rate used by Adam. Not used by SGD.
+    learning_rate = 1e-3
     dataloader_workers = 0  # If num workers > 0 then dataloader caching won't work.
     # When True the dataloader will cache all data in memory after the first read.
     dataloader_cache = True
