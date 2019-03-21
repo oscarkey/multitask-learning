@@ -98,22 +98,20 @@ class CityscapesDataset(Dataset):
     this class for each.
     """
 
-    def __init__(self, root_dir: str, transform=NoopTransform(), cache_only_instances=False, min_available_memory_gb=0):
+    def __init__(self, root_dir: str, transform=NoopTransform(), enable_cache=True, min_available_memory_gb=0,
+                 use_precomputed_instances=False):
         self._root_dir = root_dir
         self._transform = transform
         self._file_prefixes = self._find_file_prefixes(root_dir)
+        self._use_precomputed_instances = use_precomputed_instances
 
         assert min_available_memory_gb >= 0, f'min_available_memory_gb must not be negative: {min_available_memory_gb}'
         self._min_available_memory_gb = min_available_memory_gb
 
-        self._cached_get_image_array = self._cache_if_enabled(self._get_image_array,
-                                                              enable_cache=not cache_only_instances)
-        self._cached_get_label_array = self._cache_if_enabled(self._get_label_array,
-                                                              enable_cache=not cache_only_instances)
-        self._cached_get_instance_vecs_and_mask = self._cache_if_enabled(self._get_instance_vecs_and_mask,
-                                                                         enable_cache=True)
-        self._cached_get_depth_array = self._cache_if_enabled(self._get_depth_array,
-                                                              enable_cache=not cache_only_instances)
+        self._cached_get_image = self._cache_if_enabled(self._get_image, enable_cache=enable_cache)
+        self._cached_get_labels = self._cache_if_enabled(self._get_labels, enable_cache=enable_cache)
+        self._cached_get_instances = self._cache_if_enabled(self._get_instances, enable_cache=enable_cache)
+        self._cached_get_depth = self._cache_if_enabled(self._get_depth, enable_cache=enable_cache)
 
     @staticmethod
     def _find_file_prefixes(root_dir: str) -> [str]:
@@ -147,10 +145,10 @@ class CityscapesDataset(Dataset):
     def __getitem__(self, index: int):
         self._check_available_memory()
 
-        image_array = self._cached_get_image_array(index)
-        label_array = self._cached_get_label_array(index)
-        instance_vecs, instance_mask = self._cached_get_instance_vecs_and_mask(index)
-        depth_array, depth_mask = self._cached_get_depth_array(index)
+        image_array = self._cached_get_image(index)
+        label_array = self._cached_get_labels(index)
+        instance_vecs, instance_mask = self._cached_get_instances(index)
+        depth_array, depth_mask = self._cached_get_depth(index)
 
         if index == 0:
             self._print_cache_info()
@@ -168,10 +166,10 @@ class CityscapesDataset(Dataset):
 
     def _print_cache_info(self):
         print(f'Data loader cache: hit/miss/size, '
-              f'{self._build_cache_info_string("image", self._cached_get_image_array.cache_info())} '
-              f'{self._build_cache_info_string("label", self._cached_get_label_array.cache_info())} '
-              f'{self._build_cache_info_string("instance", self._cached_get_instance_vecs_and_mask.cache_info())} '
-              f'{self._build_cache_info_string("depth", self._cached_get_depth_array.cache_info())}')
+              f'{self._build_cache_info_string("image", self._cached_get_image.cache_info())} '
+              f'{self._build_cache_info_string("label", self._cached_get_labels.cache_info())} '
+              f'{self._build_cache_info_string("instance", self._cached_get_instances.cache_info())} '
+              f'{self._build_cache_info_string("depth", self._cached_get_depth.cache_info())}')
 
     @staticmethod
     def _build_cache_info_string(name: str, info):
@@ -190,7 +188,7 @@ class CityscapesDataset(Dataset):
                 return func(*args, **kwargs)
         return _wrapper
 
-    def _get_image_array(self, index: int):
+    def _get_image(self, index: int):
         imagenet_mean = np.reshape([0.485, 0.456, 0.406], (3, 1, 1))
         imagenet_std = np.reshape([0.229, 0.224, 0.225], (3, 1, 1))
 
@@ -208,13 +206,13 @@ class CityscapesDataset(Dataset):
         assert len(image_array.shape) == 3, 'image_array should have 3 dimensions' + image_file
         return image_array
 
-    def _get_label_array(self, index: int):
+    def _get_labels(self, index: int):
         label_file = self._get_file_path_for_index(index, 'labelIds')
         label_array = np.asarray(Image.open(label_file), dtype=np.int64)
         assert len(label_array.shape) == 2, 'label_array should have 2 dimensions' + label_file
         return label_array
 
-    def _get_depth_array(self, index: int):
+    def _get_depth(self, index: int):
         depth_file = self._get_file_path_for_index(index, 'disparity')
         depth_array = np.asarray(Image.open(depth_file), dtype=np.float32)
         assert len(depth_array.shape) == 2, 'depth_array should have 2 dimensions' + depth_file
@@ -235,7 +233,22 @@ class CityscapesDataset(Dataset):
             mask = np.ones(depth_array.shape, dtype=np.uint8)
         return depth_array, mask
 
-    def _get_instance_vecs_and_mask(self, index: int):
+    def _get_instances(self, index: int):
+        if self._use_precomputed_instances:
+            return self._get_precomputed_instances(index)
+        else:
+            return self._load_and_compute_instances(index)
+
+    def _load_and_compute_instances(self, index: int):
+        """Loads the instance file from cityscapes, and then computes the instances."""
+        instance_file = self._get_file_path_for_index(index, 'instanceIds')
+        instance_array = np.asarray(Image.open(instance_file), dtype=np.float32)
+        assert len(instance_array.shape) == 2, 'instance_array should have 2 dimensions' + instance_file
+
+        return compute_centroid_vectors(instance_array)
+
+    def _get_precomputed_instances(self, index: int):
+        """Loads the precomputed instances from a pickled numpy array."""
         instance_file = self._get_file_path_for_index(index, 'instanceMask', ext='png.npy')
         instance = np.load(instance_file).item()
         instance_vecs, instance_mask = instance['vec'], instance['mask']
@@ -248,47 +261,53 @@ class CityscapesDataset(Dataset):
         assert len(files) == 1, 'Only expect one file for the given type.'
         return files[0]
 
-    @staticmethod
-    def _compute_centroid_vectors(instance_image):
-        """For each pixel, calculate the vector from that pixel to the centre of its instance.
-
-        :return a pair of a matrix containing the distance vector to every pixel, and a mask
-        identifying which pixels are associated with an instance
-        """
-        # Each pixel in the image is of one of two formats:
-        # 1) If the pixel does not belong to an instance:
-        #    The id of the class the pixel belongs to
-        # 2) If the pixel does belong to an instance:
-        #    id x 1000 + instance id
-
-        # For each instance, find all pixels associated with it and compute the centre.
-        # Add an extra dimension for each pixel containing the coordinates of the associated centre.
-        centroids = np.zeros(instance_image.shape + (2,))
-        for value in np.unique(instance_image):
-            xs, ys = np.where(instance_image == value)
-            centroids[xs, ys] = np.array((np.floor(np.mean(xs)), np.floor(np.mean(ys))))
-
-        # Calculate the distance from the x,y coordinates of the pixel to the coordinates of the
-        # centre of its associated instance.
-        coordinates = np.zeros(instance_image.shape + (2,))
-        g1, g2 = np.mgrid[range(instance_image.shape[0]), range(instance_image.shape[1])]
-        coordinates[:, :, 0] = g1
-        coordinates[:, :, 1] = g2
-        vecs = centroids - coordinates
-        mask = np.ma.masked_where(instance_image >= 1000, instance_image)
-
-        # To catch instances where the mask is all false
-        if len(mask.mask.shape) > 1:
-            mask = np.asarray(mask.mask, dtype=np.uint8)
-        elif mask.mask is False:
-            mask = np.zeros(instance_image.shape, dtype=np.uint8)
-        else:
-            mask = np.ones(instance_image.shape, dtype=np.uint8)
-        mask = np.stack((mask, mask))
-        return vecs, mask
-
     def __len__(self):
         return len(self._file_prefixes)
+
+
+def compute_centroid_vectors(instance_image: np.ndarray):
+    """For each pixel, calculate the vector from that pixel to the centre of its instance.
+
+    :param instance_image A numpy array of shape (H, W) in the Cityscapes instance format.
+    :return A pair of a matrix containing the distance vector to every pixel, and a mask
+    identifying which pixels are associated with an instance
+    """
+    # Each pixel in the image is of one of two formats:
+    # 1) If the pixel does not belong to an instance:
+    #    The id of the class the pixel belongs to
+    # 2) If the pixel does belong to an instance:
+    #    id x 1000 + instance id
+
+    # For each instance, find all pixels associated with it and compute the centre.
+    # Add an extra dimension for each pixel containing the coordinates of the associated centre.
+    centroids = np.zeros(instance_image.shape + (2,))
+    for value in np.unique(instance_image):
+        xs, ys = np.where(instance_image == value)
+        centroids[xs, ys] = np.array((np.floor(np.mean(xs)), np.floor(np.mean(ys))))
+
+    # Calculate the distance from the x,y coordinates of the pixel to the coordinates of the
+    # centre of its associated instance.
+    coordinates = np.zeros(instance_image.shape + (2,))
+    g1, g2 = np.mgrid[range(instance_image.shape[0]), range(instance_image.shape[1])]
+    coordinates[:, :, 0] = g1
+    coordinates[:, :, 1] = g2
+    vecs = centroids - coordinates
+    mask = np.ma.masked_where(instance_image >= 1000, instance_image)
+
+    # To catch instances where the mask is all false
+    if len(mask.mask.shape) > 1:
+        mask = np.asarray(mask.mask, dtype=np.uint8)
+    elif mask.mask is False:
+        mask = np.zeros(instance_image.shape, dtype=np.uint8)
+    else:
+        mask = np.ones(instance_image.shape, dtype=np.uint8)
+    mask = np.stack((mask, mask))
+
+    # We load the images as H x W x channel, but we need channel x H x W.
+    # We don't need to transpose the mask as it has no channels.
+    vecs = np.transpose(vecs, (2, 0, 1))
+
+    return vecs, mask
 
 
 def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
@@ -298,7 +317,7 @@ def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
     """
 
     return get_loader(
-        CityscapesDataset(root_dir, transform=transform, cache_only_instances=config['cache_only_instances'],
+        CityscapesDataset(root_dir, transform=transform, enable_cache=config['dataloader_cache'],
                           min_available_memory_gb=config['min_available_memory_gb']), config)
 
 
