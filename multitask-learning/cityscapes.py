@@ -316,9 +316,8 @@ def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
     Will load any data file in any sub directory under the root directory.
     """
 
-    return get_loader(
-        CityscapesDataset(root_dir, transform=transform, enable_cache=config['dataloader_cache'],
-                          min_available_memory_gb=config['min_available_memory_gb']), config)
+    return get_loader(CityscapesDataset(root_dir, transform=transform, enable_cache=config['dataloader_cache'],
+                                        min_available_memory_gb=config['min_available_memory_gb']), config)
 
 
 def get_loader(dataset: Dataset, config):

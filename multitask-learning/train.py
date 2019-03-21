@@ -25,10 +25,8 @@ def main(_run):
         assert len(validation_loader.dataset) >= 3, f'Must have at least 3 validation images ' \
             f'(had {len(validation_loader.dataset)})'
 
-    learner = MultitaskLearner(
-        num_classes=_run.config['num_classes'],
-        loss_uncertainties=_run.config['loss_uncertainties'],
-        pre_train_encoder=_run.config['pre_train_encoder'])
+    learner = MultitaskLearner(num_classes=_run.config['num_classes'],
+        loss_uncertainties=_run.config['loss_uncertainties'], pre_train_encoder=_run.config['pre_train_encoder'])
 
     device = "cuda:0" if _run.config['gpu'] and torch.cuda.is_available() else "cpu"
     learner.to(device)
@@ -89,8 +87,7 @@ def main(_run):
 
             # Forward + backward + optimize
             output = learner(inputs)
-            loss, task_loss = criterion(output, semantic_labels,
-                                        instance_centroid, instance_mask, depth, depth_mask)
+            loss, task_loss = criterion(output, semantic_labels, instance_centroid, instance_mask, depth, depth_mask)
             loss.backward()
             optimizer.step()
 
@@ -98,7 +95,8 @@ def main(_run):
             running_loss += loss.item()
             # if i % 2000 == 1999:    # print every 2000 mini-batches
             logvars = learner.get_loss_params()
-            print('[%d, %5d] Training loss: %.3f - (%.3f, %.3f, %.3f)' % (epoch + 1, i + 1, running_loss, logvars[0].item(), logvars[1].item(), logvars[2].item()))
+            print('[%d, %5d] Training loss: %.3f - (%.3f, %.3f, %.3f)' % (
+            epoch + 1, i + 1, running_loss, logvars[0].item(), logvars[1].item(), logvars[2].item()))
             running_loss = 0.0
 
             # compute gradient of an output pixel with respect to input
@@ -115,13 +113,11 @@ def main(_run):
             training_depth_loss += task_loss[2].item()
 
         # Save statistics to Sacred
-        _run.log_scalar('training_semantic_loss', training_semantic_loss /
-                        num_training_batches, epoch)
-        _run.log_scalar('training_instance_loss', training_instance_loss /
-                        num_training_batches, epoch)
+        _run.log_scalar('training_semantic_loss', training_semantic_loss / num_training_batches, epoch)
+        _run.log_scalar('training_instance_loss', training_instance_loss / num_training_batches, epoch)
         _run.log_scalar('training_depth_loss', training_depth_loss / num_training_batches, epoch)
 
-        #print(f'Training losses: {training_semantic_loss / num_training_batches, training_instance_loss / num_training_batches, training_depth_loss / num_training_batches}')
+        # print(f'Training losses: {training_semantic_loss / num_training_batches, training_instance_loss / num_training_batches, training_depth_loss / num_training_batches}')
 
         if _run.config['validate_epochs'] != 0 and ((epoch + 1) % _run.config['validate_epochs'] == 0 or epoch == 0):
             _validate(_run=_run, device=device, validation_loader=validation_loader, learner=learner,
