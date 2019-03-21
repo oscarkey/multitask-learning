@@ -315,14 +315,13 @@ def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
 
     Will load any data file in any sub directory under the root directory.
     """
+    num_workers = config['dataloader_workers']
+    enable_cache = config['dataloader_cache']
+    assert (enable_cache and num_workers == 0) or (num_workers > 0 and not enable_cache)
 
-    return get_loader(CityscapesDataset(root_dir, transform=transform, enable_cache=config['dataloader_cache'],
-                                        min_available_memory_gb=config['min_available_memory_gb']), config)
-
-
-def get_loader(dataset: Dataset, config):
-    return torch.utils.data.DataLoader(dataset, batch_size=config['batch_size'],
-                                       num_workers=config['dataloader_workers'], shuffle=False)
+    dataset = CityscapesDataset(root_dir, transform=transform, enable_cache=enable_cache,
+                                min_available_memory_gb=config['min_available_memory_gb'])
+    return torch.utils.data.DataLoader(dataset, batch_size=config['batch_size'], num_workers=num_workers, shuffle=False)
 
 
 if __name__ == '__main__':
