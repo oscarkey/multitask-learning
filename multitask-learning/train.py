@@ -9,21 +9,7 @@ from model import MultitaskLearner
 
 
 def main(_run):
-    if _run.config['train_augment']:
-        assert len(_run.config['crop_size']) == 2, 'Wrong crop size' + _run.config['crop_size']
-        train_transform = transforms.Compose(
-            [cityscapes.RandomCrop(_run.config['crop_size']), cityscapes.RandomHorizontalFlip()])
-    else:
-        train_transform = cityscapes.NoopTransform()
-    train_loader = cityscapes.get_loader_from_dir(_run.config['root_dir_train'], _run.config, transform=train_transform)
-
-    validation_loader = cityscapes.get_loader_from_dir(_run.config['root_dir_validation'], _run.config)
-
-    assert len(train_loader.dataset) >= 3, f'Must have at least 3 train images ' \
-        f'(had {len(train_loader.dataset)})'
-    if _run.config['validate_epochs'] >= 1:
-        assert len(validation_loader.dataset) >= 3, f'Must have at least 3 validation images ' \
-            f'(had {len(validation_loader.dataset)})'
+    train_loader, validation_loader = _create_dataloaders(_run.config)
 
     learner = MultitaskLearner(num_classes=_run.config['num_classes'],
                                loss_uncertainties=_run.config['loss_uncertainties'],
@@ -124,6 +110,25 @@ def main(_run):
 
         if _run.config['model_save_epochs'] != 0 and (epoch + 1) % _run.config['model_save_epochs'] == 0:
             checkpointing.save_model(_run, learner, optimizer, epoch)
+
+
+def _create_dataloaders(config):
+    if config['train_augment']:
+        assert len(config['crop_size']) == 2, 'Wrong crop size' + config['crop_size']
+        train_transform = transforms.Compose(
+            [cityscapes.RandomCrop(config['crop_size']), cityscapes.RandomHorizontalFlip()])
+    else:
+        train_transform = cityscapes.NoopTransform()
+    train_loader = cityscapes.get_loader_from_dir(config['root_dir_train'], config, transform=train_transform)
+
+    validation_loader = cityscapes.get_loader_from_dir(config['root_dir_validation'], config)
+
+    assert len(train_loader.dataset) >= 3, f'Must have at least 3 train images (had {len(train_loader.dataset)})'
+    if config['validate_epochs'] >= 1:
+        assert len(validation_loader.dataset) >= 3, f'Must have at least 3 validation images ' \
+            f'(had {len(validation_loader.dataset)})'
+
+    return train_loader, validation_loader
 
 
 def _validate(_run, device, validation_loader, learner, criterion, epoch):
