@@ -123,7 +123,7 @@ def main(_run):
                       criterion=criterion, epoch=epoch)
 
         if _run.config['model_save_epochs'] != 0 and (epoch + 1) % _run.config['model_save_epochs'] == 0:
-            checkpointing.save_model(_run, learner, epoch)
+            checkpointing.save_model(_run, learner, optimizer, epoch)
 
 
 def _validate(_run, device, validation_loader, learner, criterion, epoch):
