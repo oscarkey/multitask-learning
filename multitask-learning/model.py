@@ -28,7 +28,7 @@ class MultitaskLearner(nn.Module):
         """Returns sem_seg_output, instance_seg_output, depth_output"""
         return self.decoders(self.encoder(x))
 
-    def get_loss_params(self):
+    def get_loss_params(self) -> (nn.Parameter, nn.Parameter, nn.Parameter):
         """Returns sem_log_var, inst_log_var, depth_log_var"""
         return self.sem_log_var, self.inst_log_var, self.depth_log_var
 

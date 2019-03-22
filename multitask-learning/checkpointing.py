@@ -1,5 +1,7 @@
 import tempfile
+from typing import Dict, Tuple
 
+import pymongo
 import torch
 from torch.optim import Optimizer
 
@@ -18,3 +20,35 @@ def save_model(_run, model: MultitaskLearner, optimizer: Optimizer, epoch: int):
         torch.save(state, file.name)
         _run.add_artifact(file.name, f'model_epoch_{epoch}')
         _run.run_logger.info(f'Saved state to sacred at epoch {epoch}.')
+
+
+def load_state(_run, run_id: int) -> Tuple[int, Dict, Dict]:
+    """Loads the state of the latest save from the given run.
+
+    :return (epoch: int, state_dict)
+    """
+    db = pymongo.MongoClient(server_name, 27017)[collection_name]
+    experiment = db['runs'].find_one({'_id': run_id})
+
+    artifacts = experiment['artifacts']
+    _run.run_logger.debug(f'Found {len(artifacts)} saves')
+    artifact = artifacts[len(artifacts) - 1]
+
+    # Parse the name above: model_epoch_{epoch}
+    epoch = int(artifact['name'].split('_')[2])
+
+    cursor = db['fs.chunks'].find({'files_id': artifact['file_id']})
+    with tempfile.NamedTemporaryFile() as file:
+        _run.run_logger.info(f'Found {cursor.count()} chunks for epoch {epoch}, downloading...')
+        i = 0
+        for chunk in cursor:
+            assert chunk['n'] == i
+            i += 1
+            file.write(chunk['data'])
+        _run.run_logger.debug(f'Download complete')
+        state = torch.load(file.name)
+
+    # We don't know how to handle anything except version 1.
+    assert state['version'] == 1
+
+    return state['epoch'], state['model_state_dict'], state['optimizer_state_dict']
