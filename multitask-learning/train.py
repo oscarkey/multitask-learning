@@ -18,15 +18,6 @@ def main(_run):
     device = "cuda:0" if _run.config['gpu'] and torch.cuda.is_available() else "cpu"
     learner.to(device)
 
-    if _run.config['loss_type'] == 'learned':
-        loss_uncertainties = learner.get_loss_params()
-    elif _run.config['loss_type'] == 'fixed':
-        loss_uncertainties = _run.config['loss_uncertainties']
-    else:
-        raise ValueError(f'Unknown loss_type {_run.config["loss_type"]}')
-
-    criterion = MultiTaskLoss(_run.config['loss_type'], loss_uncertainties, _run.config['enabled_tasks'])
-
     if _run.config['use_adam']:
         optimizer = torch.optim.Adam(learner.parameters(), lr=_run.config['learning_rate'])
     else:
@@ -35,6 +26,9 @@ def main(_run):
 
         lr_lambda = lambda x: (1 - x / _run.config['max_iter']) ** 0.9
         lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
+
+    criterion = MultiTaskLoss(_run.config['loss_type'], _get_uncertainties(_run.config, learner),
+                              _run.config['enabled_tasks'])
 
     for epoch in range(_run.config['max_iter']):  # loop over the dataset multiple times
 
@@ -129,6 +123,15 @@ def _create_dataloaders(config):
             f'(had {len(validation_loader.dataset)})'
 
     return train_loader, validation_loader
+
+
+def _get_uncertainties(config, learner: MultitaskLearner):
+    if config['loss_type'] == 'learned':
+        return learner.get_loss_params()
+    elif config['loss_type'] == 'fixed':
+        return config['loss_uncertainties']
+    else:
+        raise ValueError(f'Unknown loss_type {config["loss_type"]}')
 
 
 def _validate(_run, device, validation_loader, learner, criterion, epoch):
