@@ -58,9 +58,6 @@ def main(_run):
 
             learner.set_output_size(inputs.shape[2:])
 
-            if not _run.config['use_adam']:
-                lr_scheduler.step()
-
             # Keep count of number of batches
             num_training_batches += 1
 
@@ -114,6 +111,9 @@ def main(_run):
 
         if _run.config['model_save_epochs'] != 0 and (epoch + 1) % _run.config['model_save_epochs'] == 0:
             checkpointing.save_model(_run, learner, optimizer, epoch)
+
+        if not _run.config['use_adam']:
+            lr_scheduler.step()
 
         epoch += 1
 
