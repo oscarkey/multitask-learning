@@ -19,10 +19,11 @@ def main(_run):
     learner.to(device)
 
     if _run.config['use_adam']:
-        optimizer = torch.optim.Adam(learner.parameters(), lr=_run.config['learning_rate'])
+        optimizer = torch.optim.Adam(learner.parameters(), lr=_run.config['learning_rate'],
+                                     weight_decay=_run.config['weight_decay'])
     else:
         optimizer = torch.optim.SGD(learner.parameters(), lr=_run.config['initial_learning_rate'], momentum=0.9,
-                                    nesterov=True, weight_decay=1e4)
+                                    nesterov=True, weight_decay=_run.config['weight_decay'])
 
         lr_lambda = lambda x: (1 - x / _run.config['max_iter']) ** 0.9
         lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)

@@ -45,6 +45,8 @@ def config():
     use_adam = True
     # The learning rate used by Adam. Not used by SGD.
     learning_rate = 1e-3
+    # Weight decay to set on the optimizer. Value from paper is 10e4
+    weight_decay = 0
     dataloader_workers = 0  # If num workers > 0 then dataloader caching won't work.
     # When True the dataloader will cache all data in memory after the first read.
     dataloader_cache = True
