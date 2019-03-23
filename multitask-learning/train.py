@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch.optim import Optimizer
 from torchvision.transforms import transforms
 
 import checkpointing
@@ -18,7 +19,8 @@ def main(_run):
     device = "cuda:0" if _run.config['gpu'] and torch.cuda.is_available() else "cpu"
     learner.to(device)
 
-    if _run.config['use_adam']:
+    use_adam = _run.config['use_adam']
+    if use_adam:
         optimizer = torch.optim.Adam(learner.parameters(), lr=_run.config['learning_rate'],
                                      weight_decay=_run.config['weight_decay'])
     else:
@@ -103,6 +105,10 @@ def main(_run):
         _run.log_scalar('training_instance_loss', training_instance_loss / num_training_batches, epoch)
         _run.log_scalar('training_depth_loss', training_depth_loss / num_training_batches, epoch)
 
+        # We only log the learning rate if using SGD.
+        if not use_adam:
+            _run.log_scalar('learning_rate', _get_learning_rate(optimizer))
+
         # print(f'Training losses: {training_semantic_loss / num_training_batches, training_instance_loss / num_training_batches, training_depth_loss / num_training_batches}')
 
         if _run.config['validate_epochs'] != 0 and ((epoch + 1) % _run.config['validate_epochs'] == 0 or epoch == 0):
@@ -112,10 +118,15 @@ def main(_run):
         if _run.config['model_save_epochs'] != 0 and (epoch + 1) % _run.config['model_save_epochs'] == 0:
             checkpointing.save_model(_run, learner, optimizer, epoch)
 
-        if not _run.config['use_adam']:
+        if not use_adam:
             lr_scheduler.step()
 
         epoch += 1
+
+
+def _get_learning_rate(optimizer: Optimizer):
+    assert len(optimizer.state_dict()['param_groups']) == 1
+    return optimizer.state_dict()['param_groups'][0]['lr']
 
 
 def _create_dataloaders(config):
