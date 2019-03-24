@@ -20,6 +20,7 @@ notebook = "*"
 # Use dev version of sklearn to get OPTICS.
 scikit-learn = "*"
 psutil = "*"
+gitpython = "*"
 
 [dev-packages]
 pylint = "*"
