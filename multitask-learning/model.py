@@ -41,7 +41,7 @@ if __name__ == '__main__':
     model0 = MultitaskLearner(num_classes=20, loss_uncertainties=(1, 0, 0), pre_train_encoder=False)
     test = torch.zeros(size=(2, 3, 256, 256))
     result = model0.forward(test)
-    assert result[0].shape == (2, 20, 128, 256), f"output shape is {result[0].shape}"
+    assert result[0].shape == (2, 20, 128, 256), "output shape is {}".format(result[0].shape)
 
     # Check the weights have been properly loaded
     model1 = MultitaskLearner(num_classes=20, loss_uncertainties=(1, 1, 1), pre_train_encoder=True)

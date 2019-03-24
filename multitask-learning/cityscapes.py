@@ -34,8 +34,8 @@ class RandomCrop(object):
         h, w = self._get_shape(images[0])
         new_h, new_w = self.output_size
 
-        assert h > new_h, f"h < new_h: {h, w, new_h, new_w, images[0].shape}"
-        assert w > new_w, f"w < new_w: {h, w, new_h, new_w, images[0].shape}"
+        assert h > new_h, "h < new_h: {} {} {} {} {} {}".format(h, w, new_h, new_w, images[0].shape)
+        assert w > new_w, "w < new_w: {} {} {} {} {} {}".format(h, w, new_h, new_w, images[0].shape)
 
         top = np.random.randint(0, h - new_h)
         left = np.random.randint(0, w - new_w)
@@ -46,12 +46,12 @@ class RandomCrop(object):
     def _crop(image, left, top, w, h, new_w, new_h):
         # Check if we have a channel dimension or not.
         if len(image.shape) == 2:
-            assert image.shape[0] == h, f'Image has wrong shape {image.shape[0]} {h}'
-            assert image.shape[1] == w, f'Image has wrong shape {image.shape[1]} {w}'
+            assert image.shape[0] == h, 'Image has wrong shape {} {}'.format(image.shape[0], h)
+            assert image.shape[1] == w, 'Image has wrong shape {} {}'.format(image.shape[1], h)
             return image[top: top + new_h, left: left + new_w]
         elif len(image.shape) == 3:
-            assert image.shape[1] == h, f'Image has wrong shape {image.shape[1]} {h}'
-            assert image.shape[2] == w, f'Image has wrong shape {image.shape[2]} {w}'
+            assert image.shape[1] == h, 'Image has wrong shape {} {}'.format(image.shape[1], h)
+            assert image.shape[2] == w, 'Image has wrong shape {} {}'.format(image.shape[2], h)
             return image[:, top: top + new_h, left: left + new_w]
         else:
             raise ValueError
@@ -105,7 +105,7 @@ class CityscapesDataset(Dataset):
         self._file_prefixes = self._find_file_prefixes(root_dir)
         self._use_precomputed_instances = use_precomputed_instances
 
-        assert min_available_memory_gb >= 0, f'min_available_memory_gb must not be negative: {min_available_memory_gb}'
+        assert min_available_memory_gb >= 0, 'min_available_memory_gb must not be negative: {}'.format(min_available_memory_gb)
         self._min_available_memory_gb = min_available_memory_gb
 
         self._cached_get_image = self._cache_if_enabled(self._get_image, enable_cache=enable_cache)
@@ -161,19 +161,20 @@ class CityscapesDataset(Dataset):
 
         available_gb = psutil.virtual_memory().available / 1024 / 1024 / 1024
         if available_gb < self._min_available_memory_gb:
-            raise ValueError(f'Available memory was too low '
-                             f'(available:{available_gb:.2f}gb req:{self._min_available_memory_gb:.2f}gb)')
+            raise ValueError('Available memory was too low ', 
+                             '(available:{:.2f}gb req:{:.2f}gb)'.format(available_gb, self._min_available_memory_gb))
 
     def _print_cache_info(self):
-        print(f'Data loader cache: hit/miss/size, '
-              f'{self._build_cache_info_string("image", self._cached_get_image.cache_info())} '
-              f'{self._build_cache_info_string("label", self._cached_get_labels.cache_info())} '
-              f'{self._build_cache_info_string("instance", self._cached_get_instances.cache_info())} '
-              f'{self._build_cache_info_string("depth", self._cached_get_depth.cache_info())}')
+
+        print('Data loader cache: hit/miss/size, ', 
+              '{} '.format(self._build_cache_info_string("image", self._cached_get_image.cache_info())),
+              '{} '.format(self._build_cache_info_string("label", self._cached_get_labels.cache_info())),
+              '{} '.format(self._build_cache_info_string("instance", self._cached_get_instances.cache_info())),
+              '{}'.format(self._build_cache_info_string("depth", self._cached_get_depth.cache_info())))
 
     @staticmethod
     def _build_cache_info_string(name: str, info):
-        return f'{name} {info.hits}/{info.misses}/{info.currsize}'
+        return '{} {}/{}/{}'.format(name, info.hits, info.misses, info.currsize)
 
     @staticmethod
     def _cache_if_enabled(func, enable_cache: bool):
@@ -256,7 +257,7 @@ class CityscapesDataset(Dataset):
 
     def _get_file_path_for_index(self, index: int, type: str, ext='png') -> str:
         path_prefix = self._file_prefixes[index]
-        files = glob.glob(f'{path_prefix}*_{type}.{ext}')
+        files = glob.glob('{}*_{}.{}'.format(path_prefix, type, ext))
         assert len(files) > 0, 'Expect at least one file for the given type.'
         assert len(files) == 1, 'Only expect one file for the given type.'
         return files[0]

@@ -50,4 +50,4 @@ if __name__ == '__main__':
     model = Decoders(num_classes=20, output_size=output_size)
     test = torch.zeros(size=(2, 1280, 256, 256))
     result = model.forward(test)
-    assert result[0].shape == (2, 20, *output_size), f"output shape is {result[0].shape}"
+    assert result[0].shape == (2, 20, *output_size), "output shape is {}".format(result[0].shape)

@@ -35,9 +35,10 @@ def main(_run):
         epoch, model_state_dict, optimizer_state_dict = checkpointing.load_state(_run, restore_run_id)
         learner.load_state_dict(model_state_dict)
         optimizer.load_state_dict(optimizer_state_dict)
-        _run.run_logger.info(f'Restored from sacred run {restore_run_id} at epoch {epoch}')
+        _run.run_logger.info('Restored from sacred run {} at epoch {}'.format(restore_run_id, epoch))
     else:
         epoch = 0
+
 
     criterion = MultiTaskLoss(_run.config['loss_type'], _get_uncertainties(_run.config, learner),
                               _run.config['enabled_tasks'])
@@ -140,10 +141,9 @@ def _create_dataloaders(config):
 
     validation_loader = cityscapes.get_loader_from_dir(config['root_dir_validation'], config)
 
-    assert len(train_loader.dataset) >= 3, f'Must have at least 3 train images (had {len(train_loader.dataset)})'
+    assert len(train_loader.dataset) >= 3, 'Must have at least 3 train images (had {})'.format(len(train_loader.dataset))
     if config['validate_epochs'] >= 1:
-        assert len(validation_loader.dataset) >= 3, f'Must have at least 3 validation images ' \
-            f'(had {len(validation_loader.dataset)})'
+        assert len(validation_loader.dataset) >= 3, 'Must have at least 3 validation images(had {})'.format(len(validation_loader.dataset))
 
     return train_loader, validation_loader
 
@@ -154,7 +154,7 @@ def _get_uncertainties(config, learner: MultitaskLearner):
     elif config['loss_type'] == 'fixed':
         return config['loss_uncertainties']
     else:
-        raise ValueError(f'Unknown loss_type {config["loss_type"]}')
+        raise ValueError('Unknown loss_type {}'.format(config["loss_type"]))
 
 
 def _validate(_run, device, validation_loader, learner, criterion, epoch):
@@ -279,7 +279,7 @@ def _compute_image_iou(truth, output_softmax, num_classes: int):
         # We expect values 0, 1, 2 for no object, one object and both objects respectively.
         counts = torch.bincount(result.view(-1), minlength=3)
 
-        assert counts.size(0) == 3, f'Wrong number of bins: {counts}'
+        assert counts.size(0) == 3, 'Wrong number of bins: {}'.format(counts)
 
         intersection = counts[2].item()
         union = counts[1].item() + counts[2].item()

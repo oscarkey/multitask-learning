@@ -157,4 +157,5 @@ if __name__ == '__main__':
     model = Encoder()
     test = torch.zeros(size=(2, 3, 256, 256))
     result = model.forward(test)
-    assert result.shape == (2, 1280, *test.shape[:-2] / 8), f"output shape is {result.shape}"
+    size = test.shape
+    assert result.shape == (2, 1280, test.shape[-2] // 8, test.shape[-1] // 8), "output shape is {} {} {} {}".format()
