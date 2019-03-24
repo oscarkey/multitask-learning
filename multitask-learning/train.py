@@ -130,13 +130,8 @@ def _get_learning_rate(optimizer: Optimizer):
 
 
 def _create_dataloaders(config):
-    if config['train_augment']:
-        assert len(config['crop_size']) == 2, 'Wrong crop size' + config['crop_size']
-        train_transform = transforms.Compose(
-            [cityscapes.RandomCrop(config['crop_size']), cityscapes.RandomHorizontalFlip()])
-    else:
-        train_transform = cityscapes.NoopTransform()
-    train_loader = cityscapes.get_loader_from_dir(config['root_dir_train'], config, transform=train_transform)
+    train_loader = cityscapes.get_loader_from_dir(config['root_dir_train'], config,
+                                                  transform=_get_training_transforms(config))
 
     validation_loader = cityscapes.get_loader_from_dir(config['root_dir_validation'], config)
 
@@ -146,6 +141,21 @@ def _create_dataloaders(config):
             f'(had {len(validation_loader.dataset)})'
 
     return train_loader, validation_loader
+
+
+def _get_training_transforms(config):
+    transform_list = []
+    if config['crop']:
+        assert len(config['crop_size']) == 2, 'Wrong crop size' + config['crop_size']
+        transform_list.append(cityscapes.RandomCrop(config['crop_size']))
+
+    if config['flip']:
+        transform_list.append(cityscapes.RandomHorizontalFlip())
+
+    if len(transform_list) > 0:
+        return transforms.Compose(transform_list)
+    else:
+        return cityscapes.NoopTransform()
 
 
 def _get_uncertainties(config, learner: MultitaskLearner):
