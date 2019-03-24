@@ -67,12 +67,13 @@ def config():
 @ex.named_config
 def tiny_cityscapes_crops():
     """Crops of 64x64 from Tiny Cityscapes train, with random flipping, validated on Tiny Cityscales val"""
+    crop = True
+    flip = True
     crop_size = (64, 64)
     max_iter = 50000
     root_dir_train = '/data/home/aml8/tiny_cityscapes_train'
     root_dir_validation = '/data/home/aml8/tiny_cityscapes_val'
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
-    train_augment = True
     batch_size = 24
     learning_rate = 2.5e-5
 
@@ -86,7 +87,9 @@ def cityscapes_crops():
     root_dir_train = '/data/home/aml8/cityscapes/train'
     root_dir_validation = '/data/home/aml8/tiny_cityscapes_val'
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
-    train_augment = True
+    crop = True
+    crop_size = (256,256)
+    flip = True
 
 
 @ex.named_config
