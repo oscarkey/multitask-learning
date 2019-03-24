@@ -42,7 +42,8 @@ def main(_run):
     criterion = MultiTaskLoss(_run.config['loss_type'], _get_uncertainties(_run.config, learner),
                               _run.config['enabled_tasks'])
 
-    while epoch < _run.config['max_iter']:
+    iterations = 0
+    while iterations < _run.config['max_iter']:
 
         # polynomial learning rate decay
         # print(f'Learning rate: {lr_scheduler.get_lr()}')
@@ -79,6 +80,9 @@ def main(_run):
             loss.backward()
             optimizer.step()
 
+            if not use_adam:
+                lr_scheduler.step()
+
             # Print statistics
             running_loss += loss.item()
             # if i % 2000 == 1999:    # print every 2000 mini-batches
@@ -100,6 +104,8 @@ def main(_run):
             training_instance_loss += task_loss[1].item()
             training_depth_loss += task_loss[2].item()
 
+            iterations += 1
+
         # Save statistics to Sacred
         _run.log_scalar('training_semantic_loss', training_semantic_loss / num_training_batches, epoch)
         _run.log_scalar('training_instance_loss', training_instance_loss / num_training_batches, epoch)
@@ -117,9 +123,6 @@ def main(_run):
 
         if _run.config['model_save_epochs'] != 0 and (epoch + 1) % _run.config['model_save_epochs'] == 0:
             checkpointing.save_model(_run, learner, optimizer, epoch)
-
-        if not use_adam:
-            lr_scheduler.step()
 
         epoch += 1
 
