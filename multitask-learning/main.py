@@ -30,7 +30,7 @@ def config():
     root_dir_validation = 'example-tiny-cityscapes'
     root_dir_test = 'example-tiny-cityscapes'
     num_classes = 20
-    initial_learning_rate = 2.5e-3
+    initial_learning_rate = 2.5e-4
     height = 128  # TODO: pass through to model
     width = 256  # TODO: pass through to model
     loss_type = 'learned'  # One of 'fixed' or 'learned'.
