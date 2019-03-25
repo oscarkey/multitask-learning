@@ -7,7 +7,8 @@ from encoder import Encoder
 
 
 class MultitaskLearner(nn.Module):
-    def __init__(self, num_classes, loss_uncertainties, pre_train_encoder, output_size=(128, 256)):
+    def __init__(self, num_classes, enabled_tasks: (bool, bool, bool), loss_uncertainties, pre_train_encoder,
+                 output_size=(128, 256)):
         super(MultitaskLearner, self).__init__()
 
         encoder = Encoder()
@@ -18,7 +19,7 @@ class MultitaskLearner(nn.Module):
             encoder.load_state_dict(state_dict, strict=False)
         self.encoder = encoder
 
-        self.decoders = Decoders(num_classes, output_size)
+        self.decoders = Decoders(num_classes, enabled_tasks, output_size)
 
         self.sem_log_var = nn.Parameter(torch.tensor(loss_uncertainties[0], dtype=torch.float))
         self.inst_log_var = nn.Parameter(torch.tensor(loss_uncertainties[1], dtype=torch.float))

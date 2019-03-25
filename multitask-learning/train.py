@@ -13,6 +13,7 @@ def main(_run):
     train_loader, validation_loader = _create_dataloaders(_run.config)
 
     learner = MultitaskLearner(num_classes=_run.config['num_classes'],
+                               enabled_tasks=_run.config['enabled_tasks'],
                                loss_uncertainties=_run.config['loss_uncertainties'],
                                pre_train_encoder=_run.config['pre_train_encoder'])
 
