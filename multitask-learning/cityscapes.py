@@ -189,6 +189,8 @@ class CityscapesDataset(Dataset):
         return _wrapper
 
     def _get_image(self, index: int):
+        # We pre-train the network on ImageNet, so we normalize the dataset to match that.
+        # See: https://pytorch.org/docs/master/torchvision/models.html
         imagenet_mean = np.reshape([0.485, 0.456, 0.406], (3, 1, 1))
         imagenet_std = np.reshape([0.229, 0.224, 0.225], (3, 1, 1))
 
