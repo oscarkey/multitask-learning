@@ -94,8 +94,7 @@ class MultiTaskLoss(nn.Module):
 
         return loss
 
-    def forward(self, predicted, *target) -> (
-            Union[Tensor, None], (Union[Tensor, None], Union[Tensor, None], Union[Tensor, None])):
+    def forward(self, predicted, *target) -> (Union[Tensor, None], (float, float, float)):
         sem_seg_pred, instance_pred, depth_pred = predicted
         sem_seg_target, instance_target, instance_mask, depth_target, depth_mask = target
 
@@ -106,4 +105,8 @@ class MultiTaskLoss(nn.Module):
 
         total_loss = self.calculate_total_loss(sem_seg_loss, inst_seg_loss, depth_loss)
 
-        return total_loss, (sem_seg_loss, inst_seg_loss, depth_loss)
+        sem_seg_loss_item = sem_seg_loss.item() if sem_seg_loss is not None else 0
+        inst_seg_loss_item = inst_seg_loss.item() if inst_seg_loss is not None else 0
+        depth_loss_item = depth_loss.item() if depth_loss is not None else 0
+
+        return total_loss, (sem_seg_loss_item, inst_seg_loss_item, depth_loss_item)
