@@ -100,9 +100,9 @@ def main(_run):
             # output[0, 0, 0, 0].backward(retain_graph=True)
             # print(inputs.grad)
 
-            training_semantic_loss += task_loss[0].item()
-            training_instance_loss += task_loss[1].item()
-            training_depth_loss += task_loss[2].item()
+            training_semantic_loss += task_loss[0].item() if task_loss[0] is not None else 0
+            training_instance_loss += task_loss[1].item() if task_loss[1] is not None else 0
+            training_depth_loss += task_loss[2].item() if task_loss[2] is not None else 0
 
             iterations += 1
 

@@ -1,6 +1,8 @@
 """Contains the loss functions."""
+from typing import Union
 
 import torch
+from torch import Tensor
 from torch import nn
 
 
@@ -36,10 +38,10 @@ class MultiTaskLoss(nn.Module):
         # Classes that we don't care about are set to 255.
         self.cross_entropy = nn.CrossEntropyLoss(ignore_index=255)
 
-    def semantic_segmentation_loss(self, semseg_input, semseg_target):
-        return self.cross_entropy(semseg_input, semseg_target)
+    def sem_seg_loss(self, sem_seg_input, sem_seg_target):
+        return self.cross_entropy(sem_seg_input, sem_seg_target)
 
-    def instance_segmentation_loss(self, instance_input, instance_target, instance_mask):
+    def inst_seg_loss(self, instance_input, instance_target, instance_mask):
         instance_mask = instance_mask.float()
 
         target = instance_target.float() * instance_mask
@@ -92,14 +94,16 @@ class MultiTaskLoss(nn.Module):
 
         return loss
 
-    def forward(self, predicted, *target):
-        semseg_pred, instance_pred, depth_pred = predicted
-        semseg_target, instance_target, instance_mask, depth_target, depth_mask = target
+    def forward(self, predicted, *target) -> (
+            Union[Tensor, None], (Union[Tensor, None], Union[Tensor, None], Union[Tensor, None])):
+        sem_seg_pred, instance_pred, depth_pred = predicted
+        sem_seg_target, instance_target, instance_mask, depth_target, depth_mask = target
 
-        semseg_loss = self.semantic_segmentation_loss(semseg_pred, semseg_target)
-        instanceseg_loss = self.instance_segmentation_loss(instance_pred, instance_target, instance_mask)
-        depth_loss = self.depth_loss(depth_pred, depth_target, depth_mask)
+        sem_enabled, inst_enabled, depth_enabled = self.enabled_tasks
+        sem_seg_loss = self.sem_seg_loss(sem_seg_pred, sem_seg_target) if sem_enabled else None
+        inst_seg_loss = self.inst_seg_loss(instance_pred, instance_target, instance_mask) if inst_enabled else None
+        depth_loss = self.depth_loss(depth_pred, depth_target, depth_mask) if depth_enabled else None
 
-        total_loss = self.calculate_total_loss(semseg_loss, instanceseg_loss, depth_loss)
+        total_loss = self.calculate_total_loss(sem_seg_loss, inst_seg_loss, depth_loss)
 
-        return total_loss, (semseg_loss, instanceseg_loss, depth_loss)
+        return total_loss, (sem_seg_loss, inst_seg_loss, depth_loss)
