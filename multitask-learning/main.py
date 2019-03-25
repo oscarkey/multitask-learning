@@ -7,7 +7,7 @@ from sacred.observers import FileStorageObserver
 from sacred.observers import MongoObserver
 
 import checkpointing
-import train
+import train_semseg
 
 ex = Experiment()
 
@@ -64,11 +64,11 @@ def config():
 
 @ex.named_config
 def tiny_cityscapes_crops():
-    """Crops of 64x64 from Tiny Cityscapes train, with random flipping, validated on Tiny Cityscales val"""
-    crop_size = (64, 64)
+    """Crops of 64x124 from Tiny Cityscapes train, with random flipping, validated on Tiny Cityscales val"""
+    # crop_size = (128, 256)
     max_iter = 50000
-    root_dir_train = '/data/home/aml8/tiny_cityscapes_train'
-    root_dir_validation = '/data/home/aml8/tiny_cityscapes_val'
+    root_dir_train = '/jdata/tiny_cityscapes_train'
+    root_dir_validation = '/jdata/tiny_cityscapes_val'
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
     train_augment = True
     batch_size = 24
@@ -99,4 +99,4 @@ def server_config():
 @ex.automain
 def main(_run):
     # TODO: add testing loop
-    train.main(_run)
+    train_semseg.main(_run)
