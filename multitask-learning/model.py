@@ -33,7 +33,7 @@ class MultitaskLearner(nn.Module):
         return self.sem_log_var, self.inst_log_var, self.depth_log_var
 
     def set_output_size(self, size):
-        self.decoders.output_size = size
+        self.decoders.set_output_size(size)
 
 
 if __name__ == '__main__':
