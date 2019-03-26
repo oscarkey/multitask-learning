@@ -37,13 +37,13 @@ def main(dir: str):
 
     assert len(means) == len(stds)
 
-    mean_conc = np.stack(means)
-    std_conc = np.stack(stds)
-    assert mean_conc.shape[0] == 3 and len(mean_conc.shape) == 2, f'mean_conc.shape = {mean_conc.shape}'
-    assert std_conc.shape[0] == 3 and len(std_conc.shape) == 2, f'std_conc.shape = {std_conc.shape}'
+    mean_conc = np.stack(means, axis=0)
+    std_conc = np.stack(stds, axis=0)
+    assert mean_conc.shape[1] == 3 and len(mean_conc.shape) == 2, f'mean_conc.shape = {mean_conc.shape}'
+    assert std_conc.shape[1] == 3 and len(std_conc.shape) == 2, f'std_conc.shape = {std_conc.shape}'
 
-    mean = mean_conc.mean(axis=1)
-    std = std_conc.mean(axis=1)
+    mean = mean_conc.mean(axis=0)
+    std = std_conc.mean(axis=0)
     assert mean.shape == (3,), f'mean shape = {mean.shape}'
     assert std.shape == (3,), f'std shape = {std.shape}'
 
