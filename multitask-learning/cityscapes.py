@@ -102,8 +102,10 @@ class CityscapesDataset(Dataset):
                  use_precomputed_instances=False):
         self._root_dir = root_dir
         self._transform = transform
-        self._file_prefixes = self._find_file_prefixes(root_dir)
         self._use_precomputed_instances = use_precomputed_instances
+
+        self._file_prefixes = self._find_file_prefixes(root_dir)
+        self._assert_files_exist()
 
         assert min_available_memory_gb >= 0, f'min_available_memory_gb must not be negative: {min_available_memory_gb}'
         self._min_available_memory_gb = min_available_memory_gb
@@ -259,9 +261,15 @@ class CityscapesDataset(Dataset):
     def _get_file_path_for_index(self, index: int, type: str, ext='png') -> str:
         path_prefix = self._file_prefixes[index]
         files = glob.glob(f'{path_prefix}*_{type}.{ext}')
-        assert len(files) > 0, 'Expect at least one file for the given type.'
-        assert len(files) == 1, 'Only expect one file for the given type.'
+        assert len(files) == 1, f'Expected one file of type {type}, found {len(files)} ({path_prefix})'
         return files[0]
+
+    def _assert_files_exist(self):
+        """Checks that all the files we require exist, to avoid crashing later."""
+        file_types = ['leftImg8bit', 'labelIds', 'instanceIds', 'disparity']
+        for file_type in file_types:
+            for i, _ in enumerate(self._file_prefixes):
+                self._get_file_path_for_index(i, file_type)
 
     def __len__(self):
         return len(self._file_prefixes)
