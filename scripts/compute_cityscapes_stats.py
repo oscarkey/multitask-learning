@@ -8,7 +8,7 @@ from PIL import Image
 _IMAGE_FILE_SUFFIX = 'leftImg8bit.png'
 
 
-def _compute_mean_and_std(file_path: str) -> (np.ndarray, np.ndarray):
+def _compute_stats_for_image(file_path: str) -> (np.ndarray, np.ndarray):
     with Image.open(file_path) as image:
         image_array = np.asarray(image) / 255
 
@@ -21,19 +21,32 @@ def _compute_mean_and_std(file_path: str) -> (np.ndarray, np.ndarray):
         return mean, std
 
 
-def main(dir: str):
-    if not os.path.isdir(dir):
+def _compute_stats_for_dir(dir_name) -> ([np.ndarray], [np.ndarray]):
+    if not os.path.isdir(dir_name):
         raise ValueError(f'Directory does not exist: {dir}')
 
     means = []
     stds = []
 
-    for dir_path, _, file_names in os.walk(dir):
+    for dir_path, _, file_names in os.walk(dir_name):
         for file_name in file_names:
             if file_name.endswith(_IMAGE_FILE_SUFFIX):
-                mean, std = _compute_mean_and_std(os.path.join(dir_path, file_name))
+                mean, std = _compute_stats_for_image(os.path.join(dir_path, file_name))
                 means.append(mean)
                 stds.append(std)
+
+    return means, stds
+
+
+def main(dirs: [str]):
+    assert len(dirs) > 0
+
+    means = []
+    stds = []
+    for dir in dirs:
+        ms, ss = _compute_stats_for_dir(dir)
+        means.extend(ms)
+        stds.extend(ss)
 
     assert len(means) == len(stds)
 
@@ -53,7 +66,7 @@ def main(dir: str):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('dir', type=str, nargs='?')
+    parser.add_argument('dirs', type=str, nargs='+')
     args = parser.parse_args()
 
-    main(args.dir)
+    main(args.dirs)
