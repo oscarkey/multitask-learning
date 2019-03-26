@@ -12,8 +12,8 @@ def _compute_stats_for_image(file_path: str) -> (np.ndarray, np.ndarray):
     with Image.open(file_path) as image:
         image_array = np.asarray(image) / 255
 
-        mean = image_array.mean(0).mean(0)
-        std = image_array.mean(0).mean(0)
+        mean = image_array.mean((0, 1))
+        std = image_array.std((0, 1))
 
         assert mean.shape == (3,), f'mean had shape {mean.shape}'
         assert std.shape == (3,), f'std had shape {std.shape}'
