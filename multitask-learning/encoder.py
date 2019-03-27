@@ -62,8 +62,8 @@ class AtrousBottleneck(nn.Module):
 class ASPP(nn.Module):
     """Atrous Spatial Pyramid Pooling module as described for DeeplabV3 with output_stride = 8
 
-    A 1x1 convolution and three 3x3 convolutions with dilation = 12,24,36, all with out_channels=256, are applied in parallel to the input feature map,
-    and concatenated with that feature map convolved down to 256 channels by a 1x1 convolution.
+    It applies, in parallel: one 1x1 convolution, three 3x3 convolutions with dilation = 12,24,36. All have
+    out_channels=256. These are concatenated with the feature map convolved down to 256 channels by a 1x1 convolution.
     """
 
     def __init__(self):

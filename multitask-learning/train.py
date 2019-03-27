@@ -13,6 +13,7 @@ def main(_run):
     train_loader, validation_loader = _create_dataloaders(_run.config)
 
     learner = MultitaskLearner(num_classes=_run.config['num_classes'],
+                               enabled_tasks=_run.config['enabled_tasks'],
                                loss_uncertainties=_run.config['loss_uncertainties'],
                                pre_train_encoder=_run.config['pre_train_encoder'])
 
@@ -42,6 +43,11 @@ def main(_run):
 
     criterion = MultiTaskLoss(_run.config['loss_type'], _get_uncertainties(_run.config, learner),
                               _run.config['enabled_tasks'])
+
+    if _run.config['validate_only']:
+        # The user may want to load a previous experiment from Sacred, validate it, and exit.
+        _validate(_run, device, validation_loader, learner, criterion, epoch)
+        return
 
     iterations = 0
     while iterations < _run.config['max_iter']:
@@ -101,9 +107,9 @@ def main(_run):
             # output[0, 0, 0, 0].backward(retain_graph=True)
             # print(inputs.grad)
 
-            training_semantic_loss += task_loss[0].item()
-            training_instance_loss += task_loss[1].item()
-            training_depth_loss += task_loss[2].item()
+            training_semantic_loss += task_loss[0]
+            training_instance_loss += task_loss[1]
+            training_depth_loss += task_loss[2]
 
             iterations += 1
 
@@ -213,10 +219,10 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
                                                 _run.config['num_classes'])
 
             # instance mean error
-            instance_error = val_task_loss[1].item()
+            instance_error = val_task_loss[1]
 
             # inverse depth mean error
-            depth_error = val_task_loss[2].item()
+            depth_error = val_task_loss[2]
 
             # print('Batch iou %', batch_iou * 100)
             # print('Batch instance_error', instance_error)
@@ -226,9 +232,9 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
             # if i % 2000 == 1999:
             print('[%d, %5d] Validation loss: %.3f' % (epoch + 1, i + 1, val_loss.item()))
 
-            val_semantic_loss += val_task_loss[0].item()
-            val_instance_loss += val_task_loss[1].item()
-            val_depth_loss += val_task_loss[2].item()
+            val_semantic_loss += val_task_loss[0]
+            val_instance_loss += val_task_loss[1]
+            val_depth_loss += val_task_loss[2]
             val_iou += batch_iou / batch_size
 
     # save statistics to Sacred

@@ -102,10 +102,12 @@ class CityscapesDataset(Dataset):
                  use_precomputed_instances=False):
         self._root_dir = root_dir
         self._transform = transform
-        self._file_prefixes = self._find_file_prefixes(root_dir)
         self._use_precomputed_instances = use_precomputed_instances
 
         assert min_available_memory_gb >= 0, 'min_available_memory_gb must not be negative: {}'.format(min_available_memory_gb)
+
+        self._file_prefixes = self._find_file_prefixes(root_dir)
+        self._assert_files_exist()
         self._min_available_memory_gb = min_available_memory_gb
 
         self._cached_get_image = self._cache_if_enabled(self._get_image, enable_cache=enable_cache)
@@ -190,6 +192,8 @@ class CityscapesDataset(Dataset):
         return _wrapper
 
     def _get_image(self, index: int):
+        # We pre-train the network on ImageNet, so we normalize the dataset to match that.
+        # See: https://pytorch.org/docs/master/torchvision/models.html
         imagenet_mean = np.reshape([0.485, 0.456, 0.406], (3, 1, 1))
         imagenet_std = np.reshape([0.229, 0.224, 0.225], (3, 1, 1))
 
@@ -257,10 +261,18 @@ class CityscapesDataset(Dataset):
 
     def _get_file_path_for_index(self, index: int, type: str, ext='png') -> str:
         path_prefix = self._file_prefixes[index]
+
         files = glob.glob('{}*_{}.{}'.format(path_prefix, type, ext))
         assert len(files) > 0, 'Expect at least one file for the given type.'
-        assert len(files) == 1, 'Only expect one file for the given type.'
+        assert len(files) == 1, 'Only expect one file for the given type {}, found {} {}.'.format(type, len(files), path_prefix)
         return files[0]
+
+    def _assert_files_exist(self):
+        """Checks that all the files we require exist, to avoid crashing later."""
+        file_types = ['leftImg8bit', 'labelIds', 'instanceIds', 'disparity']
+        for file_type in file_types:
+            for i, _ in enumerate(self._file_prefixes):
+                self._get_file_path_for_index(i, file_type)
 
     def __len__(self):
         return len(self._file_prefixes)
