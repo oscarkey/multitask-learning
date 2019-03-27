@@ -44,7 +44,7 @@ def config():
     validate_only = False
     model_save_epochs = 0  # How frequently to checkpoint the model to Sacred. Set to 0 to disable saving the model.
     # Id of the sacred run to continue training on, or -1 to disable restoring.
-    restore_from_sacred_run = -1
+    restore_sacred_run = -1
     use_adam = True
     # The learning rate used by Adam. Not used by SGD.
     learning_rate = 1e-3
