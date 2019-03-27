@@ -43,6 +43,11 @@ def main(_run):
     criterion = MultiTaskLoss(_run.config['loss_type'], _get_uncertainties(_run.config, learner),
                               _run.config['enabled_tasks'])
 
+    if _run.config['validate_only']:
+        # The user may want to load a previous experiment from Sacred, validate it, and exit.
+        _validate(_run, device, validation_loader, learner, criterion, epoch)
+        return
+
     iterations = 0
     while iterations < _run.config['max_iter']:
 
