@@ -269,6 +269,7 @@ class CityscapesDataset(Dataset):
 
     def _assert_files_exist(self):
         """Checks that all the files we require exist, to avoid crashing later."""
+        print('Validating data set...')
         file_types = ['leftImg8bit', 'labelIds', 'instanceIds', 'disparity']
         for file_type in file_types:
             for i, _ in enumerate(self._file_prefixes):

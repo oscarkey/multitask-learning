@@ -31,7 +31,7 @@ def main(_run):
         lr_lambda = lambda x: (1 - x / _run.config['max_iter']) ** 0.9
         lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
 
-    restore_run_id = _run.config['restore_from_sacred_run']
+    restore_run_id = _run.config['restore_sacred_run']
     if restore_run_id != -1:
         epoch, model_state_dict, optimizer_state_dict = checkpointing.load_state(_run, restore_run_id)
         learner.load_state_dict(model_state_dict)
