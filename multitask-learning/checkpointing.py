@@ -11,11 +11,11 @@ server_name = 'mongodb://multitask-learning:***REMOVED***@134.209.21.201/admin?r
 collection_name = 'multitask-learning'
 
 
-def save_model(_run, model: MultitaskLearner, optimizer: Optimizer, epoch: int, file_name='model'):
+def save_model(_run, model: MultitaskLearner, optimizer: Optimizer, epoch: int, iterations: int):
     """Saves the state of the model and optimizer to Sacred, suitable for visualisation or resuming training."""
-
-    state = {'version': 1, 'model_state_dict': model.state_dict(), 'optimizer_state_dict': optimizer.state_dict(),
-             'epoch': epoch}
+    with tempfile.NamedTemporaryFile() as file:
+        state = {'version': 1, 'model_state_dict': model.state_dict(), 'optimizer_state_dict': optimizer.state_dict(),
+                 'epoch': epoch, 'iterations': iterations}
 
     torch.save(state, file_name)
     _run.add_artifact(file_name, 'model_epoch_{}'.format(epoch))

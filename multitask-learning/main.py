@@ -30,7 +30,7 @@ def config():
     root_dir_validation = 'example-tiny-cityscapes'
     root_dir_test = 'example-tiny-cityscapes'
     num_classes = 20
-    initial_learning_rate = 2.5e-3
+    initial_learning_rate = 2.5e-4
     height = 128  # TODO: pass through to model
     width = 256  # TODO: pass through to model
     loss_type = 'learned'  # One of 'fixed' or 'learned'.
@@ -52,9 +52,11 @@ def config():
     dataloader_cache = True
     # When True the data loader will load precomputed instance vectors from the .npy files.
     use_precomputed_instances = False
-    # Whether to randomly crop and flip the training data, only works when training on full size images.
-    train_augment = False
-    crop_size = (256, 256)
+    # Whether to augment the training data with random cropping.
+    crop = False
+    crop_size = (64, 64)
+    # Whether to augment the training data with random flipping.
+    flip = False
     pre_train_encoder = True  # When true, will download weights for resnet pre-trained on imagenet.
     # If total available memory is lower than this threshold, we crash rather than loading more data.
     # This avoids using all the memory on the server and getting it stuck.
@@ -64,13 +66,15 @@ def config():
 
 @ex.named_config
 def tiny_cityscapes_crops():
-    """Crops of 64x124 from Tiny Cityscapes train, with random flipping, validated on Tiny Cityscales val"""
-    # crop_size = (128, 256)
+    """Crops of 64x64 from Tiny Cityscapes train, with random flipping, validated on Tiny Cityscales val"""
+    crop = True
+    flip = True
+    crop_size = (64, 128)
+
     max_iter = 50000
     root_dir_train = '/jdata/tiny_cityscapes_train'
     root_dir_validation = '/jdata/tiny_cityscapes_val'
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
-    train_augment = True
     batch_size = 24
     learning_rate = 2.5e-5
 
@@ -84,7 +88,9 @@ def cityscapes_crops():
     root_dir_train = '/data/home/aml8/cityscapes/train'
     root_dir_validation = '/data/home/aml8/tiny_cityscapes_val'
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
-    train_augment = True
+    crop = True
+    crop_size = (256,256)
+    flip = True
 
 
 @ex.named_config

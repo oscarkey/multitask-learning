@@ -43,7 +43,8 @@ def main(_run):
     criterion = MultiTaskLoss(_run.config['loss_type'], _get_uncertainties(_run.config, learner),
                               _run.config['enabled_tasks'])
 
-    while epoch < _run.config['max_iter']:
+    iterations = 0
+    while iterations < _run.config['max_iter']:
 
         # polynomial learning rate decay
         # print(f'Learning rate: {lr_scheduler.get_lr()}')
@@ -80,6 +81,9 @@ def main(_run):
             loss.backward()
             optimizer.step()
 
+            if not use_adam:
+                lr_scheduler.step()
+
             # Print statistics
             running_loss += loss.item()
             # if i % 2000 == 1999:    # print every 2000 mini-batches
@@ -101,6 +105,8 @@ def main(_run):
             training_instance_loss += task_loss[1].item()
             training_depth_loss += task_loss[2].item()
 
+            iterations += 1
+
         # Save statistics to Sacred
         _run.log_scalar('training_semantic_loss', training_semantic_loss / num_training_batches, epoch)
         _run.log_scalar('training_instance_loss', training_instance_loss / num_training_batches, epoch)
@@ -117,10 +123,7 @@ def main(_run):
                       criterion=criterion, epoch=epoch)
 
         if _run.config['model_save_epochs'] != 0 and (epoch + 1) % _run.config['model_save_epochs'] == 0:
-            checkpointing.save_model(_run, learner, optimizer, epoch)
-
-        if not use_adam:
-            lr_scheduler.step()
+            checkpointing.save_model(_run, learner, optimizer, epoch, iterations)
 
         epoch += 1
 
@@ -131,13 +134,8 @@ def _get_learning_rate(optimizer: Optimizer):
 
 
 def _create_dataloaders(config):
-    if config['train_augment']:
-        assert len(config['crop_size']) == 2, 'Wrong crop size' + config['crop_size']
-        train_transform = transforms.Compose(
-            [cityscapes.RandomCrop(config['crop_size']), cityscapes.RandomHorizontalFlip()])
-    else:
-        train_transform = cityscapes.NoopTransform()
-    train_loader = cityscapes.get_loader_from_dir(config['root_dir_train'], config, transform=train_transform)
+    train_loader = cityscapes.get_loader_from_dir(config['root_dir_train'], config,
+                                                  transform=_get_training_transforms(config))
 
     validation_loader = cityscapes.get_loader_from_dir(config['root_dir_validation'], config)
 
@@ -146,6 +144,21 @@ def _create_dataloaders(config):
         assert len(validation_loader.dataset) >= 3, 'Must have at least 3 validation images(had {})'.format(len(validation_loader.dataset))
 
     return train_loader, validation_loader
+
+
+def _get_training_transforms(config):
+    transform_list = []
+    if config['crop']:
+        assert len(config['crop_size']) == 2, 'Wrong crop size' + config['crop_size']
+        transform_list.append(cityscapes.RandomCrop(config['crop_size']))
+
+    if config['flip']:
+        transform_list.append(cityscapes.RandomHorizontalFlip())
+
+    if len(transform_list) > 0:
+        return transforms.Compose(transform_list)
+    else:
+        return cityscapes.NoopTransform()
 
 
 def _get_uncertainties(config, learner: MultitaskLearner):
