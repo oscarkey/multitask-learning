@@ -80,6 +80,19 @@ def tiny_cityscapes_crops():
     batch_size = 24
     learning_rate = 2.5e-5
 
+@ex.named_config
+def tiny_cityscapes():
+    """Tiny Cityscapes train, with random flipping, validated on Tiny Cityscales val"""
+    crop = False
+    flip = True
+    max_iter = 50000
+    root_dir_train = '/data/home/aml8/tiny_cityscapes_train'
+    root_dir_validation = '/data/home/aml8/tiny_cityscapes_val'
+    root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
+    batch_size = 16
+    learning_rate = 2.5e-5
+    weight_decay = 10e-4
+
 
 @ex.named_config
 def cityscapes_crops():
