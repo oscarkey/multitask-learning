@@ -91,7 +91,9 @@ def tiny_cityscapes():
     root_dir_validation = '/data/home/aml8/tiny_cityscapes_val'
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
     batch_size = 16
-    learning_rate = 2.5e-5
+    max_iter = 50000
+    use_adam = False
+    initial_learning_rate = 1e-3
     weight_decay = 10e-4
 
 
