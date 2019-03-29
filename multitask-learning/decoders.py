@@ -23,9 +23,9 @@ class Decoders(nn.Module):
         self._base_depth = _build_base_decoder()
 
         kernel_size = (1, 1)
-        self._semsegcls = nn.Conv2d(256, self._num_classes, kernel_size, bias=False)
-        self._inssegcls = nn.Conv2d(256, 2, kernel_size, bias=False)
-        self._depthcls = nn.Conv2d(256, 1, kernel_size, bias=False)
+        self._semsegcls = nn.Conv2d(256, self._num_classes, kernel_size)
+        self._inssegcls = nn.Conv2d(256, 2, kernel_size)
+        self._depthcls = nn.Conv2d(256, 1, kernel_size)
 
     def set_output_size(self, size):
         self._output_size = size
