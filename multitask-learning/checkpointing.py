@@ -17,9 +17,9 @@ def save_model(_run, model: MultitaskLearner, optimizer: Optimizer, epoch: int, 
         state = {'version': 1, 'model_state_dict': model.state_dict(), 'optimizer_state_dict': optimizer.state_dict(),
                  'epoch': epoch, 'iterations': iterations}
 
-    torch.save(state, file_name)
-    _run.add_artifact(file_name, 'model_epoch_{}'.format(epoch))
-    _run.run_logger.info('Saved model to sacred at epoch {}.'.format(epoch))
+        torch.save(state, file.name)
+        _run.add_artifact(file.name, 'model_epoch_{}'.format(epoch))
+        _run.run_logger.info('Saved model to sacred at epoch {}.'.format(epoch))
 
 
 def load_state(_run, run_id: int) -> Tuple[int, Dict, Dict]:

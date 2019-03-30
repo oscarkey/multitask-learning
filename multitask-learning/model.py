@@ -3,21 +3,21 @@ import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
 from decoders import Decoders
-# from encoder import Encoder
-from deeplab import DeepLabv3 as Encoder
+from encoder import Encoder
+
 
 class MultitaskLearner(nn.Module):
     def __init__(self, num_classes, enabled_tasks: (bool, bool, bool), loss_uncertainties, pre_train_encoder,
                  output_size=(128, 256)):
         super(MultitaskLearner, self).__init__()
 
-        self.encoder = Encoder()
-        # if pre_train_encoder:
-        #     # Use ImageNet pre-trained weights for the ResNet-like layers of the encoder
-        #     state_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet101-5d3b4d8f.pth')
-        #     # strict = False so we ignore incompatibilities between official reset and our resnet.
-        #     encoder.load_state_dict(state_dict, strict=False)
-        # self.encoder = encoder
+        encoder = Encoder()
+        if pre_train_encoder:
+            # Use ImageNet pre-trained weights for the ResNet-like layers of the encoder
+            state_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet101-5d3b4d8f.pth')
+            # strict = False so we ignore incompatibilities between official reset and our resnet.
+            encoder.load_state_dict(state_dict, strict=False)
+        self.encoder = encoder
 
         self.decoders = Decoders(num_classes, enabled_tasks, output_size)
 
