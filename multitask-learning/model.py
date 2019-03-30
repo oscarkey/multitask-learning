@@ -7,11 +7,11 @@ from encoder import Encoder
 
 
 class MultitaskLearner(nn.Module):
-    def __init__(self, num_classes, enabled_tasks: (bool, bool, bool), loss_uncertainties, pre_train_encoder,
-                 output_size=(128, 256)):
+    def __init__(self, num_classes, enabled_tasks: (bool, bool, bool), loss_uncertainties, pre_train_encoder: bool,
+                 aspp_dilations: (int, int, int), output_size=(128, 256)):
         super(MultitaskLearner, self).__init__()
 
-        encoder = Encoder()
+        encoder = Encoder(aspp_dilations)
         if pre_train_encoder:
             # Use ImageNet pre-trained weights for the ResNet-like layers of the encoder
             state_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet101-5d3b4d8f.pth')

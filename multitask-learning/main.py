@@ -65,6 +65,8 @@ def config():
     # This avoids using all the memory on the server and getting it stuck.
     # Set to 0 to disable the check.
     min_available_memory_gb = 0
+    # Size of the dilations in the atrous convolutions in ASPP module of the encoder. Paper default is (12, 24, 36).
+    aspp_dilations = (12, 24, 36)
 
 
 @ex.named_config

@@ -57,8 +57,6 @@ class AtrousBottleneck(nn.Module):
         return out
 
 
-# ### ASPP
-
 class ASPP(nn.Module):
     """Atrous Spatial Pyramid Pooling module as described for DeeplabV3 with output_stride = 8
 
@@ -66,12 +64,16 @@ class ASPP(nn.Module):
     out_channels=256. These are concatenated with the feature map convolved down to 256 channels by a 1x1 convolution.
     """
 
-    def __init__(self):
-        super(ASPP, self).__init__()
+    def __init__(self, dilations: (int, int, int)):
+        super().__init__()
+
+        assert len(dilations) == 3
+        assert all([dilation > 0 for dilation in dilations])
+
         self.conv1 = conv1x1(2048, 256)
-        self.conv2 = conv3x3(2048, 256, dilation=12)
-        self.conv3 = conv3x3(2048, 256, dilation=24)
-        self.conv4 = conv3x3(2048, 256, dilation=36)
+        self.conv2 = conv3x3(2048, 256, dilation=dilations[0])
+        self.conv3 = conv3x3(2048, 256, dilation=dilations[1])
+        self.conv4 = conv3x3(2048, 256, dilation=dilations[2])
 
         # Operations for last feature map
         self.gap = nn.AdaptiveAvgPool2d((1, 1))
@@ -104,8 +106,8 @@ class Encoder(nn.Module):
 
     """
 
-    def __init__(self):
-        super(Encoder, self).__init__()
+    def __init__(self, aspp_dilations: (int, int, int)):
+        super().__init__()
         self.inplanes = 64
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -117,7 +119,7 @@ class Encoder(nn.Module):
         # Dilation choices of 2 and 4
         self.layer3 = self._make_layer(AtrousBottleneck, 256, 23, stride=1, dilation=2)
         self.layer4 = self._make_layer(AtrousBottleneck, 512, 3, stride=1, dilation=4)
-        self.aspp = ASPP()
+        self.aspp = ASPP(aspp_dilations)
 
     # from torchvision.models.resnet.ResNet
     def _make_layer(self, block, planes, blocks, stride=1, dilation=1):

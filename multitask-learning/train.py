@@ -15,7 +15,8 @@ def main(_run):
     learner = MultitaskLearner(num_classes=_run.config['num_classes'],
                                enabled_tasks=_run.config['enabled_tasks'],
                                loss_uncertainties=_run.config['loss_uncertainties'],
-                               pre_train_encoder=_run.config['pre_train_encoder'])
+                               pre_train_encoder=_run.config['pre_train_encoder'],
+                               aspp_dilations=_run.config['aspp_dilations'])
 
     device = "cuda:0" if _run.config['gpu'] and torch.cuda.is_available() else "cpu"
     learner.to(device)
