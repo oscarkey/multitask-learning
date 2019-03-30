@@ -39,21 +39,21 @@ class Decoders(nn.Module):
         if sem_seg_enabled:
             x1 = self._base_semseg(x)
             x1 = self._semsegcls(x1)
-            x1 = F.interpolate(x1, size=self._output_size, mode='bilinear', align_corners=False)
+            x1 = F.interpolate(x1, size=self._output_size, mode='bilinear', align_corners=True)
         else:
             x1 = None
 
         if inst_seg_enabled:
             x2 = self._base_insseg(x)
             x2 = self._inssegcls(x2)
-            x2 = F.interpolate(x2, size=self._output_size, mode='bilinear', align_corners=False)
+            x2 = F.interpolate(x2, size=self._output_size, mode='bilinear', align_corners=True)
         else:
             x2 = None
 
         if depth_enabled:
             x3 = self._base_depth(x)
             x3 = self._depthcls(x3)
-            x3 = F.interpolate(x3, size=self._output_size, mode='bilinear', align_corners=False)
+            x3 = F.interpolate(x3, size=self._output_size, mode='bilinear', align_corners=True)
         else:
             x3 = None
 
