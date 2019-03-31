@@ -104,7 +104,8 @@ class CityscapesDataset(Dataset):
         self._transform = transform
         self._use_precomputed_instances = use_precomputed_instances
 
-        assert min_available_memory_gb >= 0, 'min_available_memory_gb must not be negative: {}'.format(min_available_memory_gb)
+        assert min_available_memory_gb >= 0, 'min_available_memory_gb must not be negative: {}'.format(
+            min_available_memory_gb)
 
         self._file_prefixes = self._find_file_prefixes(root_dir)
         self._assert_files_exist()
@@ -163,12 +164,12 @@ class CityscapesDataset(Dataset):
 
         available_gb = psutil.virtual_memory().available / 1024 / 1024 / 1024
         if available_gb < self._min_available_memory_gb:
-            raise ValueError('Available memory was too low ', 
+            raise ValueError('Available memory was too low ',
                              '(available:{:.2f}gb req:{:.2f}gb)'.format(available_gb, self._min_available_memory_gb))
 
     def _print_cache_info(self):
 
-        print('Data loader cache: hit/miss/size, ', 
+        print('Data loader cache: hit/miss/size, ',
               '{} '.format(self._build_cache_info_string("image", self._cached_get_image.cache_info())),
               '{} '.format(self._build_cache_info_string("label", self._cached_get_labels.cache_info())),
               '{} '.format(self._build_cache_info_string("instance", self._cached_get_instances.cache_info())),
@@ -263,8 +264,8 @@ class CityscapesDataset(Dataset):
         path_prefix = self._file_prefixes[index]
 
         files = glob.glob('{}*_{}.{}'.format(path_prefix, type, ext))
-        assert len(files) > 0, 'Expect at least one file for the given type.'
-        assert len(files) == 1, 'Only expect one file for the given type {}, found {} {}.'.format(type, len(files), path_prefix)
+        assert len(files) == 1, (
+            'Only expect one file for the given type {}, found {} {}.'.format(type, len(files), path_prefix))
         return files[0]
 
     def _assert_files_exist(self):
