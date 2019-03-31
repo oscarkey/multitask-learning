@@ -48,7 +48,7 @@ def config():
     use_adam = True
     # The learning rate used by Adam. Not used by SGD.
     learning_rate = 1e-3
-    # Weight decay to set on the optimizer. Value from paper is 10e4
+    # Weight decay to set on the optimizer. Value from paper is 10^4 = 1e4
     weight_decay = 0
     dataloader_workers = 0  # If num workers > 0 then dataloader caching won't work.
     # When True the dataloader will cache all data in memory after the first read.
@@ -95,7 +95,7 @@ def tiny_cityscapes():
     max_iter = 50000
     use_adam = False
     initial_learning_rate = 1e-3
-    weight_decay = 10e-4
+    weight_decay = 1e4 # value from paper is 10^4 = 1e4
 
 
 @ex.named_config
