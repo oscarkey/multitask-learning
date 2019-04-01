@@ -67,6 +67,8 @@ def config():
     min_available_memory_gb = 0
     # Size of the dilations in the atrous convolutions in ASPP module of the encoder. Paper default is (12, 24, 36).
     aspp_dilations = (12, 24, 36)
+    # When True, use minute Cityscapes. This is downsampled to 64x128, then cropped in half to 64x64.
+    minute = False
 
 
 @ex.named_config

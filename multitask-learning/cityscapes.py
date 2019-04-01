@@ -99,10 +99,11 @@ class CityscapesDataset(Dataset):
     """
 
     def __init__(self, root_dir: str, transform=NoopTransform(), enable_cache=True, min_available_memory_gb=0,
-                 use_precomputed_instances=False):
+                 use_precomputed_instances=False, minute=False):
         self._root_dir = root_dir
         self._transform = transform
         self._use_precomputed_instances = use_precomputed_instances
+        self._minute = minute
 
         assert min_available_memory_gb >= 0, 'min_available_memory_gb must not be negative: {}'.format(
             min_available_memory_gb)
@@ -199,7 +200,8 @@ class CityscapesDataset(Dataset):
         imagenet_std = np.reshape([0.229, 0.224, 0.225], (3, 1, 1))
 
         image_file = self._get_file_path_for_index(index, 'leftImg8bit')
-        image_array = np.asarray(Image.open(image_file), dtype=np.float32)
+        image = self._convert_to_minute_if_enabled(Image.open(image_file))
+        image_array = np.asarray(image, dtype=np.float32)
 
         # We load the images as H x W x channel, but we need channel x H x W.
         image_array = np.transpose(image_array, (2, 0, 1))
@@ -214,13 +216,15 @@ class CityscapesDataset(Dataset):
 
     def _get_labels(self, index: int):
         label_file = self._get_file_path_for_index(index, 'labelIds')
-        label_array = np.asarray(Image.open(label_file), dtype=np.int64)
+        label_image = self._convert_to_minute_if_enabled(Image.open(label_file))
+        label_array = np.asarray(label_image, dtype=np.int64)
         assert len(label_array.shape) == 2, 'label_array should have 2 dimensions' + label_file
         return label_array
 
     def _get_depth(self, index: int):
         depth_file = self._get_file_path_for_index(index, 'disparity')
-        depth_array = np.asarray(Image.open(depth_file), dtype=np.float32)
+        depth_image = self._convert_to_minute_if_enabled(Image.open(depth_file))
+        depth_array = np.asarray(depth_image, dtype=np.float32)
         assert len(depth_array.shape) == 2, 'depth_array should have 2 dimensions' + depth_file
 
         mask = np.ma.masked_where(depth_array != 0, depth_array)
@@ -275,6 +279,15 @@ class CityscapesDataset(Dataset):
         for file_type in file_types:
             for i, _ in enumerate(self._file_prefixes):
                 self._get_file_path_for_index(i, file_type)
+
+    def _convert_to_minute_if_enabled(self, image: Image) -> Image:
+        """Down samples and crops a PIL image to minute size, if minute is enabled. Otherwise does nothing."""
+        if not self._minute:
+            return image
+
+        assert image.size == (256, 128), f'Minute conversion: expect input (256, 128), was {image.size}'
+
+        return image.resize((128, 64), resample=Image.NEAREST).crop((0, 0, 64, 64))
 
     def __len__(self):
         return len(self._file_prefixes)
@@ -335,7 +348,7 @@ def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
     assert (enable_cache and num_workers == 0) or (num_workers > 0 and not enable_cache)
 
     dataset = CityscapesDataset(root_dir, transform=transform, enable_cache=enable_cache,
-                                min_available_memory_gb=config['min_available_memory_gb'])
+                                min_available_memory_gb=config['min_available_memory_gb'], minute=config['minute'])
     return torch.utils.data.DataLoader(dataset, batch_size=config['batch_size'], num_workers=num_workers, shuffle=False)
 
 
