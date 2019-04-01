@@ -349,7 +349,7 @@ def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
 
     dataset = CityscapesDataset(root_dir, transform=transform, enable_cache=enable_cache,
                                 min_available_memory_gb=config['min_available_memory_gb'], minute=config['minute'])
-    return torch.utils.data.DataLoader(dataset, batch_size=config['batch_size'], num_workers=num_workers, shuffle=False)
+    return torch.utils.data.DataLoader(dataset, batch_size=config['batch_size'], num_workers=num_workers, shuffle=True)
 
 
 if __name__ == '__main__':
