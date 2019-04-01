@@ -149,10 +149,12 @@ class CityscapesDataset(Dataset):
     def __getitem__(self, index: int):
         self._check_available_memory()
 
-        image_array = self._cached_get_image(index)
-        label_array = self._cached_get_labels(index)
+        index, crop_left = self._convert_index(index)
+
+        image_array = self._cached_get_image(index, crop_left)
+        label_array = self._cached_get_labels(index, crop_left)
         instance_vecs, instance_mask = self._cached_get_instances(index)
-        depth_array, depth_mask = self._cached_get_depth(index)
+        depth_array, depth_mask = self._cached_get_depth(index, crop_left)
 
         if index == 0:
             self._print_cache_info()
@@ -193,14 +195,14 @@ class CityscapesDataset(Dataset):
                 return func(*args, **kwargs)
         return _wrapper
 
-    def _get_image(self, index: int):
+    def _get_image(self, index: int, crop_left: bool):
         # We pre-train the network on ImageNet, so we normalize the dataset to match that.
         # See: https://pytorch.org/docs/master/torchvision/models.html
         imagenet_mean = np.reshape([0.485, 0.456, 0.406], (3, 1, 1))
         imagenet_std = np.reshape([0.229, 0.224, 0.225], (3, 1, 1))
 
         image_file = self._get_file_path_for_index(index, 'leftImg8bit')
-        image = self._convert_to_minute_if_enabled(Image.open(image_file))
+        image = self._convert_to_minute_if_enabled(Image.open(image_file), crop_left)
         image_array = np.asarray(image, dtype=np.float32)
 
         # We load the images as H x W x channel, but we need channel x H x W.
@@ -214,16 +216,16 @@ class CityscapesDataset(Dataset):
         assert len(image_array.shape) == 3, 'image_array should have 3 dimensions' + image_file
         return image_array
 
-    def _get_labels(self, index: int):
+    def _get_labels(self, index: int, crop_left: bool):
         label_file = self._get_file_path_for_index(index, 'labelIds')
-        label_image = self._convert_to_minute_if_enabled(Image.open(label_file))
+        label_image = self._convert_to_minute_if_enabled(Image.open(label_file), crop_left)
         label_array = np.asarray(label_image, dtype=np.int64)
         assert len(label_array.shape) == 2, 'label_array should have 2 dimensions' + label_file
         return label_array
 
-    def _get_depth(self, index: int):
+    def _get_depth(self, index: int, crop_left: bool):
         depth_file = self._get_file_path_for_index(index, 'disparity')
-        depth_image = self._convert_to_minute_if_enabled(Image.open(depth_file))
+        depth_image = self._convert_to_minute_if_enabled(Image.open(depth_file), crop_left)
         depth_array = np.asarray(depth_image, dtype=np.float32)
         assert len(depth_array.shape) == 2, 'depth_array should have 2 dimensions' + depth_file
 
@@ -280,17 +282,39 @@ class CityscapesDataset(Dataset):
             for i, _ in enumerate(self._file_prefixes):
                 self._get_file_path_for_index(i, file_type)
 
-    def _convert_to_minute_if_enabled(self, image: Image) -> Image:
+    def _convert_index(self, index: int) -> (int, bool):
+        """If minute enabled, returns the file index and half of the file to crop. Else returns the index unchanged."""
+        if not self._minute:
+            return index, None
+
+        raw_image_count = len(self._file_prefixes)
+        # Return True (left) for even indices, False (right) for odd.
+        if index % 2 == 0:
+            return index % raw_image_count, True
+        else:
+            return index % raw_image_count, False
+
+    def _convert_to_minute_if_enabled(self, image: Image, crop_left=True) -> Image:
         """Down samples and crops a PIL image to minute size, if minute is enabled. Otherwise does nothing."""
         if not self._minute:
             return image
 
         assert image.size == (256, 128), f'Minute conversion: expect input (256, 128), was {image.size}'
 
-        return image.resize((128, 64), resample=Image.NEAREST).crop((0, 0, 64, 64))
+        if crop_left:
+            crop = (0, 0, 64, 64)
+        else:
+            crop = (64, 0, 128, 64)
+
+        return image.resize((128, 64), resample=Image.NEAREST).crop(crop)
 
     def __len__(self):
-        return len(self._file_prefixes)
+        # If minute is enabled then we crop each image in half, thus we have double the number of images available.
+        raw_image_count = len(self._file_prefixes)
+        if self._minute:
+            return raw_image_count * 2
+        else:
+            return raw_image_count
 
 
 def compute_centroid_vectors(instance_image: np.ndarray):
