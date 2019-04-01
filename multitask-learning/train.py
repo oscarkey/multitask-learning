@@ -12,8 +12,7 @@ from model import MultitaskLearner
 def main(_run):
     train_loader, validation_loader = _create_dataloaders(_run.config)
 
-    learner = MultitaskLearner(num_classes=_run.config['num_classes'],
-                               enabled_tasks=_run.config['enabled_tasks'],
+    learner = MultitaskLearner(num_classes=_run.config['num_classes'], enabled_tasks=_run.config['enabled_tasks'],
                                loss_uncertainties=_run.config['loss_uncertainties'],
                                pre_train_encoder=_run.config['pre_train_encoder'],
                                aspp_dilations=_run.config['aspp_dilations'])
@@ -22,6 +21,9 @@ def main(_run):
     learner.to(device)
 
     use_adam = _run.config['use_adam']
+    reduce_lr_on_plateau = _run.config['reduce_lr_on_plateau']
+    lr_plateau_scheduler = None
+    lr_lambda_scheduler = None
     if use_adam:
         optimizer = torch.optim.Adam(learner.parameters(), lr=_run.config['learning_rate'],
                                      weight_decay=_run.config['weight_decay'])
@@ -29,8 +31,12 @@ def main(_run):
         optimizer = torch.optim.SGD(learner.parameters(), lr=_run.config['initial_learning_rate'], momentum=0.9,
                                     nesterov=True, weight_decay=_run.config['weight_decay'])
 
-        lr_lambda = lambda x: (1 - x / _run.config['max_iter']) ** 0.9
-        lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
+        if not reduce_lr_on_plateau:
+            lr_lambda = lambda x: (1 - x / _run.config['max_iter']) ** 0.9
+            lr_lambda_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
+
+    if reduce_lr_on_plateau:
+        lr_plateau_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, verbose=True)
 
     restore_run_id = _run.config['restore_sacred_run']
     if restore_run_id != -1:
@@ -40,7 +46,6 @@ def main(_run):
         _run.run_logger.info('Restored from sacred run {} at epoch {}'.format(restore_run_id, epoch))
     else:
         epoch = 0
-
 
     criterion = MultiTaskLoss(_run.config['loss_type'], _get_uncertainties(_run.config, learner),
                               _run.config['enabled_tasks'])
@@ -88,8 +93,8 @@ def main(_run):
             loss.backward()
             optimizer.step()
 
-            if not use_adam:
-                lr_scheduler.step()
+            if lr_lambda_scheduler is not None:
+                lr_lambda_scheduler.step()
 
             # Print statistics
             running_loss += loss.item()
@@ -126,8 +131,10 @@ def main(_run):
         # print(f'Training losses: {training_semantic_loss / num_training_batches, training_instance_loss / num_training_batches, training_depth_loss / num_training_batches}')
 
         if _run.config['validate_epochs'] != 0 and ((epoch + 1) % _run.config['validate_epochs'] == 0 or epoch == 0):
-            _validate(_run=_run, device=device, validation_loader=validation_loader, learner=learner,
-                      criterion=criterion, epoch=epoch)
+            loss = _validate(_run=_run, device=device, validation_loader=validation_loader, learner=learner,
+                             criterion=criterion, epoch=epoch)
+            if reduce_lr_on_plateau:
+                lr_plateau_scheduler.step(loss)
 
         if _run.config['model_save_epochs'] != 0 and (epoch + 1) % _run.config['model_save_epochs'] == 0:
             checkpointing.save_model(_run, learner, optimizer, epoch, iterations)
@@ -146,9 +153,11 @@ def _create_dataloaders(config):
 
     validation_loader = cityscapes.get_loader_from_dir(config['root_dir_validation'], config)
 
-    assert len(train_loader.dataset) >= 3, 'Must have at least 3 train images (had {})'.format(len(train_loader.dataset))
+    assert len(train_loader.dataset) >= 3, 'Must have at least 3 train images (had {})'.format(
+        len(train_loader.dataset))
     if config['validate_epochs'] >= 1:
-        assert len(validation_loader.dataset) >= 3, 'Must have at least 3 validation images(had {})'.format(len(validation_loader.dataset))
+        assert len(validation_loader.dataset) >= 3, 'Must have at least 3 validation images(had {})'.format(
+            len(validation_loader.dataset))
 
     return train_loader, validation_loader
 
@@ -177,7 +186,8 @@ def _get_uncertainties(config, learner: MultitaskLearner):
         raise ValueError('Unknown loss_type {}'.format(config["loss_type"]))
 
 
-def _validate(_run, device, validation_loader, learner, criterion, epoch):
+def _validate(_run, device, validation_loader, learner, criterion, epoch) -> float:
+    val_total_loss = 0
     val_semantic_loss = 0
     val_instance_loss = 0
     val_depth_loss = 0
@@ -233,6 +243,7 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
             # if i % 2000 == 1999:
             print('[%d, %5d] Validation loss: %.3f' % (epoch + 1, i + 1, val_loss.item()))
 
+            val_total_loss += val_loss.item()
             val_semantic_loss += val_task_loss[0]
             val_instance_loss += val_task_loss[1]
             val_depth_loss += val_task_loss[2]
@@ -251,6 +262,8 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch):
 
     if _run.config['loss_type'] == 'learned':
         _log_loss_uncertainties_and_weights(_run, epoch, learner)
+
+    return val_total_loss / num_val_batches
 
 
 def _log_loss_uncertainties_and_weights(_run, epoch, learner):

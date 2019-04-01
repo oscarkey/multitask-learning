@@ -50,6 +50,8 @@ def config():
     learning_rate = 1e-3
     # Weight decay to set on the optimizer. Value from paper is 10^4 = 1e4
     weight_decay = 0
+    # When True, drops learning rate when training loss plateaus.
+    reduce_lr_on_plateau = False
     dataloader_workers = 0  # If num workers > 0 then dataloader caching won't work.
     # When True the dataloader will cache all data in memory after the first read.
     dataloader_cache = True
