@@ -233,9 +233,11 @@ class CityscapesDataset(Dataset):
 
         depth_array[depth_array > 0] = (depth_array[depth_array > 0] - 1) / 256
         # https://github.com/mcordts/cityscapesScripts/issues/55
-        baseline = 0.209313
-        focus_length = 2262.52
-        depth_array[depth_array > 0] = depth_array[depth_array > 0] / (baseline * focus_length)
+        #baseline = 0.209313
+        #focus_length = 2262.52
+        #depth_array[depth_array > 0] = depth_array[depth_array > 0] / (baseline * focus_length)
+
+        depth_array = depth_array / 8
 
         if len(mask.mask.shape) > 1:
             mask = np.asarray(mask.mask, dtype=np.uint8)

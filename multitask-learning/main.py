@@ -100,6 +100,21 @@ def tiny_cityscapes():
     initial_learning_rate = 1e-3
     weight_decay = 1e4 # value from paper is 10^4 = 1e4
 
+@ex.named_config
+def tiny_cityscapes_servers():
+    """Tiny Cityscapes train, with random flipping, validated on Tiny Cityscales val"""
+    crop = False
+    flip = True
+    max_iter = 5000000
+    root_dir_train = '/home/luiten/vision/tinycityscapes/tiny_cityscapes_train'
+    root_dir_validation = '/home/luiten/vision/tinycityscapes/tiny_cityscapes_val'
+    root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
+    batch_size = 16
+    use_adam = True
+    initial_learning_rate = 1e-3
+    learning_rate = 1e-5
+    weight_decay = 0 #1e-4 # value from paper is 10^4 = 1e4
+
 
 @ex.named_config
 def cityscapes_crops():
