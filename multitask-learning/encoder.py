@@ -4,6 +4,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+_LAYER_BLOCKS = {
+    'resnet101': [3, 4, 23, 3],
+    'resnet50': [3, 4, 6, 3],
+}
+
 # code in this cell mostly from torchvision/models/resnet.py
 
 def conv3x3(in_planes, out_planes, stride=1, dilation=1):
@@ -106,19 +111,22 @@ class Encoder(nn.Module):
 
     """
 
-    def __init__(self, aspp_dilations: (int, int, int)):
+    def __init__(self, aspp_dilations: (int, int, int), resnet_type: str):
         super().__init__()
         self.inplanes = 64
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(AtrousBottleneck, 64, 3)
-        self.layer2 = self._make_layer(AtrousBottleneck, 128, 4, stride=2)
 
+        layer_blocks = _LAYER_BLOCKS[resnet_type]
+        assert len(layer_blocks) == 4
+        self.layer1 = self._make_layer(AtrousBottleneck, 64, layer_blocks[0])
+        self.layer2 = self._make_layer(AtrousBottleneck, 128, layer_blocks[1], stride=2)
         # Dilation choices of 2 and 4
-        self.layer3 = self._make_layer(AtrousBottleneck, 256, 23, stride=1, dilation=2)
-        self.layer4 = self._make_layer(AtrousBottleneck, 512, 3, stride=1, dilation=4)
+        self.layer3 = self._make_layer(AtrousBottleneck, 256, layer_blocks[2], stride=1, dilation=2)
+        self.layer4 = self._make_layer(AtrousBottleneck, 512, layer_blocks[3], stride=1, dilation=4)
+
         self.aspp = ASPP(aspp_dilations)
 
     # from torchvision.models.resnet.ResNet

@@ -69,6 +69,7 @@ def config():
     aspp_dilations = (12, 24, 36)
     # When True, use minute Cityscapes. This is downsampled to 64x128, then cropped in half to 64x64.
     minute = False
+    resnet_type = 'resnet101'
 
 
 @ex.named_config

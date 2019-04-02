@@ -5,16 +5,22 @@ import torch.utils.model_zoo as model_zoo
 from decoders import Decoders
 from encoder import Encoder
 
+_RESNET_MODELS = {
+    'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
+    'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth'
+}
 
 class MultitaskLearner(nn.Module):
     def __init__(self, num_classes, enabled_tasks: (bool, bool, bool), loss_uncertainties, pre_train_encoder: bool,
-                 aspp_dilations: (int, int, int), output_size=(128, 256)):
+                 aspp_dilations: (int, int, int), resnet_type='resnet101', output_size=(128, 256)):
         super(MultitaskLearner, self).__init__()
 
-        encoder = Encoder(aspp_dilations)
+        assert resnet_type in _RESNET_MODELS, f'Unknown resnet type {resnet_type}'
+
+        encoder = Encoder(aspp_dilations, resnet_type)
         if pre_train_encoder:
             # Use ImageNet pre-trained weights for the ResNet-like layers of the encoder
-            state_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet101-5d3b4d8f.pth')
+            state_dict = model_zoo.load_url(_RESNET_MODELS[resnet_type])
             # strict = False so we ignore incompatibilities between official reset and our resnet.
             encoder.load_state_dict(state_dict, strict=False)
         self.encoder = encoder
