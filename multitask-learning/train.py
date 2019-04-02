@@ -216,16 +216,17 @@ def _validate(_run, device, validation_loader, learner, criterion, epoch) -> flo
                                                 semantic_labels.long(), instance_centroid, instance_mask, depth,
                                                 depth_mask)
 
-            # Calculate accuracy measures
-
-            # Segmentation IoU
-            batch_iou = 0
-
             # TODO: this batch size might break
             batch_size = semantic_labels.shape[0]
-            for image_index in range(batch_size):
-                batch_iou += _compute_image_iou(semantic_labels[image_index], output_semantic[image_index],
-                                                _run.config['num_classes'])
+
+            # Calculate accuracy measures
+            # Segmentation IoU
+            # Only compute IoU if semantic segmentation is enabled.
+            batch_iou = 0
+            if _run.config['enabled_tasks'][0]:
+                for image_index in range(batch_size):
+                    batch_iou += _compute_image_iou(semantic_labels[image_index], output_semantic[image_index],
+                                                    _run.config['num_classes'])
 
             # instance mean error
             instance_error = val_task_loss[1]
