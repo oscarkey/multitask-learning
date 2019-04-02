@@ -153,7 +153,7 @@ class CityscapesDataset(Dataset):
 
         image_array = self._cached_get_image(index, crop_left)
         label_array = self._cached_get_labels(index, crop_left)
-        instance_vecs, instance_mask = self._cached_get_instances(index)
+        instance_vecs, instance_mask = self._cached_get_instances(index, crop_left)
         depth_array, depth_mask = self._cached_get_depth(index, crop_left)
 
         if index == 0:
@@ -245,16 +245,17 @@ class CityscapesDataset(Dataset):
             mask = np.ones(depth_array.shape, dtype=np.uint8)
         return depth_array, mask
 
-    def _get_instances(self, index: int):
+    def _get_instances(self, index: int, crop_left: bool):
         if self._use_precomputed_instances:
             return self._get_precomputed_instances(index)
         else:
-            return self._load_and_compute_instances(index)
+            return self._load_and_compute_instances(index, crop_left)
 
-    def _load_and_compute_instances(self, index: int):
+    def _load_and_compute_instances(self, index: int, crop_left: bool):
         """Loads the instance file from cityscapes, and then computes the instances."""
         instance_file = self._get_file_path_for_index(index, 'instanceIds')
-        instance_array = np.asarray(Image.open(instance_file), dtype=np.float32)
+        instance_image = self._convert_to_minute_if_enabled(Image.open(instance_file), crop_left)
+        instance_array = np.asarray(instance_image, dtype=np.float32)
         assert len(instance_array.shape) == 2, 'instance_array should have 2 dimensions' + instance_file
 
         return compute_centroid_vectors(instance_array)
