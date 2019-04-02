@@ -124,9 +124,7 @@ def main(_run):
         _run.log_scalar('training_instance_loss', training_instance_loss / num_training_batches, epoch)
         _run.log_scalar('training_depth_loss', training_depth_loss / num_training_batches, epoch)
 
-        # We only log the learning rate if using SGD.
-        if not use_adam:
-            _run.log_scalar('learning_rate', _get_learning_rate(optimizer))
+        _run.log_scalar('learning_rate', _get_learning_rate(optimizer))
 
         # print(f'Training losses: {training_semantic_loss / num_training_batches, training_instance_loss / num_training_batches, training_depth_loss / num_training_batches}')
 
