@@ -31,8 +31,6 @@ def config():
     root_dir_test = 'example-tiny-cityscapes'
     num_classes = 20
     initial_learning_rate = 2.5e-4
-    height = 128  # TODO: pass through to model
-    width = 256  # TODO: pass through to model
     loss_type = 'learned'  # One of 'fixed' or 'learned'.
     loss_uncertainties = (1.0, 1.0, 1.0)  # equal to weights when loss_type = 'fixed'
     enabled_tasks = (True, True, True)
