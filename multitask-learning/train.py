@@ -36,7 +36,8 @@ def main(_run):
             lr_lambda_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
 
     if reduce_lr_on_plateau:
-        lr_plateau_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, verbose=True)
+        lr_plateau_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, verbose=True,
+                                                                          threshold=1e-3)
 
     restore_run_id = _run.config['restore_sacred_run']
     if restore_run_id != -1:
