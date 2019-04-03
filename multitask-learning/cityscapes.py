@@ -307,7 +307,7 @@ class CityscapesDataset(Dataset):
         if not self._minute:
             return image
 
-        assert image.size == (256, 128), f'Minute conversion: expect input (256, 128), was {image.size}'
+        assert image.size[0] / image.size[1] == 2, f'Minute conversion: expect width double height, was {image.size}'
 
         if crop_left:
             crop = (0, 0, 64, 64)
