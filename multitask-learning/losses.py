@@ -55,6 +55,7 @@ class MultiTaskLoss(nn.Module):
         return mult_loss
 
     def depth_loss(self, depth_input, depth_target, depth_mask):
+        depth_input = depth_input.squeeze(1)
         depth_mask = depth_mask.float()
         target = depth_target.float() * depth_mask
         mult_loss = self.l1_loss(depth_input * depth_mask, target)
