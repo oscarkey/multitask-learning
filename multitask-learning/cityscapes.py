@@ -343,7 +343,7 @@ def compute_centroid_vectors(instance_image: np.ndarray):
     centroids = np.zeros(instance_image.shape + (2,))
     for value in np.unique(instance_image):
         xs, ys = np.where(instance_image == value)
-        centroids[xs, ys] = np.array((np.floor(np.mean(xs)), np.floor(np.mean(ys))))
+        centroids[xs, ys] = np.array((np.mean(xs), np.mean(ys)))
 
     # Calculate the distance from the x,y coordinates of the pixel to the coordinates of the
     # centre of its associated instance.
