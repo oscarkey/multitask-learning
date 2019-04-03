@@ -275,17 +275,25 @@ def _log_loss_uncertainties_and_weights(_run, epoch, learner):
     inst_weight = 0.5 * np.exp(-inst_uncertainty)
     depth_weight = 0.5 * np.exp(-depth_uncertainty)
 
-    _run.log_scalar('uncertainty_semantic_loss', sem_uncertainty, epoch)
-    _run.log_scalar('uncertainty_instance_loss', inst_uncertainty, epoch)
-    _run.log_scalar('uncertainty_depth_loss', depth_uncertainty, epoch)
+    _run.log_scalar('S_semantic', sem_uncertainty, epoch)
+    _run.log_scalar('S_instance', inst_uncertainty, epoch)
+    _run.log_scalar('S_depth', depth_uncertainty, epoch)
 
-    print('Uncertainties: (%.5f, %.5f, %.5f)' % (sem_uncertainty, inst_uncertainty, depth_uncertainty))
+    print('S: (%.5f, %.5f, %.5f)' % (sem_uncertainty, inst_uncertainty, depth_uncertainty))
 
-    _run.log_scalar('weight_semantic_loss', sem_weight, epoch)
-    _run.log_scalar('weight_instance_loss', inst_weight, epoch)
-    _run.log_scalar('weight_depth_loss', depth_weight, epoch)
+    _run.log_scalar('weight_semantic', sem_weight, epoch)
+    _run.log_scalar('weight_instance', inst_weight, epoch)
+    _run.log_scalar('weight_depth', depth_weight, epoch)
 
     print('Weights: (%.5f, %.5f, %.5f)' % (sem_weight, inst_weight, depth_weight))
+
+    sem_var = np.exp(sem_uncertainty)
+    inst_var = np.exp(inst_uncertainty)
+    depth_var = np.exp(depth_uncertainty)
+
+    _run.log_scalar('var_semantic', sem_var, epoch)
+    _run.log_scalar('var_instance', inst_var, epoch)
+    _run.log_scalar('var_depth', depth_var, epoch)
 
     print()
 

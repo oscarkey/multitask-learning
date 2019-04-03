@@ -229,7 +229,10 @@ class CityscapesDataset(Dataset):
         depth_array = np.asarray(depth_image, dtype=np.float32)
         assert len(depth_array.shape) == 2, 'depth_array should have 2 dimensions' + depth_file
 
-        mask = np.ma.masked_where(depth_array != 0, depth_array)
+        sem_map = self._get_labels(index, crop_left)
+        sky_mask = sem_map == 10
+        mask = ((depth_array != 0) + (sky_mask)).astype(np.bool).astype(np.uint8)
+        #mask = np.ma.masked_where(depth_array != 0, depth_array)
 
         depth_array[depth_array > 0] = (depth_array[depth_array > 0] - 1) / 256
         # https://github.com/mcordts/cityscapesScripts/issues/55
@@ -239,12 +242,14 @@ class CityscapesDataset(Dataset):
 
         depth_array = depth_array / 8
 
-        if len(mask.mask.shape) > 1:
-            mask = np.asarray(mask.mask, dtype=np.uint8)
-        elif mask.mask is False:
-            mask = np.zeros(depth_array.shape, dtype=np.uint8)
-        else:
-            mask = np.ones(depth_array.shape, dtype=np.uint8)
+        depth_array[sky_mask] = 0
+        
+       # if len(mask.mask.shape) > 1:
+       #     mask = np.asarray(mask.mask, dtype=np.uint8)
+       # elif mask.mask is False:
+       #     mask = np.zeros(depth_array.shape, dtype=np.uint8)
+       # else:
+       #     mask = np.ones(depth_array.shape, dtype=np.uint8)
         return depth_array, mask
 
     def _get_instances(self, index: int, crop_left: bool):

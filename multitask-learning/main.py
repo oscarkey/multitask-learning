@@ -110,11 +110,11 @@ def tiny_cityscapes_servers():
     root_dir_validation = '/home/luiten/vision/tinycityscapes/tiny_cityscapes_val'
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
     batch_size = 16
-    use_adam = True
+    use_adam = False #True
     initial_learning_rate = 1e-3
     learning_rate = 1e-5
-    weight_decay = 0 #1e-4 # value from paper is 10^4 = 1e4
-
+    weight_decay = 1e-4 #0 #1e-4 # value from paper is 10^4 = 1e4
+    num_classes = 19
 
 @ex.named_config
 def cityscapes_crops():
