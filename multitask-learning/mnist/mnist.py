@@ -62,8 +62,8 @@ def _get_dataloaders(mnist_type: str, batch_size: int) -> (DataLoader, DataLoade
     else:
         raise ValueError(f'Unknown MNIST type: {mnist_type}')
 
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=2)
 
     return train_dataloader, test_dataloader
 
