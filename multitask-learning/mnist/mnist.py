@@ -119,7 +119,7 @@ def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel) -> (float
 
 
 @ex.capture
-def _train(max_epochs: int, lr: float, _log: Logger):
+def _train(_run, max_epochs: int, lr: float, _log: Logger):
     train_dataloader, test_dataloader = _get_dataloaders()
 
     model = MultitaskMnistModel()
@@ -132,6 +132,9 @@ def _train(max_epochs: int, lr: float, _log: Logger):
 
     for epoch in range(max_epochs):
         epoch_loss = 0
+        epoch_loss1 = 0
+        epoch_loss2 = 0
+
         for i, data in enumerate(train_dataloader):
             images, labels = data
 
@@ -150,9 +153,21 @@ def _train(max_epochs: int, lr: float, _log: Logger):
             optimizer.step()
 
             epoch_loss += loss.item()
+            epoch_loss1 += loss1
+            epoch_loss2 += loss2
 
         weight1, weight2 = model.get_loss_weights()
         _log.info(f'Epoch {epoch}: {epoch_loss / i:.3f} ({weight1.item():.3f}, {weight2.item():.3f})')
+
+        acc1, acc2 = _validate(test_dataloader, model)
+
+        _run.log_scalar('train_loss', epoch_loss / i, epoch)
+        _run.log_scalar('train_loss1', epoch_loss1 / i, epoch)
+        _run.log_scalar('train_loss2', epoch_loss2 / i, epoch)
+        _run.log_scalar('val_acc1', acc1, epoch)
+        _run.log_scalar('val_acc2', acc2, epoch)
+        _run.log_scalar('weight1', weight1.item(), epoch)
+        _run.log_scalar('weight2', weight2.item(), epoch)
 
 
 @ex.automain
