@@ -156,9 +156,6 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
             epoch_loss1 += loss1.item()
             epoch_loss2 += loss2.item()
 
-            if i >= 5:
-                break
-
         weight1, weight2 = model.get_loss_weights()
         _log.info(f'Epoch {epoch}: {epoch_loss / i:.3f} ({weight1.item():.3f}, {weight2.item():.3f})')
 
