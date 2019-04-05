@@ -123,8 +123,9 @@ def _train(max_epochs: int, lr: float, _log: Logger):
     train_dataloader, test_dataloader = _get_dataloaders()
 
     model = MultitaskMnistModel()
-    loss_func = _get_loss_func(model=model)
+    model = model.to(_get_device())
 
+    loss_func = _get_loss_func(model=model)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     _log.info('Starting training...')
