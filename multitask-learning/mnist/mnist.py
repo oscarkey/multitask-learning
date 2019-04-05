@@ -57,7 +57,11 @@ def _get_dataloaders(mnist_type: str, batch_size: int) -> (DataLoader, DataLoade
         test_dataset = torchvision.datasets.MNIST(model_dir, train=False, download=True, transform=transform)
 
     elif mnist_type == 'fashion':
-        raise NotImplementedError
+        # TODO: normalize?
+        transform = transforms.Compose([transforms.ToTensor()])
+        model_dir = '~/.torch/models/fashion_mnist'
+        train_dataset = torchvision.datasets.FashionMNIST(model_dir, train=True, download=True, transform=transform)
+        test_dataset = torchvision.datasets.FashionMNIST(model_dir, train=False, download=True, transform=transform)
 
     else:
         raise ValueError(f'Unknown MNIST type: {mnist_type}')
