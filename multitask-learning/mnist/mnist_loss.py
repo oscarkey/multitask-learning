@@ -55,16 +55,16 @@ class FixedWeightsLoss(MultitaskMnistLoss):
         self._weight1 = weight1
         self._weight2 = weight2
 
-    def __call__(self, output1: Tensor, output2: Tensor, labels) -> (Tensor, (float, float)):
+    def __call__(self, output1: Tensor, output2: Tensor, labels) -> (Tensor, (Tensor, Tensor)):
         if self._enable_task1:
             loss1 = _compute_loss1(output1, labels)
         else:
-            loss1 = 0
+            loss1 = torch.tensor([0], dtype=torch.float)
 
         if self._enable_task2:
             loss2 = _compute_loss2(output2, labels)
         else:
-            loss2 = 0
+            loss2 = torch.tensor([0], dtype=torch.float)
 
         return self._weight1 * loss1 + self._weight2 * loss2, (loss1, loss2)
 
@@ -77,7 +77,7 @@ class LearnedWeightsLoss(MultitaskMnistLoss):
         self._weight1 = weight1
         self._weight2 = weight2
 
-    def __call__(self, output1: Tensor, output2: Tensor, labels) -> (Tensor, (float, float)):
+    def __call__(self, output1: Tensor, output2: Tensor, labels) -> (Tensor, (Tensor, Tensor)):
         loss1 = _compute_loss1(output1, labels)
         loss2 = _compute_loss2(output2, labels)
         loss = (torch.exp(-self._weight1) * loss1 + 0.5 * self._weight1 + torch.exp(
