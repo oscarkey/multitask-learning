@@ -59,12 +59,13 @@ class FixedWeightsLoss(MultitaskMnistLoss):
         if self._enable_task1:
             loss1 = _compute_loss1(output1, labels)
         else:
-            loss1 = torch.tensor([0], dtype=torch.float)
+            output1
+            loss1 = torch.tensor([0], dtype=torch.float, device=output1.device)
 
         if self._enable_task2:
             loss2 = _compute_loss2(output2, labels)
         else:
-            loss2 = torch.tensor([0], dtype=torch.float)
+            loss2 = torch.tensor([0], dtype=torch.float, device=output1.device)
 
         return self._weight1 * loss1 + self._weight2 * loss2, (loss1, loss2)
 
