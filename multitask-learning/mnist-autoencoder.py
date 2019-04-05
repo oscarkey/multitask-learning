@@ -128,13 +128,17 @@ def train(train_dataloader, num_epochs, model, criterion1, criterion2, optimizer
 
             if enable[0]:
                 loss1 = criterion1(output1, labels)
+                l1 = loss1.item()
             else:
                 loss1 = 0
+                l1 = 0
 
             if enable[1]:
                 loss2 = criterion2(image, output2)
+                l2 = loss2.item()
             else:
                 loss2 = 0
+                l2 = 0
 
             if learn_weights:
                 loss = (torch.exp(-model.weight1) * loss1 + 0.5 * model.weight1 
@@ -143,8 +147,8 @@ def train(train_dataloader, num_epochs, model, criterion1, criterion2, optimizer
                 w_1.append(model.weight1.detach().cpu().numpy())
             else:
                 loss = fixed_weights_vals[0]*loss1 + fixed_weights_vals[1]*loss2
-                loss1_log.append(loss1.item())
-                loss2_log.append(loss2.item())
+                loss1_log.append(l1)
+                loss2_log.append(l2)
 
             loss.backward()
             optimizer.step()
