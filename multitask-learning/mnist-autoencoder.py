@@ -183,7 +183,7 @@ def evaluate(test_dataloader, model, criterion2):
 
         print(f'Accuracy 1: {correct1}/{total} ({100 * correct1/total:.2f}%)')
         print('Reconstruction error: {}'.format(total_loss/i))
-    return 100 * correct1/total total_loss/i
+    return 100 * correct1/total, total_loss/i
 
 
 
@@ -199,7 +199,7 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
     optimizer = torch.optim.Adam(model1.parameters(), lr=0.001, weight_decay=0.0001)
 
     train(train_dataloader, num_epochs, model1, criterion1, criterion2, optimizer, 
-      enable=enable, learn_weights=learn_weights, weights_vals, file_name)
+      enable, learn_weights, weights_vals, file_name)
 
 
 # single tasks
