@@ -35,7 +35,7 @@ def config():
     mnist = 1
     # One of 'numbers', 'fashion'.
     mnist_type = 'numbers'
-    max_epochs = 60
+    max_epochs = 100
     lr = 0.0001
     batch_size = 64
     # One of 'learned' or 'fixed'.
