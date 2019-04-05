@@ -33,7 +33,8 @@ def config():
     """Default config values."""
     # Allows us to filter to mnist results only in sacredboard.
     mnist = 1
-    # One of 'numbers', 'fashion'.
+    # Whether to use the standard MNIST or FashionMNIST dataset, and so what type of classifcation task to perform.
+    # See mnist_loss._labels_to_1()
     mnist_type = 'numbers'
     max_epochs = 100
     lr = 0.0001
@@ -56,7 +57,7 @@ def _get_dataloaders(mnist_type: str, batch_size: int) -> (DataLoader, DataLoade
         train_dataset = torchvision.datasets.MNIST(model_dir, train=True, download=True, transform=transform)
         test_dataset = torchvision.datasets.MNIST(model_dir, train=False, download=True, transform=transform)
 
-    elif mnist_type == 'fashion':
+    elif mnist_type == 'fashion_pullover_coat':
         # TODO: normalize?
         transform = transforms.Compose([transforms.ToTensor()])
         model_dir = '~/.torch/models/fashion_mnist'
@@ -83,21 +84,22 @@ def _get_loss_func(loss_type: str, model: MultitaskMnistModel) -> MultitaskMnist
 
 
 @ex.capture
-def _get_fixed_loss_func(enable1: bool, enable2: bool, weight1: float, weight2: float):
-    return FixedWeightsLoss(enable1, enable2, weight1, weight2)
+def _get_fixed_loss_func(enable1: bool, enable2: bool, weight1: float, weight2: float, mnist_type: str):
+    return FixedWeightsLoss(enable1, enable2, weight1, weight2, mnist_type)
 
 
 @ex.capture
-def _get_learned_loss_func(model: MultitaskMnistModel):
+def _get_learned_loss_func(model: MultitaskMnistModel, mnist_type: str):
     weight1, weight2 = model.get_loss_weights()
-    return LearnedWeightsLoss(weight1, weight2)
+    return LearnedWeightsLoss(weight1, weight2, mnist_type)
 
 
 def _get_device():
     return "cuda:0" if torch.cuda.is_available() else "cpu"
 
 
-def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel) -> (float, float):
+@ex.capture
+def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel, mnist_type: str) -> (float, float):
     """Returns (accuracy1, accuracy2)."""
     with torch.no_grad():
         correct1 = 0
@@ -116,7 +118,7 @@ def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel) -> (float
             preds2 = output2.argmax(dim=1)
             assert preds1.shape == preds2.shape
 
-            correct1 += mnist_loss.compute_num_correct_task1(preds1, labels)
+            correct1 += mnist_loss.compute_num_correct_task1(preds1, labels, mnist_type)
             correct2 += mnist_loss.compute_num_correct_task2(preds2, labels)
             total += preds1.shape[0]
     return correct1 / total, correct2 / total
@@ -163,7 +165,7 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
         weight1, weight2 = model.get_loss_weights()
         _log.info(f'Epoch {epoch}: {epoch_loss / i:.3f} ({weight1.item():.3f}, {weight2.item():.3f})')
 
-        acc1, acc2 = _validate(test_dataloader, model)
+        acc1, acc2 = _validate(test_dataloader=test_dataloader, model=model)
 
         _run.log_scalar('train_loss', epoch_loss / i, epoch)
         _run.log_scalar('train_loss1', epoch_loss1 / i, epoch)
