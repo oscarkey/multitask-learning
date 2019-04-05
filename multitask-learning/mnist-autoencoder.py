@@ -143,12 +143,12 @@ def train(train_dataloader, num_epochs, model, criterion1, criterion2, optimizer
             if learn_weights:
                 loss = (torch.exp(-model.weight1) * loss1 + 0.5 * model.weight1 
                         + 0.5 * (torch.exp(-model.weight2) * loss2 + model.weight2))
-                w_0.append(model.weight1.detach().cpu().numpy())
-                w_1.append(model.weight1.detach().cpu().numpy())
+                w_0.append(np.round(model.weight1.detach().cpu().numpy()), 5)
+                w_1.append(np.round(model.weight1.detach().cpu().numpy()), 5)
             else:
                 loss = fixed_weights_vals[0]*loss1 + fixed_weights_vals[1]*loss2
-                loss1_log.append(l1)
-                loss2_log.append(l2)
+                loss1_log.append(np.round(l1, 5))
+                loss2_log.append(np.round(l2, 5))
 
             loss.backward()
             optimizer.step()
