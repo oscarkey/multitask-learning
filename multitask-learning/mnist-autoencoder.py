@@ -204,9 +204,9 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
 
 # single tasks
 run(train_dataloader, enable=(True, False), learn_weights=False, 
-    weights_vals=[1, 0], file_name='classification_only')
+    weights_vals=[1., 0.], file_name='classification_only')
 run(train_dataloader, enable=(False, True), learn_weights=False, 
-    weights_vals=[0, 1], file_name='reconstruction_only')
+    weights_vals=[0., 1.], file_name='reconstruction_only')
 
 # fixed grid search
 run(train_dataloader, enable=(True, True), learn_weights=False, 
