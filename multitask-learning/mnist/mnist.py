@@ -10,7 +10,6 @@ from sacred.observers import MongoObserver
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-import checkpointing
 import mnist_loss
 from mnist_loss import FixedWeightsLoss, MultitaskMnistLoss, LearnedWeightsLoss
 from mnist_model import MultitaskMnistModel
@@ -21,7 +20,9 @@ config_updates, _ = get_config_updates(sys.argv)
 
 # Disable saving to mongo using "with save_to_db=False"
 if ("save_to_db" not in config_updates) or config_updates["save_to_db"]:
-    mongo_observer = MongoObserver.create(url=checkpointing.server_name, db_name=checkpointing.collection_name)
+    mongo_observer = MongoObserver.create(
+        url='mongodb://multitask-learning:***REMOVED***@134.209.21.201/admin?retryWrites=true',
+        db_name='multitask-learning')
     ex.observers.append(mongo_observer)
 else:
     ex.observers.append(FileStorageObserver.create('multitask_results'))
