@@ -21,6 +21,7 @@ notebook = "*"
 scikit-learn = "*"
 psutil = "*"
 gitpython = "*"
+incense = "*"
 
 [dev-packages]
 pylint = "*"
