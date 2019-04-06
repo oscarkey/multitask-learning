@@ -12,7 +12,7 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.1307,), (0.3081,)),
 ])
-train_dataset = torchvision.datasets.FashionMNIST('~/.torch/models/mnist', train=True, download=True, 
+train_dataset = torchvision.datasets.FashionMNIST('~/.torch/models/fashionmnist', train=True, download=True, 
                                            transform=transform)
 test_dataset = torchvision.datasets.FashionMNIST('~/.torch/models/mnist', train=False, download=True, 
                                            transform=transform)
