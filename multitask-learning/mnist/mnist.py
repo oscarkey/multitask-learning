@@ -126,7 +126,8 @@ def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel, mnist_typ
             task_2_num_correct += mnist_loss.compute_num_correct_task2(preds2, labels)
             num_images += preds1.shape[0]
 
-            task_3_accumulated_error += F.l1_loss(output3, image)
+            task_3_accumulated_error += F.l1_loss(output3, image).sum().item()
+            num_batches += 1
 
     return task_1_num_correct / num_images, task_2_num_correct / num_images, task_3_accumulated_error / num_batches
 
