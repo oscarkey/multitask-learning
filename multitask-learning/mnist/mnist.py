@@ -3,6 +3,7 @@ from logging import Logger
 
 import sacred
 import torch
+import torch.nn.functional as F
 import torchvision
 from sacred.arg_parser import get_config_updates
 from sacred.observers import FileStorageObserver
@@ -97,28 +98,37 @@ def _get_device():
 
 @ex.capture
 def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel, mnist_type: str) -> (float, float):
-    """Returns (accuracy1, accuracy2)."""
-    with torch.no_grad():
-        correct1 = 0
-        correct2 = 0
-        total = 0
+    """Returns (accuracy1, accuracy2, accuracy3).
 
-        for i, data in enumerate(test_dataloader):
+    accuracy1 and accuracy2 are the fraction of the images which the model labelled correctly. accuracy3 is the mean
+    reconstruction error.
+    """
+    with torch.no_grad():
+        task_1_num_correct = 0
+        task_2_num_correct = 0
+        task_3_accumulated_error = 0
+        num_images = 0
+        num_batches = 0
+
+        for data in test_dataloader:
             image, labels = data
 
             image = image.to(_get_device())
             labels = labels.to(_get_device())
 
-            output1, output2 = model(image)
+            output1, output2, output3 = model(image)
 
             preds1 = output1.argmax(dim=1)
             preds2 = output2.argmax(dim=1)
             assert preds1.shape == preds2.shape
 
-            correct1 += mnist_loss.compute_num_correct_task1(preds1, labels, mnist_type)
-            correct2 += mnist_loss.compute_num_correct_task2(preds2, labels)
-            total += preds1.shape[0]
-    return correct1 / total, correct2 / total
+            task_1_num_correct += mnist_loss.compute_num_correct_task1(preds1, labels, mnist_type)
+            task_2_num_correct += mnist_loss.compute_num_correct_task2(preds2, labels)
+            num_images += preds1.shape[0]
+
+            task_3_accumulated_error += F.l1_loss(output3, image)
+
+    return task_1_num_correct / num_images, task_2_num_correct / num_images, task_3_accumulated_error / num_batches
 
 
 @ex.capture
@@ -146,8 +156,6 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
             images = images.to(_get_device())
             labels = labels.to(_get_device())
 
-            images /= 255
-
             optimizer.zero_grad()
 
             outputs = model(images)
@@ -165,9 +173,10 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
             iteration_count += 1
 
         weight1, weight2, weight3 = model.get_loss_weights()
-        _log.info(f'Epoch {epoch}: {epoch_loss / iteration_count:.3f} ({weight1.item():.3f}, {weight2.item():.3f})')
+        _log.info(f'Epoch {epoch}: {epoch_loss / iteration_count:.3f} '
+                  f'({weight1.item():.3f}, {weight2.item():.3f}, {weight3.item():.3f})')
 
-        acc1, acc2 = _validate(test_dataloader=test_dataloader, model=model)
+        acc1, acc2, acc3 = _validate(test_dataloader=test_dataloader, model=model)
 
         _run.log_scalar('train_loss', epoch_loss / iteration_count, epoch)
         _run.log_scalar('train_loss1', epoch_loss1 / iteration_count, epoch)
@@ -175,6 +184,7 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
         _run.log_scalar('train_loss3', epoch_loss3 / iteration_count, epoch)
         _run.log_scalar('val_acc1', acc1, epoch)
         _run.log_scalar('val_acc2', acc2, epoch)
+        _run.log_scalar('val_acc3', acc3, epoch)
         _run.log_scalar('weight1', weight1.item(), epoch)
         _run.log_scalar('weight2', weight2.item(), epoch)
         _run.log_scalar('weight3', weight3.item(), epoch)
