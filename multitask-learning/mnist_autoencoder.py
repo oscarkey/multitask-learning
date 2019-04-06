@@ -244,6 +244,9 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
 if __name__ = "__main__":
   #  learned
     run(train_dataloader, enable=(True, True), learn_weights=True, 
+        weights_vals=[5.0, 5.0], file_name='learned_init_5_5')
+  
+    run(train_dataloader, enable=(True, True), learn_weights=True, 
         weights_vals=[1.0, 1.0], file_name='learned_init_1_1')
 
     run(train_dataloader, enable=(True, True), learn_weights=True, 
@@ -255,8 +258,7 @@ if __name__ = "__main__":
     run(train_dataloader, enable=(True, True), learn_weights=True, 
         weights_vals=[4.0, 4.0], file_name='learned_init_4_4')
 
-    run(train_dataloader, enable=(True, True), learn_weights=True, 
-        weights_vals=[5.0, 5.0], file_name='learned_init_5_5')
+
 
 # Just 1:
 # Accuracy 1: 9868/10000 (98.68%)
