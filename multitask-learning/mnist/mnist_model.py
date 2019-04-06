@@ -31,7 +31,7 @@ class Encoder(nn.Module):
         return x
 
 
-class Decoder(nn.Module):
+class Classifier(nn.Module):
     def __init__(self, num_classes: int):
         super().__init__()
         self._fc1 = nn.Linear(in_features=4 * 4 * 64, out_features=1024)
@@ -46,23 +46,42 @@ class Decoder(nn.Module):
         return x
 
 
-class MultitaskMnistModel(nn.Module):
+class Reconstructor(nn.Module):
     def __init__(self):
         super().__init__()
-        self._encoder = Encoder()
-        self._decoder1 = Decoder(num_classes=3)
-        self._decoder2 = Decoder(num_classes=10)
+        self._decoder = nn.Sequential(nn.ConvTranspose2d(64, 16, 3, stride=2),  # b, 16, 5, 5
+                                      nn.ReLU(True), nn.ConvTranspose2d(16, 8, 5, stride=3, padding=0),  # b, 8, 15, 15
+                                      nn.ReLU(True), nn.ConvTranspose2d(8, 1, 2, stride=1, padding=1),  # b, 1, 28, 28
+                                      nn.Tanh())
 
-        self._weight1 = nn.Parameter(torch.tensor([1.0]))
-        self._weight2 = nn.Parameter(torch.tensor([1.0]))
+    def forward(self, x):
+        x = self._decoder(x)
+        assert_shape(x, (28, 28))
+        return x
+
+
+class MultitaskMnistModel(nn.Module):
+    def __init__(self, initial_ses: [float]):
+        super().__init__()
+        self._encoder = Encoder()
+        self._classifier1 = Classifier(num_classes=3)
+        self._classifier2 = Classifier(num_classes=10)
+        self._reconstructor = Reconstructor()
+
+        assert len(initial_ses) == 3
+        self._weight1 = nn.Parameter(torch.tensor([initial_ses[0]]))
+        self._weight2 = nn.Parameter(torch.tensor([initial_ses[1]]))
+        self._weight3 = nn.Parameter(torch.tensor([initial_ses[2]]))
 
     def forward(self, x):
         assert_shape(x, (28, 28))
 
         x = self._encoder(x)
-        x1 = self._decoder1(x)
-        x2 = self._decoder2(x)
-        return x1, x2
+        x1 = self._classifier1(x)
+        x2 = self._classifier2(x)
+        x3 = self._reconstructor(x)
+        return x1, x2, x3
 
-    def get_loss_weights(self) -> (nn.Parameter, nn.Parameter):
-        return self._weight1, self._weight2
+    def get_loss_weights(self) -> (nn.Parameter, nn.Parameter, nn.Parameter):
+        """Returns the loss weight parameters (s in the paper)."""
+        return self._weight1, self._weight2, self._weight3
