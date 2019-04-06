@@ -241,11 +241,11 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
 #     weights_vals=[0.9, 0.1], file_name='fixed_0.9_0.1')
 
 
-if __name__ = "__main__":
+if __name__ == "__main__":
   #  learned
     run(train_dataloader, enable=(True, True), learn_weights=True, 
         weights_vals=[5.0, 5.0], file_name='learned_init_5_5')
-  
+
     run(train_dataloader, enable=(True, True), learn_weights=True, 
         weights_vals=[1.0, 1.0], file_name='learned_init_1_1')
 
