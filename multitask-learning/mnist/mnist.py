@@ -57,7 +57,7 @@ def _get_dataloaders(mnist_type: str, batch_size: int) -> (DataLoader, DataLoade
         train_dataset = torchvision.datasets.MNIST(model_dir, train=True, download=True, transform=transform)
         test_dataset = torchvision.datasets.MNIST(model_dir, train=False, download=True, transform=transform)
 
-    elif mnist_type == 'fashion_pullover_coat':
+    elif mnist_type in ('fashion_pullover_coat', 'fashion_tshirt_shirt'):
         # TODO: normalize?
         transform = transforms.Compose([transforms.ToTensor()])
         model_dir = '~/.torch/models/fashion_mnist'

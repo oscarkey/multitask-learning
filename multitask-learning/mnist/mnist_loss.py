@@ -20,6 +20,11 @@ def _labels_to_1(labels, mnist_type: str):
         converted[labels == 2] = 0
         converted[labels == 4] = 1
 
+    elif mnist_type == 'fashion_tshirt_shirt':
+        # Try and distinguish between tshirts (0) and shirts (6).
+        converted[labels == 0] = 0
+        converted[labels == 6] = 1
+
     else:
         raise ValueError(f'Unknown mnist_type: {mnist_type}')
 
