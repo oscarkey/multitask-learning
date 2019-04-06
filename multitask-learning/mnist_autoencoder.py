@@ -6,19 +6,19 @@ import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 
-RES_DIR = 'mnist_exp/'
+RES_DIR = 'fashion_mnist_exp/'
 
 transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.1307,), (0.3081,)),
 ])
-train_dataset = torchvision.datasets.MNIST('~/.torch/models/mnist', train=True, download=True, 
+train_dataset = torchvision.datasets.FashionMNIST('~/.torch/models/mnist', train=True, download=True, 
                                            transform=transform)
-test_dataset = torchvision.datasets.MNIST('~/.torch/models/mnist', train=False, download=True, 
+test_dataset = torchvision.datasets.FashionMNIST('~/.torch/models/mnist', train=False, download=True, 
                                            transform=transform)
 
 train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
-test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=8, shuffle=True)
+test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=8, shuffle=False)
 
 
 def assert_shape(x, shape):
@@ -206,42 +206,45 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
       enable, learn_weights, weights_vals, file_name)
 
 
-# single tasks
-# run(train_dataloader, enable=(True, False), learn_weights=False, 
-#     weights_vals=[1., 0.], file_name='classification_only')
-# run(train_dataloader, enable=(False, True), learn_weights=False, 
-#     weights_vals=[0., 1.], file_name='reconstruction_only')
 
-# # fixed grid search
-# run(train_dataloader, enable=(True, True), learn_weights=False, 
-#     weights_vals=[0.1, 0.9], file_name='fixed_0.1_0.9')
-
-# run(train_dataloader, enable=(True, True), learn_weights=False, 
-#     weights_vals=[0.2, 0.8], file_name='fixed_0.2_0.8')
-
-# run(train_dataloader, enable=(True, True), learn_weights=False, 
-#     weights_vals=[0.3, 0.7], file_name='fixed_0.3_0.7')
-
-# run(train_dataloader, enable=(True, True), learn_weights=False, 
-#     weights_vals=[0.4, 0.6], file_name='fixed_0.4_0.6')
-
-# run(train_dataloader, enable=(True, True), learn_weights=False, 
-#     weights_vals=[0.5, 0.5], file_name='fixed_0.5_0.5')
-
-# run(train_dataloader, enable=(True, True), learn_weights=False, 
-#     weights_vals=[0.6, 0.4], file_name='fixed_0.6_0.4')
-
-# run(train_dataloader, enable=(True, True), learn_weights=False, 
-#     weights_vals=[0.7, 0.3], file_name='fixed_0.7_0.3')
-
-# run(train_dataloader, enable=(True, True), learn_weights=False, 
-#     weights_vals=[0.8, 0.2], file_name='fixed_0.8_0.2')
-
-# run(train_dataloader, enable=(True, True), learn_weights=False, 
-#     weights_vals=[0.9, 0.1], file_name='fixed_0.9_0.1')
 
 
 if __name__ == "__main__":
+
+
+        # single tasks
+    run(train_dataloader, enable=(True, False), learn_weights=False, 
+        weights_vals=[1., 0.], file_name='classification_only')
+    run(train_dataloader, enable=(False, True), learn_weights=False, 
+        weights_vals=[0., 1.], file_name='reconstruction_only')
+
+    # fixed grid search
+    run(train_dataloader, enable=(True, True), learn_weights=False, 
+        weights_vals=[0.1, 0.9], file_name='fixed_0.1_0.9')
+
+    run(train_dataloader, enable=(True, True), learn_weights=False, 
+        weights_vals=[0.2, 0.8], file_name='fixed_0.2_0.8')
+
+    run(train_dataloader, enable=(True, True), learn_weights=False, 
+        weights_vals=[0.3, 0.7], file_name='fixed_0.3_0.7')
+
+    run(train_dataloader, enable=(True, True), learn_weights=False, 
+        weights_vals=[0.4, 0.6], file_name='fixed_0.4_0.6')
+
+    run(train_dataloader, enable=(True, True), learn_weights=False, 
+        weights_vals=[0.5, 0.5], file_name='fixed_0.5_0.5')
+
+    run(train_dataloader, enable=(True, True), learn_weights=False, 
+        weights_vals=[0.6, 0.4], file_name='fixed_0.6_0.4')
+
+    run(train_dataloader, enable=(True, True), learn_weights=False, 
+        weights_vals=[0.7, 0.3], file_name='fixed_0.7_0.3')
+
+    run(train_dataloader, enable=(True, True), learn_weights=False, 
+        weights_vals=[0.8, 0.2], file_name='fixed_0.8_0.2')
+
+    run(train_dataloader, enable=(True, True), learn_weights=False, 
+        weights_vals=[0.9, 0.1], file_name='fixed_0.9_0.1')
 
     # # fixed grid search
     run(train_dataloader, enable=(True, True), learn_weights=False, 
@@ -253,21 +256,21 @@ if __name__ == "__main__":
     run(train_dataloader, enable=(True, True), learn_weights=False, 
         weights_vals=[0.005, 0.995], file_name='fixed_0.005_0.995')
 
-  #  learned
-    # run(train_dataloader, enable=(True, True), learn_weights=True, 
-    #     weights_vals=[5.0, 5.0], file_name='learned_init_5_5')
+   learned
+    run(train_dataloader, enable=(True, True), learn_weights=True, 
+        weights_vals=[5.0, 5.0], file_name='learned_init_5_5')
 
-    # run(train_dataloader, enable=(True, True), learn_weights=True, 
-    #     weights_vals=[1.0, 1.0], file_name='learned_init_1_1')
+    run(train_dataloader, enable=(True, True), learn_weights=True, 
+        weights_vals=[1.0, 1.0], file_name='learned_init_1_1')
 
-    # run(train_dataloader, enable=(True, True), learn_weights=True, 
-    #     weights_vals=[2.0, 2.0], file_name='learned_init_2_2')
+    run(train_dataloader, enable=(True, True), learn_weights=True, 
+        weights_vals=[2.0, 2.0], file_name='learned_init_2_2')
 
-    # run(train_dataloader, enable=(True, True), learn_weights=True, 
-    #     weights_vals=[3.0, 3.0], file_name='learned_init_3_3')
+    run(train_dataloader, enable=(True, True), learn_weights=True, 
+        weights_vals=[3.0, 3.0], file_name='learned_init_3_3')
 
-    # run(train_dataloader, enable=(True, True), learn_weights=True, 
-    #     weights_vals=[4.0, 4.0], file_name='learned_init_4_4')
+    run(train_dataloader, enable=(True, True), learn_weights=True, 
+        weights_vals=[4.0, 4.0], file_name='learned_init_4_4')
 
 
 
