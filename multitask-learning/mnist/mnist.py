@@ -57,7 +57,7 @@ def _get_dataloaders(mnist_type: str, batch_size: int) -> (DataLoader, DataLoade
         train_dataset = torchvision.datasets.MNIST(model_dir, train=True, download=True, transform=transform)
         test_dataset = torchvision.datasets.MNIST(model_dir, train=False, download=True, transform=transform)
 
-    elif mnist_type == 'fashion_pullover_coat':
+    elif mnist_type in ('fashion_pullover_coat', 'fashion_tshirt_shirt'):
         # TODO: normalize?
         transform = transforms.Compose([transforms.ToTensor()])
         model_dir = '~/.torch/models/fashion_mnist'
@@ -141,6 +141,7 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
         epoch_loss1 = 0
         epoch_loss2 = 0
 
+        iteration_count = 1
         for i, data in enumerate(train_dataloader):
             images, labels = data
 
@@ -162,14 +163,16 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
             epoch_loss1 += loss1.item()
             epoch_loss2 += loss2.item()
 
+            iteration_count += 1
+
         weight1, weight2 = model.get_loss_weights()
-        _log.info(f'Epoch {epoch}: {epoch_loss / i:.3f} ({weight1.item():.3f}, {weight2.item():.3f})')
+        _log.info(f'Epoch {epoch}: {epoch_loss / iteration_count:.3f} ({weight1.item():.3f}, {weight2.item():.3f})')
 
         acc1, acc2 = _validate(test_dataloader=test_dataloader, model=model)
 
-        _run.log_scalar('train_loss', epoch_loss / i, epoch)
-        _run.log_scalar('train_loss1', epoch_loss1 / i, epoch)
-        _run.log_scalar('train_loss2', epoch_loss2 / i, epoch)
+        _run.log_scalar('train_loss', epoch_loss / iteration_count, epoch)
+        _run.log_scalar('train_loss1', epoch_loss1 / iteration_count, epoch)
+        _run.log_scalar('train_loss2', epoch_loss2 / iteration_count, epoch)
         _run.log_scalar('val_acc1', acc1, epoch)
         _run.log_scalar('val_acc2', acc2, epoch)
         _run.log_scalar('weight1', weight1.item(), epoch)
