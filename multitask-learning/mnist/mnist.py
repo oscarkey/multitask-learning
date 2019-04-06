@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 import mnist_loss
-from mnist_loss import FixedWeightsLoss, MultitaskMnistLoss, LearnedWeightsLoss
+from mnist_loss import MultitaskMnistLoss
 from mnist_model import MultitaskMnistModel
 
 ex = sacred.Experiment()
@@ -41,10 +41,8 @@ def config():
     batch_size = 64
     # One of 'learned' or 'fixed'.
     loss_type = 'fixed'
-    enable1 = False
-    enable2 = True
-    weight1 = 1.0
-    weight2 = 1.0
+    enabled_tasks = (True, False)
+    weights = (1.0, 1.0)
     save_to_db = True
 
 
@@ -84,14 +82,13 @@ def _get_loss_func(loss_type: str, model: MultitaskMnistModel) -> MultitaskMnist
 
 
 @ex.capture
-def _get_fixed_loss_func(enable1: bool, enable2: bool, weight1: float, weight2: float, mnist_type: str):
-    return FixedWeightsLoss(enable1, enable2, weight1, weight2, mnist_type)
+def _get_fixed_loss_func(enabled_tasks: [bool], weights: [float], mnist_type: str):
+    return mnist_loss.get_fixed_loss(enabled_tasks, weights, mnist_type)
 
 
 @ex.capture
 def _get_learned_loss_func(model: MultitaskMnistModel, mnist_type: str):
-    weight1, weight2 = model.get_loss_weights()
-    return LearnedWeightsLoss(weight1, weight2, mnist_type)
+    return mnist_loss.get_learned_loss([True, True], model.get_loss_weights(), mnist_type)
 
 
 def _get_device():
@@ -154,7 +151,7 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
 
             output1, output2 = model(images)
 
-            loss, (loss1, loss2) = loss_func(output1, output2, labels)
+            loss, (loss1, loss2) = loss_func((output1, output2), labels)
 
             loss.backward()
             optimizer.step()
