@@ -143,8 +143,8 @@ def train(train_dataloader, num_epochs, model, criterion1, criterion2, optimizer
             if learn_weights:
                 loss = (torch.exp(-model.weight1) * loss1 + 0.5 * model.weight1 
                         + 0.5 * (torch.exp(-model.weight2) * loss2 + model.weight2))
-                w_0.append(np.round(model.weight1.detach().cpu().numpy()), 5)
-                w_1.append(np.round(model.weight1.detach().cpu().numpy()), 5)
+                w_0.append(np.round(model.weight1.detach().cpu().numpy(), 5))
+                w_1.append(np.round(model.weight1.detach().cpu().numpy(), 5))
             else:
                 loss = fixed_weights_vals[0]*loss1 + fixed_weights_vals[1]*loss2
                 loss1_log.append(np.round(l1, 5))
@@ -207,38 +207,38 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
 
 
 # single tasks
-run(train_dataloader, enable=(True, False), learn_weights=False, 
-    weights_vals=[1., 0.], file_name='classification_only')
-run(train_dataloader, enable=(False, True), learn_weights=False, 
-    weights_vals=[0., 1.], file_name='reconstruction_only')
+# run(train_dataloader, enable=(True, False), learn_weights=False, 
+#     weights_vals=[1., 0.], file_name='classification_only')
+# run(train_dataloader, enable=(False, True), learn_weights=False, 
+#     weights_vals=[0., 1.], file_name='reconstruction_only')
 
-# fixed grid search
-run(train_dataloader, enable=(True, True), learn_weights=False, 
-    weights_vals=[0.1, 0.9], file_name='fixed_0.1_0.9')
+# # fixed grid search
+# run(train_dataloader, enable=(True, True), learn_weights=False, 
+#     weights_vals=[0.1, 0.9], file_name='fixed_0.1_0.9')
 
-run(train_dataloader, enable=(True, True), learn_weights=False, 
-    weights_vals=[0.2, 0.8], file_name='fixed_0.2_0.8')
+# run(train_dataloader, enable=(True, True), learn_weights=False, 
+#     weights_vals=[0.2, 0.8], file_name='fixed_0.2_0.8')
 
-run(train_dataloader, enable=(True, True), learn_weights=False, 
-    weights_vals=[0.3, 0.7], file_name='fixed_0.3_0.7')
+# run(train_dataloader, enable=(True, True), learn_weights=False, 
+#     weights_vals=[0.3, 0.7], file_name='fixed_0.3_0.7')
 
-run(train_dataloader, enable=(True, True), learn_weights=False, 
-    weights_vals=[0.4, 0.6], file_name='fixed_0.4_0.6')
+# run(train_dataloader, enable=(True, True), learn_weights=False, 
+#     weights_vals=[0.4, 0.6], file_name='fixed_0.4_0.6')
 
-run(train_dataloader, enable=(True, True), learn_weights=False, 
-    weights_vals=[0.5, 0.5], file_name='fixed_0.5_0.5')
+# run(train_dataloader, enable=(True, True), learn_weights=False, 
+#     weights_vals=[0.5, 0.5], file_name='fixed_0.5_0.5')
 
-run(train_dataloader, enable=(True, True), learn_weights=False, 
-    weights_vals=[0.6, 0.4], file_name='fixed_0.6_0.4')
+# run(train_dataloader, enable=(True, True), learn_weights=False, 
+#     weights_vals=[0.6, 0.4], file_name='fixed_0.6_0.4')
 
-run(train_dataloader, enable=(True, True), learn_weights=False, 
-    weights_vals=[0.7, 0.3], file_name='fixed_0.7_0.3')
+# run(train_dataloader, enable=(True, True), learn_weights=False, 
+#     weights_vals=[0.7, 0.3], file_name='fixed_0.7_0.3')
 
-run(train_dataloader, enable=(True, True), learn_weights=False, 
-    weights_vals=[0.8, 0.2], file_name='fixed_0.8_0.2')
+# run(train_dataloader, enable=(True, True), learn_weights=False, 
+#     weights_vals=[0.8, 0.2], file_name='fixed_0.8_0.2')
 
-run(train_dataloader, enable=(True, True), learn_weights=False, 
-    weights_vals=[0.9, 0.1], file_name='fixed_0.9_0.1')
+# run(train_dataloader, enable=(True, True), learn_weights=False, 
+#     weights_vals=[0.9, 0.1], file_name='fixed_0.9_0.1')
 
 # learned
 run(train_dataloader, enable=(True, True), learn_weights=True, 
