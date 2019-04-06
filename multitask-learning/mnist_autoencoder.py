@@ -256,7 +256,7 @@ if __name__ == "__main__":
     run(train_dataloader, enable=(True, True), learn_weights=False, 
         weights_vals=[0.005, 0.995], file_name='fixed_0.005_0.995')
 
-   learned
+   # learned
     run(train_dataloader, enable=(True, True), learn_weights=True, 
         weights_vals=[5.0, 5.0], file_name='learned_init_5_5')
 
