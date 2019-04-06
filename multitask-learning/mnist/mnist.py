@@ -87,8 +87,8 @@ def _get_fixed_loss_func(enabled_tasks: [bool], weights: [float], mnist_type: st
 
 
 @ex.capture
-def _get_learned_loss_func(model: MultitaskMnistModel, mnist_type: str):
-    return mnist_loss.get_learned_loss([True, True], model.get_loss_weights(), mnist_type)
+def _get_learned_loss_func(enabled_tasks: [bool],model: MultitaskMnistModel, mnist_type: str):
+    return mnist_loss.get_learned_loss(enabled_tasks, model.get_loss_weights(), mnist_type)
 
 
 def _get_device():
