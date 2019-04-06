@@ -41,8 +41,8 @@ def config():
     batch_size = 64
     # One of 'learned' or 'fixed'.
     loss_type = 'fixed'
-    enabled_tasks = (True, False)
-    weights = (1.0, 1.0)
+    enabled_tasks = (True, False, False)
+    weights = (1.0, 1.0, 1.0)
     save_to_db = True
 
 
@@ -76,7 +76,7 @@ def _get_loss_func(loss_type: str, model: MultitaskMnistModel) -> MultitaskMnist
     if loss_type == 'fixed':
         return _get_fixed_loss_func()
     elif loss_type == 'learned':
-        return _get_learned_loss_func(model)
+        return _get_learned_loss_func(model=model)
     else:
         raise ValueError(f'Unknown loss type: {loss_type}')
 
@@ -87,7 +87,7 @@ def _get_fixed_loss_func(enabled_tasks: [bool], weights: [float], mnist_type: st
 
 
 @ex.capture
-def _get_learned_loss_func(enabled_tasks: [bool],model: MultitaskMnistModel, mnist_type: str):
+def _get_learned_loss_func(enabled_tasks: [bool], model: MultitaskMnistModel, mnist_type: str):
     return mnist_loss.get_learned_loss(enabled_tasks, model.get_loss_weights(), mnist_type)
 
 
@@ -137,6 +137,7 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
         epoch_loss = 0
         epoch_loss1 = 0
         epoch_loss2 = 0
+        epoch_loss3 = 0
 
         iteration_count = 1
         for i, data in enumerate(train_dataloader):
@@ -149,9 +150,9 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
 
             optimizer.zero_grad()
 
-            output1, output2 = model(images)
+            outputs = model(images)
 
-            loss, (loss1, loss2) = loss_func((output1, output2), labels)
+            loss, (loss1, loss2, loss3) = loss_func(outputs, labels, images)
 
             loss.backward()
             optimizer.step()
@@ -159,10 +160,11 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
             epoch_loss += loss.item()
             epoch_loss1 += loss1.item()
             epoch_loss2 += loss2.item()
+            epoch_loss3 += loss3.item()
 
             iteration_count += 1
 
-        weight1, weight2 = model.get_loss_weights()
+        weight1, weight2, weight3 = model.get_loss_weights()
         _log.info(f'Epoch {epoch}: {epoch_loss / iteration_count:.3f} ({weight1.item():.3f}, {weight2.item():.3f})')
 
         acc1, acc2 = _validate(test_dataloader=test_dataloader, model=model)
@@ -170,10 +172,12 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
         _run.log_scalar('train_loss', epoch_loss / iteration_count, epoch)
         _run.log_scalar('train_loss1', epoch_loss1 / iteration_count, epoch)
         _run.log_scalar('train_loss2', epoch_loss2 / iteration_count, epoch)
+        _run.log_scalar('train_loss3', epoch_loss3 / iteration_count, epoch)
         _run.log_scalar('val_acc1', acc1, epoch)
         _run.log_scalar('val_acc2', acc2, epoch)
         _run.log_scalar('weight1', weight1.item(), epoch)
         _run.log_scalar('weight2', weight2.item(), epoch)
+        _run.log_scalar('weight3', weight3.item(), epoch)
 
 
 @ex.automain
