@@ -86,7 +86,7 @@ class Model(nn.Module):
         self.encoder = Encoder(size)
         self.autoencoder = Decoder()
         self.decoder = Classifier(num_classes=10)
-        print("Initializing weights with {} {}".format(weight_init))
+        print("Initializing weights with {}".format(weight_init))
         self.weight1 = nn.Parameter(torch.tensor([weight_init[0]]))
         self.weight2 = nn.Parameter(torch.tensor([weight_init[1]]))
         
