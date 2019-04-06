@@ -61,16 +61,17 @@ class Reconstructor(nn.Module):
 
 
 class MultitaskMnistModel(nn.Module):
-    def __init__(self):
+    def __init__(self, initial_ses: [float]):
         super().__init__()
         self._encoder = Encoder()
         self._classifier1 = Classifier(num_classes=3)
         self._classifier2 = Classifier(num_classes=10)
         self._reconstructor = Reconstructor()
 
-        self._weight1 = nn.Parameter(torch.tensor([1.0]))
-        self._weight2 = nn.Parameter(torch.tensor([1.0]))
-        self._weight3 = nn.Parameter(torch.tensor([1.0]))
+        assert len(initial_ses) == 3
+        self._weight1 = nn.Parameter(torch.tensor([initial_ses[0]]))
+        self._weight2 = nn.Parameter(torch.tensor([initial_ses[1]]))
+        self._weight3 = nn.Parameter(torch.tensor([initial_ses[2]]))
 
     def forward(self, x):
         assert_shape(x, (28, 28))

@@ -44,6 +44,7 @@ def config():
     loss_type = 'fixed'
     enabled_tasks = (True, False, False)
     weights = (1.0, 1.0, 1.0)
+    initial_ses = (1.0, 1.0, 1.0)
     save_to_db = True
 
 
@@ -92,6 +93,11 @@ def _get_learned_loss_func(enabled_tasks: [bool], model: MultitaskMnistModel, mn
     return mnist_loss.get_learned_loss(enabled_tasks, model.get_loss_weights(), mnist_type)
 
 
+@ex.capture
+def _get_model(initial_ses: [float]) -> MultitaskMnistModel:
+    return MultitaskMnistModel(initial_ses)
+
+
 def _get_device():
     return "cuda:0" if torch.cuda.is_available() else "cpu"
 
@@ -136,7 +142,7 @@ def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel, mnist_typ
 def _train(_run, max_epochs: int, lr: float, _log: Logger):
     train_dataloader, test_dataloader = _get_dataloaders()
 
-    model = MultitaskMnistModel()
+    model = _get_model()
     model = model.to(_get_device())
 
     loss_func = _get_loss_func(model=model)
