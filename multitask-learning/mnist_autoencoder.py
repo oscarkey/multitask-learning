@@ -86,7 +86,7 @@ class Model(nn.Module):
         self.encoder = Encoder(size)
         self.autoencoder = Decoder()
         self.decoder = Classifier(num_classes=10)
-        
+        print("Initializing weights with {} {}".format(weight_init))
         self.weight1 = nn.Parameter(torch.tensor([weight_init[0]]))
         self.weight2 = nn.Parameter(torch.tensor([weight_init[1]]))
         
@@ -240,21 +240,23 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
 # run(train_dataloader, enable=(True, True), learn_weights=False, 
 #     weights_vals=[0.9, 0.1], file_name='fixed_0.9_0.1')
 
-# learned
-# run(train_dataloader, enable=(True, True), learn_weights=True, 
-#     weights_vals=[1.0, 1.0], file_name='learned_init_1_1')
 
-# run(train_dataloader, enable=(True, True), learn_weights=True, 
-#     weights_vals=[1.0, 1.0]*2, file_name='learned_init_2_2')
+if __name__ = "__main__":
+  #  learned
+    run(train_dataloader, enable=(True, True), learn_weights=True, 
+        weights_vals=[1.0, 1.0], file_name='learned_init_1_1')
 
-# run(train_dataloader, enable=(True, True), learn_weights=True, 
-#     weights_vals=[1.0, 1.0]*3, file_name='learned_init_3_3')
+    run(train_dataloader, enable=(True, True), learn_weights=True, 
+        weights_vals=[2.0, 2.0], file_name='learned_init_2_2')
 
-# run(train_dataloader, enable=(True, True), learn_weights=True, 
-#     weights_vals=[1.0, 1.0]*4, file_name='learned_init_4_4')
+    run(train_dataloader, enable=(True, True), learn_weights=True, 
+        weights_vals=[3.0, 3.0], file_name='learned_init_3_3')
 
-# run(train_dataloader, enable=(True, True), learn_weights=True, 
-    # weights_vals=[1.0, 1.0]*5, file_name='learned_init_5_5')
+    run(train_dataloader, enable=(True, True), learn_weights=True, 
+        weights_vals=[4.0, 4.0], file_name='learned_init_4_4')
+
+    run(train_dataloader, enable=(True, True), learn_weights=True, 
+        weights_vals=[5.0, 5.0], file_name='learned_init_5_5')
 
 # Just 1:
 # Accuracy 1: 9868/10000 (98.68%)
