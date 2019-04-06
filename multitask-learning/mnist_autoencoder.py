@@ -242,21 +242,32 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
 
 
 if __name__ == "__main__":
+
+    # # fixed grid search
+    run(train_dataloader, enable=(True, True), learn_weights=False, 
+        weights_vals=[0.15, 0.85], file_name='fixed_0.1_0.9')
+
+    run(train_dataloader, enable=(True, True), learn_weights=False, 
+        weights_vals=[0.25, 0.75], file_name='fixed_0.2_0.8')
+
+    run(train_dataloader, enable=(True, True), learn_weights=False, 
+        weights_vals=[0.005, 0.995], file_name='fixed_0.3_0.7')
+
   #  learned
-    run(train_dataloader, enable=(True, True), learn_weights=True, 
-        weights_vals=[5.0, 5.0], file_name='learned_init_5_5')
+    # run(train_dataloader, enable=(True, True), learn_weights=True, 
+    #     weights_vals=[5.0, 5.0], file_name='learned_init_5_5')
 
-    run(train_dataloader, enable=(True, True), learn_weights=True, 
-        weights_vals=[1.0, 1.0], file_name='learned_init_1_1')
+    # run(train_dataloader, enable=(True, True), learn_weights=True, 
+    #     weights_vals=[1.0, 1.0], file_name='learned_init_1_1')
 
-    run(train_dataloader, enable=(True, True), learn_weights=True, 
-        weights_vals=[2.0, 2.0], file_name='learned_init_2_2')
+    # run(train_dataloader, enable=(True, True), learn_weights=True, 
+    #     weights_vals=[2.0, 2.0], file_name='learned_init_2_2')
 
-    run(train_dataloader, enable=(True, True), learn_weights=True, 
-        weights_vals=[3.0, 3.0], file_name='learned_init_3_3')
+    # run(train_dataloader, enable=(True, True), learn_weights=True, 
+    #     weights_vals=[3.0, 3.0], file_name='learned_init_3_3')
 
-    run(train_dataloader, enable=(True, True), learn_weights=True, 
-        weights_vals=[4.0, 4.0], file_name='learned_init_4_4')
+    # run(train_dataloader, enable=(True, True), learn_weights=True, 
+    #     weights_vals=[4.0, 4.0], file_name='learned_init_4_4')
 
 
 
