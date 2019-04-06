@@ -245,13 +245,13 @@ if __name__ == "__main__":
 
     # # fixed grid search
     run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.15, 0.85], file_name='fixed_0.1_0.9')
+        weights_vals=[0.15, 0.85], file_name='fixed_0.15_0.85')
 
     run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.25, 0.75], file_name='fixed_0.2_0.8')
+        weights_vals=[0.25, 0.75], file_name='fixed_0.25_0.75')
 
     run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.005, 0.995], file_name='fixed_0.3_0.7')
+        weights_vals=[0.005, 0.995], file_name='fixed_0.005_0.995')
 
   #  learned
     # run(train_dataloader, enable=(True, True), learn_weights=True, 
