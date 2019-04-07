@@ -1,4 +1,5 @@
 import sys
+import tempfile
 from logging import Logger
 
 import sacred
@@ -46,6 +47,8 @@ def config():
     weights = (1.0, 1.0, 1.0)
     initial_ses = (1.0, 1.0, 1.0)
     save_to_db = True
+    # When True, will save a copy of the model to sacred at the end of training.
+    checkpoint_at_end = False
 
 
 @ex.capture
@@ -138,8 +141,17 @@ def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel, mnist_typ
     return task_1_num_correct / num_images, task_2_num_correct / num_images, task_3_accumulated_error / num_batches
 
 
+def _save_model(_run, model: MultitaskMnistModel):
+    with tempfile.NamedTemporaryFile() as file:
+        state = {'version': 1, 'model_state_dict': model.state_dict()}
+
+        torch.save(state, file.name)
+        _run.add_artifact(file.name, 'model_end')
+        _run.run_logger.info('Saved model to sacred')
+
+
 @ex.capture
-def _train(_run, max_epochs: int, lr: float, _log: Logger):
+def _train(_run, max_epochs: int, lr: float, _log: Logger, checkpoint_at_end: bool):
     train_dataloader, test_dataloader = _get_dataloaders()
 
     model = _get_model()
@@ -195,6 +207,9 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger):
         _run.log_scalar('weight1', weight1.item(), epoch)
         _run.log_scalar('weight2', weight2.item(), epoch)
         _run.log_scalar('weight3', weight3.item(), epoch)
+
+    if checkpoint_at_end:
+        _save_model(_run, model)
 
 
 @ex.automain
