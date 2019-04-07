@@ -144,13 +144,16 @@ def evaluate(test_dataloader, model, criterion2):
 
 
 def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
-        num_epochs=50, batchnorm=False):
+        num_epochs, batchnorm=False):
     print('running {}'.format(file_name))
     criterion1 = nn.CrossEntropyLoss()
     criterion2 = nn.L1Loss()
     model1 = Model((28,28), 10, batchnorm, weights_vals)
     model1 = model1.cuda()
-    optimizer = torch.optim.Adam(model1.parameters(), lr=0.0001)
+    if os.path.exists(RES_DIR + file_name):
+        model.load_state_dict(torch.load(RES_DIR + file_name))
+        print('resuming ...')
+    optimizer = torch.optim.Adam(model1.parameters(), lr=0.0001, weight_decay=0.0001)
 
     train(train_dataloader, num_epochs, model1, criterion1, criterion2, optimizer, 
       enable, learn_weights, weights_vals, file_name)
@@ -163,7 +166,7 @@ if __name__ == "__main__":
     num_epochs = 50
 
     dataset = 'fashionmnist'
-    run_all = True
+    run_all = False
     run_learned = True
     if dataset == 'fashionmnist':
         RES_DIR = 'fashion_mnist_exp2/'
@@ -194,64 +197,64 @@ if __name__ == "__main__":
     if run_all:
         # single tasks
         run(train_dataloader, enable=(True, False), learn_weights=False, 
-            weights_vals=[1., 0.], batchnorm=bnorm, file_name='classification_only')
+            weights_vals=[1., 0.], batchnorm=bnorm, file_name='classification_only', num_epochs=num_epochs)
         run(train_dataloader, enable=(False, True), learn_weights=False, 
-            weights_vals=[0., 1.], batchnorm=bnorm, file_name='reconstruction_only')
+            weights_vals=[0., 1.], batchnorm=bnorm, file_name='reconstruction_only', num_epochs=num_epochs)
 
         # fixed grid search
         run(train_dataloader, enable=(True, True), learn_weights=False, 
-            weights_vals=[0.1, 0.9], batchnorm=bnorm, file_name='fixed_0.1_0.9')
+            weights_vals=[0.1, 0.9], batchnorm=bnorm, file_name='fixed_0.1_0.9', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=False, 
-            weights_vals=[0.2, 0.8], batchnorm=bnorm, file_name='fixed_0.2_0.8')
+            weights_vals=[0.2, 0.8], batchnorm=bnorm, file_name='fixed_0.2_0.8', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=False, 
-            weights_vals=[0.3, 0.7], batchnorm=bnorm, file_name='fixed_0.3_0.7')
+            weights_vals=[0.3, 0.7], batchnorm=bnorm, file_name='fixed_0.3_0.7', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=False, 
-            weights_vals=[0.4, 0.6], batchnorm=bnorm, file_name='fixed_0.4_0.6')
+            weights_vals=[0.4, 0.6], batchnorm=bnorm, file_name='fixed_0.4_0.6', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=False, 
-            weights_vals=[0.5, 0.5], batchnorm=bnorm, file_name='fixed_0.5_0.5')
+            weights_vals=[0.5, 0.5], batchnorm=bnorm, file_name='fixed_0.5_0.5', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=False, 
-            weights_vals=[0.6, 0.4], batchnorm=bnorm, file_name='fixed_0.6_0.4')
+            weights_vals=[0.6, 0.4], batchnorm=bnorm, file_name='fixed_0.6_0.4', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=False, 
-            weights_vals=[0.7, 0.3], batchnorm=bnorm, file_name='fixed_0.7_0.3')
+            weights_vals=[0.7, 0.3], batchnorm=bnorm, file_name='fixed_0.7_0.3', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=False, 
-            weights_vals=[0.8, 0.2], batchnorm=bnorm, file_name='fixed_0.8_0.2')
+            weights_vals=[0.8, 0.2], batchnorm=bnorm, file_name='fixed_0.8_0.2', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=False, 
-            weights_vals=[0.9, 0.1], batchnorm=bnorm, file_name='fixed_0.9_0.1')
+            weights_vals=[0.9, 0.1], batchnorm=bnorm, file_name='fixed_0.9_0.1', num_epochs=num_epochs)
 
         # # fixed grid search
         run(train_dataloader, enable=(True, True), learn_weights=False, 
-            weights_vals=[0.15, 0.85], batchnorm=bnorm, file_name='fixed_0.15_0.85')
+            weights_vals=[0.15, 0.85], batchnorm=bnorm, file_name='fixed_0.15_0.85', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=False, 
-            weights_vals=[0.25, 0.75], batchnorm=bnorm, file_name='fixed_0.25_0.75')
+            weights_vals=[0.25, 0.75], batchnorm=bnorm, file_name='fixed_0.25_0.75', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=False, 
-            weights_vals=[0.005, 0.995], batchnorm=bnorm, file_name='fixed_0.005_0.995')
+            weights_vals=[0.005, 0.995], batchnorm=bnorm, file_name='fixed_0.005_0.995', num_epochs=num_epochs)
 
     if run_learned:
        # learned
         run(train_dataloader, enable=(True, True), learn_weights=True, 
-            weights_vals=[5.0, 5.0], batchnorm=bnorm, file_name='learned_init_5_5')
+            weights_vals=[5.0, 5.0], batchnorm=bnorm, file_name='learned_init_5_5', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=True, 
-            weights_vals=[1.0, 1.0], batchnorm=bnorm, file_name='learned_init_1_1')
+            weights_vals=[1.0, 1.0], batchnorm=bnorm, file_name='learned_init_1_1', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=True, 
-            weights_vals=[2.0, 2.0], batchnorm=bnorm, file_name='learned_init_2_2')
+            weights_vals=[2.0, 2.0], batchnorm=bnorm, file_name='learned_init_2_2', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=True, 
-            weights_vals=[3.0, 3.0], batchnorm=bnorm, file_name='learned_init_3_3')
+            weights_vals=[3.0, 3.0], batchnorm=bnorm, file_name='learned_init_3_3', num_epochs=num_epochs)
 
         run(train_dataloader, enable=(True, True), learn_weights=True, 
-            weights_vals=[4.0, 4.0], batchnorm=bnorm, file_name='learned_init_4_4')
+            weights_vals=[4.0, 4.0], batchnorm=bnorm, file_name='learned_init_4_4', num_epochs=num_epochs)
 
 
 
