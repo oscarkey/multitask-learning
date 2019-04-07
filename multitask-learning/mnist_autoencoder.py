@@ -5,7 +5,7 @@ from torch import nn
 import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
-
+import os
 
 class Model(nn.Module):
     def __init__(self, size: (int, int), num_classes: int, batchnorm, weight_init=[1.0, 1.0]):
