@@ -52,8 +52,8 @@ class Classifier(nn.Module):
     
     
 class Decoder(nn.Module):
-    def __init__(self):
-        super().__init__(batchnorm)
+    def __init__(self, batchnorm):
+        super().__init__()
         if not batchnorm:
             self.decoder = nn.Sequential(
                 nn.ConvTranspose2d(64, 16, 3, stride=2),  # b, 16, 5, 5
