@@ -8,33 +8,6 @@ import matplotlib.pyplot as plt
 
 
 
-
-def assert_shape(x, shape):
-    assert tuple(x.shape[-2:]) == tuple(shape), f'Expected shape ending {shape}, got {x.shape}'
-
-
-
-class Encoder(nn.Module):
-    def __init__(self, size: (int, int), batchnorm):
-        super().__init__()
-        self.size = size
-        self.batchnorm = batchnorm
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=25, kernel_size=12, padding=0, stride=2)
-        self.conv2 = nn.Conv2d(in_channels=25, out_channels=64, kernel_size=5, padding=2)
-        self.bnorm1 = nn.BatchNorm2d(25)
-        self.bnorm2 = nn.BatchNorm2d(64)
-    
-    def forward(self, x):
-        if not self.batchnorm:
-            x = F.relu(self.conv1(x))
-            x = F.relu(self.conv2(x))
-            x = F.max_pool2d(x, 2)
-        else:
-            x = self.bnorm1(F.relu(self.conv1(x)))
-            x = self.bnorm2(F.relu(self.conv2(x)))
-            x = F.max_pool2d(x, 2)           
-        
-        return x
     
 class Classifier(nn.Module):
     def __init__(self, num_classes: int):
@@ -49,52 +22,37 @@ class Classifier(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
-    
-    
-class Decoder(nn.Module):
-    def __init__(self, batchnorm):
-        super().__init__()
-        if not batchnorm:
-            self.decoder = nn.Sequential(
-                nn.ConvTranspose2d(64, 16, 3, stride=2),  # b, 16, 5, 5
-                nn.ReLU(True),
-                nn.ConvTranspose2d(16, 8, 5, stride=3, padding=0),  # b, 8, 15, 15
-                nn.ReLU(True),
-                nn.ConvTranspose2d(8, 1, 2, stride=1, padding=1),  # b, 1, 28, 28
-                nn.Tanh()
-            )
-        else:
-            self.decoder = nn.Sequential(
-                nn.ConvTranspose2d(64, 16, 3, stride=2),  # b, 16, 5, 5
-                nn.ReLU(True),
-                nn.BatchNorm2d(16),
-                nn.ConvTranspose2d(16, 8, 5, stride=3, padding=0),  # b, 8, 15, 15
-                nn.ReLU(True),
-                nn.BatchNorm2d(8),
-                nn.ConvTranspose2d(8, 1, 2, stride=1, padding=1),  # b, 1, 28, 28
-                nn.Tanh()
-            )
- 
 
-    def forward(self, x):
-        x = self.decoder(x)
-        return x
 
 class Model(nn.Module):
     def __init__(self, size: (int, int), num_classes: int, batchnorm, weight_init=[1.0, 1.0]):
         super().__init__()
         self.size = size
-        self.encoder = Encoder(size, batchnorm)
-        self.autoencoder = Decoder(batchnorm)
-        self.decoder = Classifier(num_classes=10)
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, 16, 3, stride=3, padding=1),  # b, 16, 10, 10
+            nn.ReLU(True),
+            nn.MaxPool2d(2, stride=2),  # b, 16, 5, 5
+            nn.Conv2d(16, 8, 3, stride=2, padding=1),  # b, 8, 3, 3
+            nn.ReLU(True),
+            nn.MaxPool2d(2, stride=1)  # b, 8, 2, 2
+        )
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(8, 16, 3, stride=2),  # b, 16, 5, 5
+            nn.ReLU(True),
+            nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 15, 15
+            nn.ReLU(True),
+            nn.ConvTranspose2d(8, 1, 2, stride=2, padding=1),  # b, 1, 28, 28
+            nn.Tanh()
+        )
+        self.classifier = Classifier(num_classes=10)
         self.weight1 = nn.Parameter(torch.tensor([weight_init[0]]))
         self.weight2 = nn.Parameter(torch.tensor([weight_init[1]]))
         
     def forward(self, x):
         x = self.encoder(x)
-        cls_ = self.decoder(x)
-        gen = self.autoencoder(x)
-        return cls_, gen
+        clss = self.classifier(x)
+        gen = self.decoder(x)
+        return clss, gen
 
 def train(train_dataloader, num_epochs, model, criterion1, criterion2, optimizer,
           enable, learn_weights, fixed_weights_vals, file_name):
@@ -213,7 +171,7 @@ if __name__ == "__main__":
     run_all = True
     run_learned = True
     if dataset == 'fashionmnist':
-        RES_DIR = 'fashion_mnist_exp/'
+        RES_DIR = 'fashion_mnist_exp2/'
         bnorm = True
         transform = transforms.Compose([
             transforms.ToTensor(),
@@ -225,7 +183,7 @@ if __name__ == "__main__":
                                                    transform=transform)
     if dataset == 'mnist':
         bnorm = False
-        RES_DIR = 'mnist_exp/'
+        RES_DIR = 'mnist_exp2/'
 
         transform = transforms.Compose([
             transforms.ToTensor(),
