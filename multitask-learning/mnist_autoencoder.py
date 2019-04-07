@@ -6,19 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
 
-RES_DIR = 'fashion_mnist_exp/'
 
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.1307,), (0.3081,)),
-])
-train_dataset = torchvision.datasets.FashionMNIST('~/.torch/models/fashionmnist', train=True, download=True, 
-                                           transform=transform)
-test_dataset = torchvision.datasets.FashionMNIST('~/.torch/models/mnist', train=False, download=True, 
-                                           transform=transform)
-
-train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
-test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=8, shuffle=False)
 
 
 def assert_shape(x, shape):
@@ -27,24 +15,24 @@ def assert_shape(x, shape):
 
 
 class Encoder(nn.Module):
-    def __init__(self, size: (int, int)):
+    def __init__(self, size: (int, int), batchnorm):
         super().__init__()
         self.size = size
+        self.batchnorm = batchnorm
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=25, kernel_size=12, padding=0, stride=2)
         self.conv2 = nn.Conv2d(in_channels=25, out_channels=64, kernel_size=5, padding=2)
-
+        self.bnorm1 = nn.BatchNorm2d(25)
+        self.bnorm2 = nn.BatchNorm2d(64)
     
     def forward(self, x):
-        assert_shape(x, self.size)
-        
-        x = F.relu(self.conv1(x))
-        assert_shape(x, (9, 9)) # Should this be the same size?
-
-        x = F.relu(self.conv2(x))
-        assert_shape(x, (9, 9))
-        
-        x = F.max_pool2d(x, 2)
-        assert_shape(x, (4, 4))
+        if not self.batchnorm:
+            x = F.relu(self.conv1(x))
+            x = F.relu(self.conv2(x))
+            x = F.max_pool2d(x, 2)
+        else:
+            x = self.bnorm1(F.relu(self.conv1(x)))
+            x = self.bnorm2(F.relu(self.conv2(x)))
+            x = F.max_pool2d(x, 2)           
         
         return x
     
@@ -65,40 +53,47 @@ class Classifier(nn.Module):
     
 class Decoder(nn.Module):
     def __init__(self):
-        super().__init__()
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(64, 16, 3, stride=2),  # b, 16, 5, 5
-            nn.ReLU(True),
-            nn.ConvTranspose2d(16, 8, 5, stride=3, padding=0),  # b, 8, 15, 15
-            nn.ReLU(True),
-            nn.ConvTranspose2d(8, 1, 2, stride=1, padding=1),  # b, 1, 28, 28
-            nn.Tanh()
-        )
+        super().__init__(batchnorm)
+        if not batchnorm:
+            self.decoder = nn.Sequential(
+                nn.ConvTranspose2d(64, 16, 3, stride=2),  # b, 16, 5, 5
+                nn.ReLU(True),
+                nn.ConvTranspose2d(16, 8, 5, stride=3, padding=0),  # b, 8, 15, 15
+                nn.ReLU(True),
+                nn.ConvTranspose2d(8, 1, 2, stride=1, padding=1),  # b, 1, 28, 28
+                nn.Tanh()
+            )
+        else:
+            self.decoder = nn.Sequential(
+                nn.ConvTranspose2d(64, 16, 3, stride=2),  # b, 16, 5, 5
+                nn.ReLU(True),
+                nn.BatchNorm2d(16),
+                nn.ConvTranspose2d(16, 8, 5, stride=3, padding=0),  # b, 8, 15, 15
+                nn.ReLU(True),
+                nn.BatchNorm2d(8),
+                nn.ConvTranspose2d(8, 1, 2, stride=1, padding=1),  # b, 1, 28, 28
+                nn.Tanh()
+            )
+ 
 
     def forward(self, x):
         x = self.decoder(x)
         return x
-    
+
 class Model(nn.Module):
-    def __init__(self, size: (int, int), num_classes: int, weight_init=[1.0, 1.0]):
+    def __init__(self, size: (int, int), num_classes: int, batchnorm, weight_init=[1.0, 1.0]):
         super().__init__()
         self.size = size
-        self.encoder = Encoder(size)
-        self.autoencoder = Decoder()
+        self.encoder = Encoder(size, batchnorm)
+        self.autoencoder = Decoder(batchnorm)
         self.decoder = Classifier(num_classes=10)
-        print("Initializing weights with {}".format(weight_init))
         self.weight1 = nn.Parameter(torch.tensor([weight_init[0]]))
         self.weight2 = nn.Parameter(torch.tensor([weight_init[1]]))
         
     def forward(self, x):
-#         assert_shape(x, self.size)
-#         print(x.size())
         x = self.encoder(x)
-#         print(x.size())
         cls_ = self.decoder(x)
-#         print(cls.size())
         gen = self.autoencoder(x)
-#         print(gen.size())
         return cls_, gen
 
 def train(train_dataloader, num_epochs, model, criterion1, criterion2, optimizer,
@@ -144,7 +139,9 @@ def train(train_dataloader, num_epochs, model, criterion1, criterion2, optimizer
                 loss = (torch.exp(-model.weight1) * loss1 + 0.5 * model.weight1 
                         + 0.5 * (torch.exp(-model.weight2) * loss2 + model.weight2))
                 w_0.append(np.round(model.weight1.detach().cpu().numpy(), 5))
-                w_1.append(np.round(model.weight1.detach().cpu().numpy(), 5))
+                w_1.append(np.round(model.weight2.detach().cpu().numpy(), 5))
+                loss1_log.append(np.round(l1.cpu().numpy(), 5))
+                loss2_log.append(np.round(l2.cpu().numpy(), 5))               
             else:
                 loss = fixed_weights_vals[0]*loss1 + fixed_weights_vals[1]*loss2
                 loss1_log.append(np.round(l1, 5))
@@ -191,14 +188,14 @@ def evaluate(test_dataloader, model, criterion2):
 
 
 
-num_epochs = 1
+
 
 def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
-        num_epochs=100):
+        num_epochs=100, batchnorm=False):
     print('running {}'.format(file_name))
     criterion1 = nn.CrossEntropyLoss()
     criterion2 = nn.L1Loss()
-    model1 = Model((28,28), 10, weights_vals)
+    model1 = Model((28,28), 10, weights_vals, batchnorm)
     model1 = model1.cuda()
     optimizer = torch.optim.Adam(model1.parameters(), lr=0.001, weight_decay=0.0001)
 
@@ -210,67 +207,98 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
 
 
 if __name__ == "__main__":
+    num_epochs = 100
 
+    dataset = 'fashionmnist'
+    run_all = True
+    run_learned = True
+    if dataset == 'fashionmnist':
+        RES_DIR = 'fashion_mnist_exp/'
+        bnorm = True
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,)),
+        ])
+        train_dataset = torchvision.datasets.FashionMNIST('~/.torch/models/fashionmnist', train=True, download=True, 
+                                                   transform=transform)
+        test_dataset = torchvision.datasets.FashionMNIST('~/.torch/models/fashionmnist', train=False, download=True, 
+                                                   transform=transform)
+    if dataset == 'mnist':
+        bnorm = False
+        RES_DIR = 'mnist_exp/'
 
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,)),
+        ])
+        train_dataset = torchvision.datasets.MNIST('~/.torch/models/mnist', train=True, download=True, 
+                                                   transform=transform)
+        test_dataset = torchvision.datasets.MNIST('~/.torch/models/mnist', train=False, download=True, 
+                                                   transform=transform)
+
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
+    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=8, shuffle=False)
+    if run_all:
         # single tasks
-    run(train_dataloader, enable=(True, False), learn_weights=False, 
-        weights_vals=[1., 0.], file_name='classification_only')
-    run(train_dataloader, enable=(False, True), learn_weights=False, 
-        weights_vals=[0., 1.], file_name='reconstruction_only')
+        run(train_dataloader, enable=(True, False), learn_weights=False, 
+            weights_vals=[1., 0.], batchnorm=bnorm, file_name='classification_only')
+        run(train_dataloader, enable=(False, True), learn_weights=False, 
+            weights_vals=[0., 1.], batchnorm=bnorm, file_name='reconstruction_only')
 
-    # fixed grid search
-    run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.1, 0.9], file_name='fixed_0.1_0.9')
+        # fixed grid search
+        run(train_dataloader, enable=(True, True), learn_weights=False, 
+            weights_vals=[0.1, 0.9], batchnorm=bnorm, file_name='fixed_0.1_0.9')
 
-    run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.2, 0.8], file_name='fixed_0.2_0.8')
+        run(train_dataloader, enable=(True, True), learn_weights=False, 
+            weights_vals=[0.2, 0.8], batchnorm=bnorm, file_name='fixed_0.2_0.8')
 
-    run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.3, 0.7], file_name='fixed_0.3_0.7')
+        run(train_dataloader, enable=(True, True), learn_weights=False, 
+            weights_vals=[0.3, 0.7], batchnorm=bnorm, file_name='fixed_0.3_0.7')
 
-    run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.4, 0.6], file_name='fixed_0.4_0.6')
+        run(train_dataloader, enable=(True, True), learn_weights=False, 
+            weights_vals=[0.4, 0.6], batchnorm=bnorm, file_name='fixed_0.4_0.6')
 
-    run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.5, 0.5], file_name='fixed_0.5_0.5')
+        run(train_dataloader, enable=(True, True), learn_weights=False, 
+            weights_vals=[0.5, 0.5], batchnorm=bnorm, file_name='fixed_0.5_0.5')
 
-    run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.6, 0.4], file_name='fixed_0.6_0.4')
+        run(train_dataloader, enable=(True, True), learn_weights=False, 
+            weights_vals=[0.6, 0.4], batchnorm=bnorm, file_name='fixed_0.6_0.4')
 
-    run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.7, 0.3], file_name='fixed_0.7_0.3')
+        run(train_dataloader, enable=(True, True), learn_weights=False, 
+            weights_vals=[0.7, 0.3], batchnorm=bnorm, file_name='fixed_0.7_0.3')
 
-    run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.8, 0.2], file_name='fixed_0.8_0.2')
+        run(train_dataloader, enable=(True, True), learn_weights=False, 
+            weights_vals=[0.8, 0.2], batchnorm=bnorm, file_name='fixed_0.8_0.2')
 
-    run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.9, 0.1], file_name='fixed_0.9_0.1')
+        run(train_dataloader, enable=(True, True), learn_weights=False, 
+            weights_vals=[0.9, 0.1], batchnorm=bnorm, file_name='fixed_0.9_0.1')
 
-    # # fixed grid search
-    run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.15, 0.85], file_name='fixed_0.15_0.85')
+        # # fixed grid search
+        run(train_dataloader, enable=(True, True), learn_weights=False, 
+            weights_vals=[0.15, 0.85], batchnorm=bnorm, file_name='fixed_0.15_0.85')
 
-    run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.25, 0.75], file_name='fixed_0.25_0.75')
+        run(train_dataloader, enable=(True, True), learn_weights=False, 
+            weights_vals=[0.25, 0.75], batchnorm=bnorm, file_name='fixed_0.25_0.75')
 
-    run(train_dataloader, enable=(True, True), learn_weights=False, 
-        weights_vals=[0.005, 0.995], file_name='fixed_0.005_0.995')
+        run(train_dataloader, enable=(True, True), learn_weights=False, 
+            weights_vals=[0.005, 0.995], batchnorm=bnorm, file_name='fixed_0.005_0.995')
 
-   # learned
-    run(train_dataloader, enable=(True, True), learn_weights=True, 
-        weights_vals=[5.0, 5.0], file_name='learned_init_5_5')
+    if run_learned:
+       # learned
+        run(train_dataloader, enable=(True, True), learn_weights=True, 
+            weights_vals=[5.0, 5.0], batchnorm=bnorm, file_name='learned_init_5_5')
 
-    run(train_dataloader, enable=(True, True), learn_weights=True, 
-        weights_vals=[1.0, 1.0], file_name='learned_init_1_1')
+        run(train_dataloader, enable=(True, True), learn_weights=True, 
+            weights_vals=[1.0, 1.0], batchnorm=bnorm, file_name='learned_init_1_1')
 
-    run(train_dataloader, enable=(True, True), learn_weights=True, 
-        weights_vals=[2.0, 2.0], file_name='learned_init_2_2')
+        run(train_dataloader, enable=(True, True), learn_weights=True, 
+            weights_vals=[2.0, 2.0], batchnorm=bnorm, file_name='learned_init_2_2')
 
-    run(train_dataloader, enable=(True, True), learn_weights=True, 
-        weights_vals=[3.0, 3.0], file_name='learned_init_3_3')
+        run(train_dataloader, enable=(True, True), learn_weights=True, 
+            weights_vals=[3.0, 3.0], batchnorm=bnorm, file_name='learned_init_3_3')
 
-    run(train_dataloader, enable=(True, True), learn_weights=True, 
-        weights_vals=[4.0, 4.0], file_name='learned_init_4_4')
+        run(train_dataloader, enable=(True, True), learn_weights=True, 
+            weights_vals=[4.0, 4.0], batchnorm=bnorm, file_name='learned_init_4_4')
 
 
 
