@@ -52,7 +52,7 @@ class Classifier(nn.Module):
         return x
 
 def train(train_dataloader, num_epochs, model, criterion1, criterion2, optimizer,
-          enable, learn_weights, fixed_weights_vals, file_name):
+          enable, learn_weights, fixed_weights_vals, file_name, resume=False):
     info = {}
     info['fixed_weights_vals'] = fixed_weights_vals
     info['enable'] = [str(enable[0]), str(enable[1])]
@@ -110,6 +110,8 @@ def train(train_dataloader, num_epochs, model, criterion1, criterion2, optimizer
     info['loss2'] = loss2_log  
     info['weight1'] = w_0
     info['weight2'] = w_1
+    if resume:
+        file_name = file_name + '_resumed'
     np.save(RES_DIR + file_name, info) 
     torch.save(model.state_dict(), RES_DIR + file_name)
 
@@ -146,6 +148,7 @@ def evaluate(test_dataloader, model, criterion2):
 def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
         num_epochs, batchnorm=False):
     print('running {}'.format(file_name))
+    resume = False
     criterion1 = nn.CrossEntropyLoss()
     criterion2 = nn.L1Loss()
     model1 = Model((28,28), 10, batchnorm, weights_vals)
@@ -153,10 +156,11 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
     if os.path.exists(RES_DIR + file_name):
         model.load_state_dict(torch.load(RES_DIR + file_name))
         print('resuming ...')
+        resume = True
     optimizer = torch.optim.Adam(model1.parameters(), lr=0.0001, weight_decay=0.0001)
 
     train(train_dataloader, num_epochs, model1, criterion1, criterion2, optimizer, 
-      enable, learn_weights, weights_vals, file_name)
+      enable, learn_weights, weights_vals, file_name, resume=resume)
 
 
 
