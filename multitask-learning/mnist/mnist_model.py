@@ -27,8 +27,8 @@ class Encoder(nn.Module):
 class Classifier(nn.Module):
     def __init__(self, num_classes: int):
         super().__init__()
-        self._fc1 = nn.Linear(in_features=2 * 2 * 8, out_features=1024)
-        self._fc2 = nn.Linear(in_features=1024, out_features=num_classes)
+        self._fc1 = nn.Linear(in_features=2 * 2 * 8, out_features=128)
+        self._fc2 = nn.Linear(in_features=128, out_features=num_classes)
 
     def forward(self, x):
         assert_shape(x, (2, 2))
