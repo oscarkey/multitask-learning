@@ -144,7 +144,7 @@ def evaluate(test_dataloader, model, criterion2):
 
 
 def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
-        num_epochs=100, batchnorm=False):
+        num_epochs=50, batchnorm=False):
     print('running {}'.format(file_name))
     criterion1 = nn.CrossEntropyLoss()
     criterion2 = nn.L1Loss()
