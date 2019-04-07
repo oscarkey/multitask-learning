@@ -7,23 +7,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
-    
-class Classifier(nn.Module):
-    def __init__(self, num_classes: int):
-        super().__init__()
-        self.fc1 = nn.Linear(in_features=4*4*64, out_features=1024)
-        self.fc2 = nn.Linear(in_features=1024, out_features=num_classes)
-        
-    def forward(self, x):
-#         assert_shape(x, (4, 4))
-        
-        x = x.view(x.shape[0], -1)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
-
-
 class Model(nn.Module):
     def __init__(self, size: (int, int), num_classes: int, batchnorm, weight_init=[1.0, 1.0]):
         super().__init__()
@@ -50,9 +33,24 @@ class Model(nn.Module):
         
     def forward(self, x):
         x = self.encoder(x)
+        print(x.size())
         clss = self.classifier(x)
         gen = self.decoder(x)
         return clss, gen
+    
+class Classifier(nn.Module):
+    def __init__(self, num_classes: int):
+        super().__init__()
+        self.fc1 = nn.Linear(in_features=32, out_features=128)
+        self.fc2 = nn.Linear(in_features=128, out_features=num_classes)
+        
+    def forward(self, x):
+#         assert_shape(x, (4, 4))
+        
+        x = x.view(x.shape[0], -1)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
 
 def train(train_dataloader, num_epochs, model, criterion1, criterion2, optimizer,
           enable, learn_weights, fixed_weights_vals, file_name):
@@ -141,8 +139,8 @@ def evaluate(test_dataloader, model, criterion2):
             total_loss += loss
 
         print(f'Accuracy 1: {correct1}/{total} ({100 * correct1/total:.2f}%)')
-        print('Reconstruction error: {}'.format(total_loss/i))
-    return 100 * correct1/total, total_loss/i
+        print('Reconstruction error: {}'.format(total_loss/(i+1)))
+    return 100 * correct1/total, total_loss/(i+1)
 
 
 
@@ -165,7 +163,7 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
 
 
 if __name__ == "__main__":
-    num_epochs = 100
+    num_epochs = 50
 
     dataset = 'fashionmnist'
     run_all = True
