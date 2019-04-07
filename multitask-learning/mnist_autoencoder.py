@@ -154,7 +154,7 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
     model1 = Model((28,28), 10, batchnorm, weights_vals)
     model1 = model1.cuda()
     if os.path.exists(RES_DIR + file_name):
-        model.load_state_dict(torch.load(RES_DIR + file_name))
+        model1.load_state_dict(torch.load(RES_DIR + file_name))
         print('resuming ...')
         resume = True
     optimizer = torch.optim.Adam(model1.parameters(), lr=0.0001, weight_decay=0.0001)
