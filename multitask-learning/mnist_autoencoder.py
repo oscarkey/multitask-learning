@@ -195,7 +195,7 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
     print('running {}'.format(file_name))
     criterion1 = nn.CrossEntropyLoss()
     criterion2 = nn.L1Loss()
-    model1 = Model((28,28), 10, weights_vals, batchnorm)
+    model1 = Model((28,28), 10, batchnorm, weights_vals)
     model1 = model1.cuda()
     optimizer = torch.optim.Adam(model1.parameters(), lr=0.001, weight_decay=0.0001)
 
