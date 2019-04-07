@@ -40,6 +40,7 @@ def config():
     mnist_type = 'numbers'
     max_epochs = 100
     lr = 0.0001
+    weight_decay = 0
     batch_size = 64
     # One of 'learned' or 'fixed'.
     loss_type = 'fixed'
@@ -101,6 +102,11 @@ def _get_model(initial_ses: [float]) -> MultitaskMnistModel:
     return MultitaskMnistModel(initial_ses)
 
 
+@ex.capture
+def _get_optimizer(model: MultitaskMnistModel, lr: float, weight_decay: float):
+    return torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+
 def _get_device():
     return "cuda:0" if torch.cuda.is_available() else "cpu"
 
@@ -158,7 +164,7 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger, checkpoint_at_end: bo
     model = model.to(_get_device())
 
     loss_func = _get_loss_func(model=model)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    optimizer = _get_optimizer(model=model)
 
     _log.info('Starting training...')
 
