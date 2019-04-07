@@ -33,7 +33,6 @@ class Model(nn.Module):
         
     def forward(self, x):
         x = self.encoder(x)
-        print(x.size())
         clss = self.classifier(x)
         gen = self.decoder(x)
         return clss, gen
