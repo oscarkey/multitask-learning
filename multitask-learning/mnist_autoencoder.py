@@ -169,7 +169,7 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
 if __name__ == "__main__":
     num_epochs = 50
 
-    dataset = 'fashionmnist'
+    dataset = 'mnist'
     run_all = False
     run_learned = True
     if dataset == 'fashionmnist':
