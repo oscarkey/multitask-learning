@@ -13,32 +13,25 @@ def assert_shape(x: Tensor, shape: (int, int)):
 class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
-        self._conv1 = nn.Conv2d(in_channels=1, out_channels=25, kernel_size=12, padding=0, stride=2)
-        self._conv2 = nn.Conv2d(in_channels=25, out_channels=64, kernel_size=5, padding=2)
+        self._encoder = nn.Sequential(nn.Conv2d(1, 16, 3, stride=3, padding=1),  # [batch x 16 x 10 x 10]
+            nn.ReLU(True), nn.MaxPool2d(2, stride=2),  # [batch x 16 x 5 x 5]
+            nn.Conv2d(16, 8, 3, stride=2, padding=1),  # [batch x 8 x 3 x 3]
+            nn.ReLU(True), nn.MaxPool2d(2, stride=1)  # [batch x 8 x 2 x 2]
+        )
 
     def forward(self, x):
         assert_shape(x, (28, 28))
-
-        x = F.relu(self._conv1(x))
-        assert_shape(x, (9, 9))
-
-        x = F.relu(self._conv2(x))
-        assert_shape(x, (9, 9))
-
-        x = F.max_pool2d(x, 2)
-        assert_shape(x, (4, 4))
-
-        return x
+        return self._encoder(x)
 
 
 class Classifier(nn.Module):
     def __init__(self, num_classes: int):
         super().__init__()
-        self._fc1 = nn.Linear(in_features=4 * 4 * 64, out_features=1024)
-        self._fc2 = nn.Linear(in_features=1024, out_features=num_classes)
+        self._fc1 = nn.Linear(in_features=2 * 2 * 8, out_features=128)
+        self._fc2 = nn.Linear(in_features=128, out_features=num_classes)
 
     def forward(self, x):
-        assert_shape(x, (4, 4))
+        assert_shape(x, (2, 2))
 
         x = x.view(x.shape[0], -1)
         x = F.relu(self._fc1(x))
@@ -49,9 +42,11 @@ class Classifier(nn.Module):
 class Reconstructor(nn.Module):
     def __init__(self):
         super().__init__()
-        self._decoder = nn.Sequential(nn.ConvTranspose2d(64, 16, 3, stride=2),  # b, 16, 5, 5
-                                      nn.ReLU(True), nn.ConvTranspose2d(16, 8, 5, stride=3, padding=0),  # b, 8, 15, 15
-                                      nn.ReLU(True), nn.ConvTranspose2d(8, 1, 2, stride=1, padding=1),  # b, 1, 28, 28
+        self._decoder = nn.Sequential(nn.ConvTranspose2d(8, 16, 3, stride=2),  # b, 16, 5, 5
+                                      nn.ReLU(True),
+                                      nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 15, 15
+                                      nn.ReLU(True),
+                                      nn.ConvTranspose2d(8, 1, 2, stride=2, padding=1),  # b, 1, 28, 28
                                       nn.Tanh())
 
     def forward(self, x):
