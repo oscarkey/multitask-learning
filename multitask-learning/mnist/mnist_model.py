@@ -14,10 +14,9 @@ class Encoder(nn.Module):
     def __init__(self):
         super().__init__()
         self._encoder = nn.Sequential(nn.Conv2d(1, 16, 3, stride=3, padding=1),  # [batch x 16 x 10 x 10]
-            nn.ReLU(True), nn.MaxPool2d(2, stride=2),  # [batch x 16 x 5 x 5]
-            nn.Conv2d(16, 8, 3, stride=2, padding=1),  # [batch x 8 x 3 x 3]
-            nn.ReLU(True), nn.MaxPool2d(2, stride=1)  # [batch x 8 x 2 x 2]
-        )
+                                      nn.ReLU(True), nn.MaxPool2d(2, stride=2),  # [batch x 16 x 5 x 5]
+                                      nn.Conv2d(16, 8, 3, stride=2, padding=1),  # [batch x 8 x 3 x 3]
+                                      nn.ReLU(True), nn.MaxPool2d(2, stride=1))  # [batch x 8 x 2 x 2]
 
     def forward(self, x):
         assert_shape(x, (28, 28))
@@ -30,6 +29,7 @@ class Encoder(nn.Module):
 
 class Encoder2(nn.Module):
     """A larger encoder."""
+
     def __init__(self):
         super().__init__()
         self._conv1 = nn.Conv2d(1, 32, 5, stride=2, padding=4)
@@ -49,7 +49,46 @@ class Encoder2(nn.Module):
 
         x = F.relu(self._conv3(x))
         assert_shape(x, (4, 4))
+        x = F.max_pool2d(x, 2, stride=2)
+        assert_shape(x, (2, 2))
 
+        return x
+
+    @staticmethod
+    def get_out_features():
+        return 16
+
+
+class Encoder3(nn.Module):
+    """A much larger encoder."""
+
+    def __init__(self):
+        super().__init__()
+        self._conv1 = nn.Conv2d(1, 32, 3, stride=1, padding=1)
+        self._conv2 = nn.Conv2d(32, 32, 3, stride=1, padding=1)
+        self._conv3 = nn.Conv2d(32, 32, 2, stride=1, padding=0)
+        self._conv4 = nn.Conv2d(32, 16, 2, stride=1, padding=0)
+        self._conv5 = nn.Conv2d(16, 16, 2, stride=2, padding=1)
+
+    def forward(self, x):
+        assert_shape(x, (28, 28))
+
+        x = F.relu(self._conv1(x))
+        assert_shape(x, (28, 28))
+        x = F.relu(self._conv2(x))
+        assert_shape(x, (28, 28))
+        x = F.max_pool2d(x, 2, stride=2)
+        assert_shape(x, (14, 14))
+
+        x = F.relu(self._conv3(x))
+        assert_shape(x, (13, 13))
+        x = F.relu(self._conv4(x))
+        assert_shape(x, (12, 12))
+        x = F.max_pool2d(x, 2, stride=2)
+        assert_shape(x, (6, 6))
+
+        x = F.relu(self._conv5(x))
+        assert_shape(x, (4, 4))
         x = F.max_pool2d(x, 2, stride=2)
         assert_shape(x, (2, 2))
 
@@ -79,9 +118,9 @@ class Reconstructor(nn.Module):
     def __init__(self, in_features: int):
         super().__init__()
         self._decoder = nn.Sequential(nn.ConvTranspose2d(in_features, 16, 3, stride=2),  # b, 16, 5, 5
-                                      nn.ReLU(True),
+                                      nn.ReLU(True),  #
                                       nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 15, 15
-                                      nn.ReLU(True),
+                                      nn.ReLU(True),  #
                                       nn.ConvTranspose2d(8, 1, 2, stride=2, padding=1),  # b, 1, 28, 28
                                       nn.Tanh())
 
@@ -91,21 +130,39 @@ class Reconstructor(nn.Module):
         return x
 
 
+class Reconstructor2(nn.Module):
+    def __init__(self, in_features: int):
+        super().__init__()
+        self._convt1 = nn.ConvTranspose2d(in_features, 16, 2, stride=2)
+        self._convt2 = nn.ConvTranspose2d(16, 8, 3, stride=2, padding=1)
+        self._convt3 = nn.ConvTranspose2d(8, 4, 2, stride=2)
+        self._convt4 = nn.ConvTranspose2d(4, 1, 2, stride=2)
+
+    def forward(self, x):
+        x = F.relu(self._convt1(x))
+        assert_shape(x, (4, 4))
+        x = F.relu(self._convt2(x))
+        assert_shape(x, (7, 7))
+        x = F.relu(self._convt3(x))
+        assert_shape(x, (14, 14))
+        x = F.relu(self._convt4(x))
+        assert_shape(x, (28, 28))
+        return torch.tanh(x)
+
+
+_models = [(Encoder, Classifier, Reconstructor), (None, None, None),  # Model 2 is no longer implemented,
+           (Encoder2, Classifier, Reconstructor), (Encoder3, Classifier, Reconstructor2)]
+
+
 class MultitaskMnistModel(nn.Module):
     def __init__(self, initial_ses: [float], model_version: int):
         super().__init__()
 
-        if model_version == 1:
-            self._encoder = Encoder()
-        # model_version 2 is no longer implemented.
-        elif model_version == 3:
-            self._encoder = Encoder2()
-        else:
-            raise ValueError(f'Unknown model version {model_version}')
-
-        self._classifier1 = Classifier(num_classes=3, in_features=self._encoder.get_out_features())
-        self._classifier2 = Classifier(num_classes=10, in_features=self._encoder.get_out_features())
-        self._reconstructor = Reconstructor(in_features=self._encoder.get_out_features())
+        encoder_con, classifier_con, reconstructor_con = _models[model_version]
+        self._encoder = encoder_con()
+        self._classifier1 = classifier_con(num_classes=3, in_features=self._encoder.get_out_features())
+        self._classifier2 = classifier_con(num_classes=10, in_features=self._encoder.get_out_features())
+        self._reconstructor = reconstructor_con(in_features=self._encoder.get_out_features())
 
         assert len(initial_ses) == 3
         self._weight1 = nn.Parameter(torch.tensor([initial_ses[0]]))
