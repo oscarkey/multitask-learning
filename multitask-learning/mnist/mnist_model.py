@@ -23,11 +23,38 @@ class Encoder(nn.Module):
         assert_shape(x, (28, 28))
         return self._encoder(x)
 
+    @staticmethod
+    def get_out_features():
+        return 8
+
+
+class Encoder2(nn.Module):
+    """A larger encoder."""
+    def __init__(self):
+        super().__init__()
+        self._conv1 = nn.Conv2d(1, 32, 5, stride=2, padding=4)
+        self._conv2 = nn.Conv2d(32, 16, 3, stride=2, padding=1)
+
+    def forward(self, x):
+        assert_shape(x, (28, 28))
+
+        x = F.relu(self._conv1(x))
+        x = F.max_pool2d(x, 2, stride=2)
+
+        x = F.relu(self._conv2(x))
+        x = F.max_pool2d(x, 2, stride=2)
+
+        return x
+
+    @staticmethod
+    def get_out_features():
+        return 16
+
 
 class Classifier(nn.Module):
-    def __init__(self, num_classes: int):
+    def __init__(self, num_classes: int, in_features: int):
         super().__init__()
-        self._fc1 = nn.Linear(in_features=2 * 2 * 8, out_features=128)
+        self._fc1 = nn.Linear(in_features=2 * 2 * in_features, out_features=128)
         self._fc2 = nn.Linear(in_features=128, out_features=num_classes)
 
     def forward(self, x):
@@ -40,9 +67,9 @@ class Classifier(nn.Module):
 
 
 class Reconstructor(nn.Module):
-    def __init__(self):
+    def __init__(self, in_features: int):
         super().__init__()
-        self._decoder = nn.Sequential(nn.ConvTranspose2d(8, 16, 3, stride=2),  # b, 16, 5, 5
+        self._decoder = nn.Sequential(nn.ConvTranspose2d(in_features, 16, 3, stride=2),  # b, 16, 5, 5
                                       nn.ReLU(True),
                                       nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 15, 15
                                       nn.ReLU(True),
@@ -56,12 +83,19 @@ class Reconstructor(nn.Module):
 
 
 class MultitaskMnistModel(nn.Module):
-    def __init__(self, initial_ses: [float]):
+    def __init__(self, initial_ses: [float], model_version: int):
         super().__init__()
-        self._encoder = Encoder()
-        self._classifier1 = Classifier(num_classes=3)
-        self._classifier2 = Classifier(num_classes=10)
-        self._reconstructor = Reconstructor()
+
+        if model_version == 1:
+            self._encoder = Encoder()
+        elif model_version == 2:
+            self._encoder = Encoder2()
+        else:
+            raise ValueError(f'Unknown model version {model_version}')
+
+        self._classifier1 = Classifier(num_classes=3, in_features=self._encoder.get_out_features())
+        self._classifier2 = Classifier(num_classes=10, in_features=self._encoder.get_out_features())
+        self._reconstructor = Reconstructor(in_features=self._encoder.get_out_features())
 
         assert len(initial_ses) == 3
         self._weight1 = nn.Parameter(torch.tensor([initial_ses[0]]))

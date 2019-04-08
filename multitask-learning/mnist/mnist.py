@@ -50,6 +50,7 @@ def config():
     save_to_db = True
     # When True, will save a copy of the model to sacred at the end of training.
     checkpoint_at_end = False
+    model_version = 1
 
 
 @ex.capture
@@ -98,8 +99,8 @@ def _get_learned_loss_func(enabled_tasks: [bool], model: MultitaskMnistModel, mn
 
 
 @ex.capture
-def _get_model(initial_ses: [float]) -> MultitaskMnistModel:
-    return MultitaskMnistModel(initial_ses)
+def _get_model(initial_ses: [float], model_version: int) -> MultitaskMnistModel:
+    return MultitaskMnistModel(initial_ses, model_version)
 
 
 @ex.capture
