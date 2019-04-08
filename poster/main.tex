@@ -52,12 +52,11 @@
        \item  Unified architecture for all three tasks with the same encoder for different tasks, with a separate decoder for each task
        \item Demonstrating that loss weighting is important for performance, and showing how superior performance can be achieved on multi-task models compared to individually trained single-task models
        \end{enumerate}
-       
        \end{itemize}
- 
+                    }
        
-    }
-    \block{Achievable objectives}{
+    
+    \block{Selected reproduction objective}{
     
        \begin{itemize}
        
@@ -71,60 +70,59 @@
         \end{tikzfigure}
         
     }
-    
-    \column{0.36}
-    \block{Method}{
+   
+   \column{0.36} 
+   \block{Technical details}{
+       \begin{itemize}
+       \item Overall joint loss function: 
+       \[ \mathcal{L} \approx 
+       \frac{1}{\sigma^2_\text{sem}} \mathcal{L}_\text{sem}  + \log \sigma_\text{sem}
+       + \frac{1}{2\sigma^2_\text{ins}} \mathcal{L}_\text{ins}+ \log \sigma_\text{ins}
+       + \frac{1}{2\sigma^2_\text{dep}} \mathcal{L}_\text{dep}
+        + \log \sigma_\text{dep} 
+  \]
      
-     Sacred with MongoDB
+  \item Model architecture
+\begin{itemize}
+\item DeepLabv3 encoder architecture, including ResNet-101 layers with dilated convolutions and Atrous Spatial Pooling Pyramid module to increase contextual awareness
+\item Simple decoder architecture with two convolutional layers for each task
+\end{itemize}
+\item Sacred with MongoDB to save results
+\end{itemize}
+       
+    }
+    
+    \block{Reproduction results}{
+
    	\begin{itemize}
-    \item Hyperparameter optimisation 
+   	\item Table 1 with paper hyperparams
+   	\item Semseg lr search
+   	\item Semseg weight decay search
+   	\item ASPP dilation size search
+   	\item Single batch (+ IoU calibration)
+   
     \end{itemize} 
          
     }
+
     
-    \block{Results of reproduction}{
-     
-    }
-    
+    \column{0.32}
     \block{Success on other multi-task problems}{
     
     \begin{itemize}
     \item Applying the principled approach to other multi-task learning problems
-    \item
     \end{itemize}
     
-    
-   \begin{enumerate}
+\textbf{MNIST and Fashion MNIST}
    
+   \begin{itemize}
    
-   \item MNIST
+   \item Table 1 style
+   \item Grid search for optimal weights on two task
+   \item Uncertainty convergence from different initial values
    
-   
-   
-   \item Fashion MNIST
-   
-   
-   
-   \item Fashion MNIST with auto-encoder
-   
-   
-   
-   \end{enumerate}
-         
-  
-         
-         
+   \end{itemize}   
     }
-
-    \column{0.32}
-    \block{Comparison}{
-        
-        }
-    
-    \block{Summary}{
-        
-    }
-    
    
 \end{columns}
 \end{document}
