@@ -34,15 +34,24 @@ class Encoder2(nn.Module):
         super().__init__()
         self._conv1 = nn.Conv2d(1, 32, 5, stride=2, padding=4)
         self._conv2 = nn.Conv2d(32, 16, 3, stride=2, padding=1)
+        self._conv3 = nn.Conv2d(16, 16, 3, stride=1, padding=1)
 
     def forward(self, x):
         assert_shape(x, (28, 28))
 
         x = F.relu(self._conv1(x))
+        assert_shape(x, (16, 16))
         x = F.max_pool2d(x, 2, stride=2)
+        assert_shape(x, (8, 8))
 
         x = F.relu(self._conv2(x))
+        assert_shape(x, (4, 4))
+
+        x = F.relu(self._conv3(x))
+        assert_shape(x, (4, 4))
+
         x = F.max_pool2d(x, 2, stride=2)
+        assert_shape(x, (2, 2))
 
         return x
 
@@ -88,7 +97,8 @@ class MultitaskMnistModel(nn.Module):
 
         if model_version == 1:
             self._encoder = Encoder()
-        elif model_version == 2:
+        # model_version 2 is no longer implemented.
+        elif model_version == 3:
             self._encoder = Encoder2()
         else:
             raise ValueError(f'Unknown model version {model_version}')
