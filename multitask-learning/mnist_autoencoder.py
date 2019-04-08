@@ -206,7 +206,7 @@ def run(train_dataloader, enable, learn_weights, weights_vals, file_name,
 
     train(train_dataloader, num_epochs, model1, criterion1, criterion2, optimizer, 
       enable, learn_weights, weights_vals, file_name, resume=resume)
-    acc, l = evaluate(test_dataloader, model, criterion2)
+    acc, l = evaluate(test_dataloader, model1, criterion2)
 
 
 
