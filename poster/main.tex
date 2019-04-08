@@ -22,10 +22,10 @@
 \usetheme{EmoryTheme}
 \usecolorstyle{EmoryStyle}
 
-\title{Reproduction of `Multi-Task Learning using Uncertainty to Weigh Losses'}
-\author{D. Baerg, O. Key, J. Materzynska and M. Tong}
+\title{\textbf{Reproduction of `Multi-Task Learning using Uncertainty to Weigh Losses'}}
+\author{D. Baerg, O. Key, J. Materzynska, M. Tong}
 \institute{Department of Computer Science, University of Oxford}
-%\titlegraphic{\includegraphics[width=0.07\textwidth]{Emory_vt_280.png}}
+\titlegraphic{\qquad \qquad \qquad \qquad \qquad  \includegraphics[width=0.06\textwidth]{oxford.jpg}}
 
 % begin document
 \begin{document}
@@ -35,58 +35,96 @@
 \centering
 \begin{columns}
     \column{0.32}
-    
-    \block{}{
+
+    \block{A new approach to multi-task learning}{
+             
+        Paper on `Multi-Task Learning using Uncertainty to Weigh Losses' -- Kendall, Gal \& Cipolla, 2017.
+        \begin{itemize}
+        \item Principled approach to multi-task learning, demonstrated on the multi-task problem of semantic segmentation, instance segmentation and depth regression for the Cityscapes dataset
         
-        We reproduced a selection of experiments from `Multi-Task Learning using Uncertainty to Weigh Losses'\textsuperscript{\cite{KendallGalCipolla2017Multi}}. This paper makes a new approach to multi-task learning by using aleatoric homoscedastic uncertainty to weigh losses in different tasks. They used a `unified' architecture with the same encoder for different tasks, with only the decoder differing between tasks. This allowed them to achieve a better performance with multi-task learning than with multiple single-task learning.
-    }
-    \block{Background}{
-        Background on multi-task learning.
+        \begin{tikzfigure}[Model architecture (Kendall et al., 2017)]
+            \includegraphics[width=1\linewidth]{overall}
+        \end{tikzfigure}
         
-    }
-    \block{Objective}{
-       We aimed to reproduce the results comparing multi-task learning with single-task learning with the sub-sampled version of the Cityscapes dataset\textsuperscript{\cite{Cityscapes}}, Tiny Cityscapes.
+        \item 3 key contributions:
+        \begin{enumerate}
+       \item  Aleatoric homoscedastic uncertainty to weigh losses in different tasks
+       \item  Unified architecture for all three tasks with the same encoder for different tasks, with a separate decoder for each task
+       \item Demonstrating that loss weighting is important for performance, and showing how superior performance can be achieved on multi-task models compared to individually trained single-task models
+       \end{enumerate}
        
-       \begin{tikzfigure}[Results that we aimed to reproduce\textsuperscript{\cite{KendallGalCipolla2017Multi}}]
+       \end{itemize}
+ 
+       
+    }
+    \block{Achievable objectives}{
+    
+       \begin{itemize}
+       
+       \item Comparison of multi-task learning with single-task learning and learned loss weights with fixed loss weights
+       \item Subsampled dataset, Tiny Cityscapes, requires less computation time
+       
+       \end{itemize}
+    
+       \begin{tikzfigure}[Results that we aimed to reproduce (Kendall et al., 2017)]
             \includegraphics[width=1\linewidth]{data.png}
         \end{tikzfigure}
         
     }
-    \block{Method}{
-        
-        We reproduced the method given in the paper in PyTorch with four main differences:
-        \begin{itemize}
-         \item Training set: $32 \times 32$ crops of Tiny Cityscapes training set images.
-         \item Validation set: $128 \times 256$ Tiny Cityscapes validation set images.
-         \item Optimiser: Adam with default parameters\textsuperscript{\cite{Adam}}.
-         \item Clustering algorithm: DBSCAN.
-         \end{itemize}
-         
-         We used ResNet\textsuperscript{\cite{ResNet}} and DeepLab\textsuperscript{\cite{DeepLabv3}\cite{DeepLab}} papers as reference for the encoder architecture.
-         
-        We also were not able to use the depth data.
-        
-        
-    }
+    
     \column{0.36}
-    \block{Results}{
-         Our results
+    \block{Method}{
+     
+     Sacred with MongoDB
+   	\begin{itemize}
+    \item Hyperparameter optimisation 
+    \end{itemize} 
+         
+    }
+    
+    \block{Results of reproduction}{
+     
+    }
+    
+    \block{Success on other multi-task problems}{
+    
+    \begin{itemize}
+    \item Applying the principled approach to other multi-task learning problems
+    \item
+    \end{itemize}
+    
+    
+   \begin{enumerate}
+   
+   
+   \item MNIST
+   
+   
+   
+   \item Fashion MNIST
+   
+   
+   
+   \item Fashion MNIST with auto-encoder
+   
+   
+   
+   \end{enumerate}
+         
+  
+         
+         
     }
 
     \column{0.32}
     \block{Comparison}{
-        How our results compare with their results
+        
         }
     
     \block{Summary}{
         
     }
     
-    \block{References}{
-        \vspace{-1em}
-        \begin{footnotesize}
-        \printbibliography[heading=none]
-        \end{footnotesize}
-    }
+   
 \end{columns}
 \end{document}
