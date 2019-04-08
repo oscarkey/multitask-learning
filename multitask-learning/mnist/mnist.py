@@ -139,9 +139,9 @@ def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel, mnist_typ
 
             _, (loss1, loss2, loss3) = loss_func([output1, output2, output3], labels, image)
 
-            task_1_accum_loss += loss1
-            task_2_accum_loss += loss2
-            task_3_accum_loss += loss3
+            task_1_accum_loss += loss1.item()
+            task_2_accum_loss += loss2.item()
+            task_3_accum_loss += loss3.item()
 
             preds1 = output1.argmax(dim=1)
             preds2 = output2.argmax(dim=1)
@@ -153,6 +153,10 @@ def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel, mnist_typ
 
             task_3_accum_error += F.l1_loss(output3, image).sum().item()
             num_batches += 1
+
+    assert isinstance(task_1_accum_loss, float)
+    assert isinstance(task_2_accum_loss, float)
+    assert isinstance(task_3_accum_loss, float)
 
     accuracies = task_1_num_correct / num_images, task_2_num_correct / num_images, task_3_accum_error / num_batches
     losses = task_1_accum_loss / num_batches, task_2_accum_loss / num_batches, task_3_accum_loss / num_batches
