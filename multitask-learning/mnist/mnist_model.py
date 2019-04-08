@@ -99,6 +99,27 @@ class Encoder3(nn.Module):
         return 16
 
 
+class EncoderFC(nn.Module):
+    """A fully connected encoder."""
+
+    def __init__(self):
+        super().__init__()
+        self._layers = nn.Sequential(nn.Linear(28 * 28, 512),  #
+                                     nn.Linear(512, 256),  #
+                                     nn.Linear(256, 32))
+
+    def forward(self, x):
+        assert_shape(x, (28, 28))
+        x = x.view(-1, 28 * 28)
+        x = self._layers(x)
+        # Return in shape (2, 2) so as to be compatible with the other decoders.
+        return x.view(-1, 8, 2, 2)
+
+    @staticmethod
+    def get_out_features():
+        return 8
+
+
 class Classifier(nn.Module):
     def __init__(self, num_classes: int, in_features: int):
         super().__init__()
@@ -106,8 +127,6 @@ class Classifier(nn.Module):
         self._fc2 = nn.Linear(in_features=128, out_features=num_classes)
 
     def forward(self, x):
-        assert_shape(x, (2, 2))
-
         x = x.view(x.shape[0], -1)
         x = F.relu(self._fc1(x))
         x = self._fc2(x)
@@ -150,8 +169,24 @@ class Reconstructor2(nn.Module):
         return torch.tanh(x)
 
 
-_models = [(Encoder, Classifier, Reconstructor), (None, None, None),  # Model 2 is no longer implemented,
-           (Encoder2, Classifier, Reconstructor), (Encoder3, Classifier, Reconstructor2)]
+class ReconstructorFC(nn.Module):
+    """A fully connected reconstruction model."""
+    def __init__(self, in_features: int):
+        super().__init__()
+        self._in_features = in_features
+        self._layers = nn.Sequential(nn.Linear(in_features*2*2, 256), nn.Linear(256, 512), nn.Linear(512, 28 * 28))
+
+    def forward(self, x):
+        x = x.view(-1, self._in_features * 2 * 2)
+        x = self._layers(x)
+        return x.view(-1, 28, 28)
+
+
+_models = [(Encoder, Classifier, Reconstructor),  #
+           (None, None, None),  # Model 2 is no longer implemented,
+           (Encoder2, Classifier, Reconstructor),  #
+           (Encoder3, Classifier, Reconstructor2),  #
+           (EncoderFC, Classifier, ReconstructorFC)]
 
 
 class MultitaskMnistModel(nn.Module):
