@@ -50,6 +50,7 @@ def config():
     save_to_db = True
     # When True, will save a copy of the model to sacred at the end of training.
     checkpoint_at_end = False
+    model_version = 1
 
 
 @ex.capture
@@ -98,8 +99,8 @@ def _get_learned_loss_func(enabled_tasks: [bool], model: MultitaskMnistModel, mn
 
 
 @ex.capture
-def _get_model(initial_ses: [float]) -> MultitaskMnistModel:
-    return MultitaskMnistModel(initial_ses)
+def _get_model(initial_ses: [float], model_version: int) -> MultitaskMnistModel:
+    return MultitaskMnistModel(initial_ses, model_version)
 
 
 @ex.capture
@@ -112,8 +113,9 @@ def _get_device():
 
 
 @ex.capture
-def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel, mnist_type: str) -> (float, float):
-    """Returns (accuracy1, accuracy2, accuracy3).
+def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel, mnist_type: str,
+              loss_func: MultitaskMnistLoss) -> ((float, float, float), (float, float, float)):
+    """Returns ((accuracy1, accuracy2, accuracy3), (loss1, loss2, loss3)).
 
     accuracy1 and accuracy2 are the fraction of the images which the model labelled correctly. accuracy3 is the mean
     reconstruction error.
@@ -121,7 +123,10 @@ def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel, mnist_typ
     with torch.no_grad():
         task_1_num_correct = 0
         task_2_num_correct = 0
-        task_3_accumulated_error = 0
+        task_3_accum_error = 0
+        task_1_accum_loss = 0
+        task_2_accum_loss = 0
+        task_3_accum_loss = 0
         num_images = 0
         num_batches = 0
 
@@ -133,6 +138,12 @@ def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel, mnist_typ
 
             output1, output2, output3 = model(image)
 
+            _, (loss1, loss2, loss3) = loss_func([output1, output2, output3], labels, image)
+
+            task_1_accum_loss += loss1.item()
+            task_2_accum_loss += loss2.item()
+            task_3_accum_loss += loss3.item()
+
             preds1 = output1.argmax(dim=1)
             preds2 = output2.argmax(dim=1)
             assert preds1.shape == preds2.shape
@@ -141,10 +152,16 @@ def _validate(test_dataloader: DataLoader, model: MultitaskMnistModel, mnist_typ
             task_2_num_correct += mnist_loss.compute_num_correct_task2(preds2, labels)
             num_images += preds1.shape[0]
 
-            task_3_accumulated_error += F.l1_loss(output3, image).sum().item()
+            task_3_accum_error += F.l1_loss(output3, image).sum().item()
             num_batches += 1
 
-    return task_1_num_correct / num_images, task_2_num_correct / num_images, task_3_accumulated_error / num_batches
+    assert isinstance(task_1_accum_loss, float)
+    assert isinstance(task_2_accum_loss, float)
+    assert isinstance(task_3_accum_loss, float)
+
+    accuracies = task_1_num_correct / num_images, task_2_num_correct / num_images, task_3_accum_error / num_batches
+    losses = task_1_accum_loss / num_batches, task_2_accum_loss / num_batches, task_3_accum_loss / num_batches
+    return accuracies, losses
 
 
 def _save_model(_run, model: MultitaskMnistModel):
@@ -157,7 +174,7 @@ def _save_model(_run, model: MultitaskMnistModel):
 
 
 @ex.capture
-def _train(_run, max_epochs: int, lr: float, _log: Logger, checkpoint_at_end: bool):
+def _train(_run, max_epochs: int, _log: Logger, checkpoint_at_end: bool):
     train_dataloader, test_dataloader = _get_dataloaders()
 
     model = _get_model()
@@ -201,12 +218,16 @@ def _train(_run, max_epochs: int, lr: float, _log: Logger, checkpoint_at_end: bo
         _log.info(f'Epoch {epoch}: {epoch_loss / iteration_count:.3f} '
                   f'({weight1.item():.3f}, {weight2.item():.3f}, {weight3.item():.3f})')
 
-        acc1, acc2, acc3 = _validate(test_dataloader=test_dataloader, model=model)
+        (acc1, acc2, acc3), (val_loss1, val_loss2, val_loss3) = _validate(test_dataloader=test_dataloader, model=model,
+                                                                          loss_func=loss_func)
 
         _run.log_scalar('train_loss', epoch_loss / iteration_count, epoch)
         _run.log_scalar('train_loss1', epoch_loss1 / iteration_count, epoch)
         _run.log_scalar('train_loss2', epoch_loss2 / iteration_count, epoch)
         _run.log_scalar('train_loss3', epoch_loss3 / iteration_count, epoch)
+        _run.log_scalar('val_loss1', val_loss1, epoch)
+        _run.log_scalar('val_loss2', val_loss2, epoch)
+        _run.log_scalar('val_loss3', val_loss3, epoch)
         _run.log_scalar('val_acc1', acc1, epoch)
         _run.log_scalar('val_acc2', acc2, epoch)
         _run.log_scalar('val_acc3', acc3, epoch)
