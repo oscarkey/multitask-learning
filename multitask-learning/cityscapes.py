@@ -34,11 +34,17 @@ class RandomCrop(object):
         h, w = self._get_shape(images[0])
         new_h, new_w = self.output_size
 
-        assert h > new_h, "h < new_h: {} {} {} {} {} {}".format(h, w, new_h, new_w, images[0].shape)
-        assert w > new_w, "w < new_w: {} {} {} {} {} {}".format(h, w, new_h, new_w, images[0].shape)
+        assert h >= new_h, 'h < new_h: {} {} {} {} {}'.format(h, w, new_h, new_w, images[0].shape)
+        assert w >= new_w, 'w < new_w: {} {} {} {} {}'.format(h, w, new_h, new_w, images[0].shape)
 
-        top = np.random.randint(0, h - new_h)
-        left = np.random.randint(0, w - new_w)
+        if h > new_h:
+            top = np.random.randint(0, h - new_h)
+        else:
+            top = 0
+        if w > new_w:
+            left = np.random.randint(0, w - new_w)
+        else:
+            left = 0
 
         return [self._crop(image, left, top, w, h, new_w, new_h) for image in images]
 
