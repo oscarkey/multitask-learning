@@ -310,6 +310,8 @@ if __name__ == "__main__":
 
     if dataset == 'fashionmnist':
 
+
+        RES_DIR = 'j_exp/fashionmnist_oscarmodel/'
         if not os.path.exists(RES_DIR):
             os.makedirs(RES_DIR)
         bnorm = True
