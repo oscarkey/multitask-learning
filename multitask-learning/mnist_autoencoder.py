@@ -8,6 +8,11 @@ import matplotlib.pyplot as plt
 import os
 import sys
 
+
+def assert_shape(x: Tensor, shape: (int, int)):
+    """Raises an exception if the Tensor doesn't have the given final two dimensions."""
+    assert tuple(x.shape[-2:]) == tuple(shape), f'Expected shape ending {shape}, got {x.shape}'
+
 # class Model(nn.Module):
 #     def __init__(self, size: (int, int), num_classes: int, batchnorm, weight_init=[1.0, 1.0]):
 #         super().__init__()
