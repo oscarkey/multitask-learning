@@ -114,16 +114,16 @@ class Model(nn.Module):
     def __init__(self, size: (int, int), num_classes: int, batchnorm=False, weight_init=[1.0, 1.0]):
         super().__init__()
         self.size = size
-        self.encoder = Encoder3()
-        self.decoder = Reconstructor2(in_features=self._encoder.get_out_features())
-        self.classifier = Classifier(num_classes=10, in_features=self._encoder.get_out_features())
+        self._encoder = Encoder3()
+        self._decoder = Reconstructor2(in_features=self._encoder.get_out_features())
+        self._classifier = Classifier(num_classes=10, in_features=self._encoder.get_out_features())
         self.weight1 = nn.Parameter(torch.tensor([weight_init[0]]))
         self.weight2 = nn.Parameter(torch.tensor([weight_init[1]]))
         
     def forward(self, x):
-        x = self.encoder(x)
-        clss = self.classifier(x)
-        gen = self.decoder(x)
+        x = self._encoder(x)
+        clss = self._classifier(x)
+        gen = self._decoder(x)
         return clss, gen
     
 class Classifier(nn.Module):
