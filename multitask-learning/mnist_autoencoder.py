@@ -115,7 +115,7 @@ class Model(nn.Module):
         super().__init__()
         self.size = size
         self.encoder = Encoder3()
-        self.decoder = Reconstructor2()
+        self.decoder = Reconstructor2(in_features=self._encoder.get_out_features())
         self.classifier = Classifier(num_classes=10, in_features=self._encoder.get_out_features())
         self.weight1 = nn.Parameter(torch.tensor([weight_init[0]]))
         self.weight2 = nn.Parameter(torch.tensor([weight_init[1]]))
