@@ -105,8 +105,11 @@ class EncoderFC(nn.Module):
     def __init__(self):
         super().__init__()
         self._layers = nn.Sequential(nn.Linear(28 * 28, 512),  #
+                                     nn.ReLU(),  #
                                      nn.Linear(512, 256),  #
-                                     nn.Linear(256, 32))
+                                     nn.ReLU(),  #
+                                     nn.Linear(256, 32),  #
+                                     nn.ReLU())
 
     def forward(self, x):
         assert_shape(x, (28, 28))
@@ -171,10 +174,16 @@ class Reconstructor2(nn.Module):
 
 class ReconstructorFC(nn.Module):
     """A fully connected reconstruction model."""
+
     def __init__(self, in_features: int):
         super().__init__()
         self._in_features = in_features
-        self._layers = nn.Sequential(nn.Linear(in_features*2*2, 1024), nn.Linear(1024, 800), nn.Linear(800, 28 * 28))
+        self._layers = nn.Sequential(nn.Linear(in_features * 2 * 2, 1024),  #
+                                     nn.ReLU(),  #
+                                     nn.Linear(1024, 800),  #
+                                     nn.ReLU(),  #
+                                     nn.Linear(800, 28 * 28),  #
+                                     nn.Tanh())
 
     def forward(self, x):
         x = x.view(-1, self._in_features * 2 * 2)
