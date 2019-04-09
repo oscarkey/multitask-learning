@@ -51,28 +51,72 @@ import sys
 #         x = F.relu(self.fc1(x))
 #         x = self.fc2(x)
 #         return x
+class Encoder3(nn.Module):
+    """A much larger encoder."""
+
+    def __init__(self):
+        super().__init__()
+        self._conv1 = nn.Conv2d(1, 32, 3, stride=1, padding=1)
+        self._conv2 = nn.Conv2d(32, 32, 3, stride=1, padding=1)
+        self._conv3 = nn.Conv2d(32, 32, 2, stride=1, padding=0)
+        self._conv4 = nn.Conv2d(32, 16, 2, stride=1, padding=0)
+        self._conv5 = nn.Conv2d(16, 16, 2, stride=2, padding=1)
+
+    def forward(self, x):
+        assert_shape(x, (28, 28))
+
+        x = F.relu(self._conv1(x))
+        assert_shape(x, (28, 28))
+        x = F.relu(self._conv2(x))
+        assert_shape(x, (28, 28))
+        x = F.max_pool2d(x, 2, stride=2)
+        assert_shape(x, (14, 14))
+
+        x = F.relu(self._conv3(x))
+        assert_shape(x, (13, 13))
+        x = F.relu(self._conv4(x))
+        assert_shape(x, (12, 12))
+        x = F.max_pool2d(x, 2, stride=2)
+        assert_shape(x, (6, 6))
+
+        x = F.relu(self._conv5(x))
+        assert_shape(x, (4, 4))
+        x = F.max_pool2d(x, 2, stride=2)
+        assert_shape(x, (2, 2))
+
+        return x
+
+    @staticmethod
+    def get_out_features():
+        return 16
+
+class Reconstructor2(nn.Module):
+    def __init__(self, in_features: int):
+        super().__init__()
+        self._convt1 = nn.ConvTranspose2d(in_features, 16, 2, stride=2)
+        self._convt2 = nn.ConvTranspose2d(16, 8, 3, stride=2, padding=1)
+        self._convt3 = nn.ConvTranspose2d(8, 4, 2, stride=2)
+        self._convt4 = nn.ConvTranspose2d(4, 1, 2, stride=2)
+
+    def forward(self, x):
+        x = F.relu(self._convt1(x))
+        assert_shape(x, (4, 4))
+        x = F.relu(self._convt2(x))
+        assert_shape(x, (7, 7))
+        x = F.relu(self._convt3(x))
+        assert_shape(x, (14, 14))
+        x = F.relu(self._convt4(x))
+        assert_shape(x, (28, 28))
+        return torch.tanh(x)
+
 
 class Model(nn.Module):
-    def __init__(self, size: (int, int), num_classes: int, batchnorm, weight_init=[1.0, 1.0]):
+    def __init__(self, size: (int, int), num_classes: int, batchnorm=False, weight_init=[1.0, 1.0]):
         super().__init__()
         self.size = size
-        self.encoder = nn.Sequential(
-            nn.Conv2d(1, 64, 3, stride=3, padding=1),  # b, 16, 10, 10
-            nn.ReLU(True),
-            nn.MaxPool2d(2, stride=2),  # b, 16, 5, 5
-            nn.Conv2d(64, 32, 3, stride=2, padding=1),  # b, 8, 3, 3
-            nn.ReLU(True),
-            nn.MaxPool2d(2, stride=1)  # b, 8, 2, 2
-        )
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(32, 16, 3, stride=2),  # b, 16, 5, 5
-            nn.ReLU(True),
-            nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 15, 15
-            nn.ReLU(True),
-            nn.ConvTranspose2d(8, 1, 2, stride=2, padding=1),  # b, 1, 28, 28
-            nn.Tanh()
-        )
-        self.classifier = Classifier(num_classes=10)
+        self.encoder = Encoder3()
+        self.decoder = Reconstructor2()
+        self.classifier = Classifier(num_classes=10, in_features=self._encoder.get_out_features())
         self.weight1 = nn.Parameter(torch.tensor([weight_init[0]]))
         self.weight2 = nn.Parameter(torch.tensor([weight_init[1]]))
         
@@ -83,18 +127,61 @@ class Model(nn.Module):
         return clss, gen
     
 class Classifier(nn.Module):
-    def __init__(self, num_classes: int):
+    def __init__(self, num_classes: int, in_features: int):
         super().__init__()
-        self.fc1 = nn.Linear(in_features=128, out_features=256)
-        self.fc2 = nn.Linear(in_features=256, out_features=num_classes)
-        
+        self._fc1 = nn.Linear(in_features=2 * 2 * in_features, out_features=128)
+        self._fc2 = nn.Linear(in_features=128, out_features=num_classes)
+
     def forward(self, x):
-#         assert_shape(x, (4, 4))
-        
         x = x.view(x.shape[0], -1)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = F.relu(self._fc1(x))
+        x = self._fc2(x)
         return x
+
+# class Model(nn.Module):
+#     def __init__(self, size: (int, int), num_classes: int, batchnorm, weight_init=[1.0, 1.0]):
+#         super().__init__()
+#         self.size = size
+#         self.encoder = nn.Sequential(
+#             nn.Conv2d(1, 64, 3, stride=3, padding=1),  # b, 16, 10, 10
+#             nn.ReLU(True),
+#             nn.MaxPool2d(2, stride=2),  # b, 16, 5, 5
+#             nn.Conv2d(64, 32, 3, stride=2, padding=1),  # b, 8, 3, 3
+#             nn.ReLU(True),
+#             nn.MaxPool2d(2, stride=1)  # b, 8, 2, 2
+#         )
+#         self.decoder = nn.Sequential(
+#             nn.ConvTranspose2d(32, 16, 3, stride=2),  # b, 16, 5, 5
+#             nn.ReLU(True),
+#             nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 15, 15
+#             nn.ReLU(True),
+#             nn.ConvTranspose2d(8, 1, 2, stride=2, padding=1),  # b, 1, 28, 28
+#             nn.Tanh()
+#         )
+#         self.classifier = Classifier(num_classes=10)
+#         self.weight1 = nn.Parameter(torch.tensor([weight_init[0]]))
+#         self.weight2 = nn.Parameter(torch.tensor([weight_init[1]]))
+        
+#     def forward(self, x):
+#         x = self.encoder(x)
+#         print(x.size())
+#         clss = self.classifier(x)
+#         gen = self.decoder(x)
+#         return clss, gen
+    
+# class Classifier(nn.Module):
+#     def __init__(self, num_classes: int):
+#         super().__init__()
+#         self.fc1 = nn.Linear(in_features=128, out_features=256)
+#         self.fc2 = nn.Linear(in_features=256, out_features=num_classes)
+        
+#     def forward(self, x):
+# #         assert_shape(x, (4, 4))
+        
+#         x = x.view(x.shape[0], -1)
+#         x = F.relu(self.fc1(x))
+#         x = self.fc2(x)
+#         return x
 
 def train(train_dataloader, num_epochs, model, criterion1, criterion2, optimizer,
           enable, learn_weights, fixed_weights_vals, file_name, resume=False):
@@ -149,8 +236,8 @@ def train(train_dataloader, num_epochs, model, criterion1, criterion2, optimizer
             optimizer.step()
 
             epoch_loss += loss.item()
-
-        print(f'Epoch {epoch}: {epoch_loss/i:.3} ({model.weight1.item()}, {model.weight2.item()})')
+        if i % 20 == 0:
+            print(f'Epoch {epoch}: {epoch_loss/i:.3} ({model.weight1.item()}, {model.weight2.item()})')
     info['loss1'] = loss1_log
     info['loss2'] = loss2_log  
     info['weight1'] = w_0
@@ -222,7 +309,6 @@ if __name__ == "__main__":
     run_learned = True
 
     if dataset == 'fashionmnist':
-        RES_DIR = 'fashion_mnist_model2/'
 
         if not os.path.exists(RES_DIR):
             os.makedirs(RES_DIR)
@@ -237,7 +323,7 @@ if __name__ == "__main__":
                                                    transform=transform)
     if dataset == 'mnist':
         bnorm = False
-        RES_DIR = 'mnist_exp_new_model2/'
+        RES_DIR = 'j_exp/mnist_oscarmodel/'
         if not os.path.exists(RES_DIR):
             os.makedirs(RES_DIR)
 
@@ -250,7 +336,7 @@ if __name__ == "__main__":
         test_dataset = torchvision.datasets.MNIST('~/.torch/models/mnist', train=False, download=True, 
                                                    transform=transform)
 
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=32, shuffle=True)
     test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=8, shuffle=False)
 
     if run_single:
