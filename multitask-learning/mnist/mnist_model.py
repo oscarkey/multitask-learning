@@ -136,6 +136,22 @@ class Classifier(nn.Module):
         return x
 
 
+class Classifier2(nn.Module):
+    """A larger fully connected classifier."""
+    def __init__(self, num_classes: int, in_features: int):
+        super().__init__()
+        self._layers = nn.Sequential(nn.Linear(in_features=2 * 2 * in_features, out_features=128),  #
+                                     nn.ReLU(),  #
+                                     nn.Linear(in_features=128, out_features=128),  #
+                                     nn.ReLU(),  #
+                                     nn.Linear(in_features=128, out_features=num_classes))
+
+    def forward(self, x):
+        x = x.view(x.shape[0], -1)
+        x = self._fc2(x)
+        return x
+
+
 class Reconstructor(nn.Module):
     def __init__(self, in_features: int):
         super().__init__()
@@ -196,7 +212,8 @@ _models = [(Encoder, Classifier, Reconstructor),  #
            (Encoder2, Classifier, Reconstructor),  #
            (Encoder3, Classifier, Reconstructor2),  #
            None,  # 4 is no longer implemented, see commit da9d7c9.
-           (EncoderFC, Classifier, ReconstructorFC)]
+           (EncoderFC, Classifier, ReconstructorFC),  #
+           (Encoder3, Classifier2, Reconstructor2)]
 
 
 class MultitaskMnistModel(nn.Module):
