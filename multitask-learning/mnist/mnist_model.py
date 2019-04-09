@@ -148,7 +148,7 @@ class Classifier2(nn.Module):
 
     def forward(self, x):
         x = x.view(x.shape[0], -1)
-        x = self._fc2(x)
+        x = self._layers(x)
         return x
 
 
