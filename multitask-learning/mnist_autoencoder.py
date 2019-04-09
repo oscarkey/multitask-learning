@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
+from torch import Tensor, nn
 
 
 def assert_shape(x: Tensor, shape: (int, int)):
