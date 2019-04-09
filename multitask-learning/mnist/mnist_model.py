@@ -174,7 +174,7 @@ class ReconstructorFC(nn.Module):
     def __init__(self, in_features: int):
         super().__init__()
         self._in_features = in_features
-        self._layers = nn.Sequential(nn.Linear(in_features*2*2, 256), nn.Linear(256, 512), nn.Linear(512, 28 * 28))
+        self._layers = nn.Sequential(nn.Linear(in_features*2*2, 1024), nn.Linear(1024, 800), nn.Linear(800, 28 * 28))
 
     def forward(self, x):
         x = x.view(-1, self._in_features * 2 * 2)
@@ -183,9 +183,10 @@ class ReconstructorFC(nn.Module):
 
 
 _models = [(Encoder, Classifier, Reconstructor),  #
-           (None, None, None),  # Model 2 is no longer implemented,
+           None,  # Model 2 is no longer implemented.
            (Encoder2, Classifier, Reconstructor),  #
            (Encoder3, Classifier, Reconstructor2),  #
+           None,  # 4 is no longer implemented, see commit da9d7c9.
            (EncoderFC, Classifier, ReconstructorFC)]
 
 
