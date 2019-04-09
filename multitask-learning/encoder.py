@@ -111,8 +111,9 @@ class Encoder(nn.Module):
 
     """
 
-    def __init__(self, aspp_dilations: (int, int, int), resnet_type: str):
+    def __init__(self, aspp_dilations: (int, int, int), resnet_type: str, dropout: str):
         super().__init__()
+        self.dropout_type = dropout
         self.inplanes = 64
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -128,7 +129,7 @@ class Encoder(nn.Module):
         self.layer4 = self._make_layer(AtrousBottleneck, 512, layer_blocks[3], stride=1, dilation=4)
 
         self.aspp = ASPP(aspp_dilations)
-
+        self.dropout = torch.nn.Dropout2d(p=0.5, inplace=False)
     # from torchvision.models.resnet.ResNet
     def _make_layer(self, block, planes, blocks, stride=1, dilation=1):
         downsample = None
@@ -158,7 +159,11 @@ class Encoder(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
+        if self.dropout_type == 'after_layer_4':
+            x = self.dropout(x)
         x = self.aspp(x)
+        if self.dropout_type == 'after_aspp':
+            x = self.dropout(x)
         return x
 
 

@@ -70,6 +70,8 @@ def config():
     # When True, use minute Cityscapes. This is downsampled to 64x128, then cropped in half to 64x64.
     minute = False
     resnet_type = 'resnet101'
+    dropout = 'none' 
+    # when None, no dropout is applied, other options are 'after_layer_4' and 'after_aspp'
 
 
 @ex.named_config
@@ -111,7 +113,7 @@ def tiny_cityscapes_servers():
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
     batch_size = 16
     use_adam = False #True
-    initial_learning_rate = 1e-3
+    initial_learning_rate = 1e-3 # for sgd
     learning_rate = 1e-5
     weight_decay = 1e-4 #0 #1e-4 # value from paper is 10^4 = 1e4
     num_classes = 19

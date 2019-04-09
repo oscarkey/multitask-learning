@@ -12,12 +12,12 @@ _RESNET_MODELS = {
 
 class MultitaskLearner(nn.Module):
     def __init__(self, num_classes, enabled_tasks: (bool, bool, bool), loss_uncertainties, pre_train_encoder: bool,
-                 aspp_dilations: (int, int, int), resnet_type='resnet101', output_size=(128, 256)):
+                 aspp_dilations: (int, int, int), resnet_type='resnet101', output_size=(128, 256), dropout=None):
         super(MultitaskLearner, self).__init__()
 
         assert resnet_type in _RESNET_MODELS, f'Unknown resnet type {resnet_type}'
 
-        encoder = Encoder(aspp_dilations, resnet_type)
+        encoder = Encoder(aspp_dilations, resnet_type, dropout)
         if pre_train_encoder:
             # Use ImageNet pre-trained weights for the ResNet-like layers of the encoder
             state_dict = model_zoo.load_url(_RESNET_MODELS[resnet_type])
