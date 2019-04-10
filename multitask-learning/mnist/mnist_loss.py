@@ -48,13 +48,18 @@ def compute_num_correct_task2(preds: Tensor, labels: Tensor) -> int:
 
 class MnistLossFunc(ABC):
     @abstractmethod
-    def __call__(self, output: Tensor, labels: Tensor, original: Tensor) -> Tensor:
-        """Return the loss, where the implementing class defines the exact loss function.
+    def get_raw_loss(self, output: Tensor, labels: Tensor, original: Tensor) -> Tensor:
+        """Return the unweighted loss, where the implementing class defines the exact loss function.
 
         :param output of the model
         :param labels for classification losses
         :param original The original image, for reconstruction losses
         """
+        pass
+
+    @abstractmethod
+    def weight_loss(self, loss: Tensor) -> Tensor:
+        """Weights the given loss appropriately. e.g. by a fixed weight or a learned uncertainty weight"""
         pass
 
 
@@ -64,8 +69,11 @@ class FixedCELoss(MnistLossFunc):
         self._weight = weight
         self._class_map_func = class_map_func
 
-    def __call__(self, output: Tensor, labels: Tensor, original: Tensor) -> Tensor:
-        return self._weight * F.cross_entropy(output, self._class_map_func(labels))
+    def get_raw_loss(self, output: Tensor, labels: Tensor, _) -> Tensor:
+        return F.cross_entropy(output, self._class_map_func(labels))
+
+    def weight_loss(self, loss: Tensor) -> Tensor:
+        return self._weight * loss
 
 
 class LearnedCELoss(MnistLossFunc):
@@ -74,8 +82,10 @@ class LearnedCELoss(MnistLossFunc):
         self._s = s
         self._class_map_func = class_map_func
 
-    def __call__(self, output: Tensor, labels: Tensor, original: Tensor) -> Tensor:
-        loss = F.cross_entropy(output, self._class_map_func(labels))
+    def get_raw_loss(self, output: Tensor, labels: Tensor, _) -> Tensor:
+        return F.cross_entropy(output, self._class_map_func(labels))
+
+    def weight_loss(self, loss: Tensor) -> Tensor:
         return torch.exp(-self._s) * loss + 0.5 * self._s
 
 
@@ -84,8 +94,11 @@ class FixedL1Loss(MnistLossFunc):
         assert isinstance(weight, float)
         self._weight = weight
 
-    def __call__(self, output: Tensor, labels: Tensor, original: Tensor) -> Tensor:
-        return self._weight * F.l1_loss(output, original)
+    def get_raw_loss(self, output: Tensor, _, original: Tensor) -> Tensor:
+        return F.l1_loss(output, original)
+
+    def weight_loss(self, loss: Tensor) -> Tensor:
+        return self._weight * loss
 
 
 class LearnedL1Loss(MnistLossFunc):
@@ -93,8 +106,10 @@ class LearnedL1Loss(MnistLossFunc):
         assert isinstance(s, nn.Parameter)
         self._s = s
 
-    def __call__(self, output: Tensor, labels: Tensor, original: Tensor) -> Tensor:
-        loss = F.l1_loss(output, original)
+    def get_raw_loss(self, output: Tensor, _, original: Tensor) -> Tensor:
+        return F.l1_loss(output, original)
+
+    def weight_loss(self, loss: Tensor) -> Tensor:
         return 0.5 * torch.exp(-self._s) * loss + 0.5 * self._s
 
 
@@ -109,10 +124,14 @@ class MultitaskMnistLoss(ABC):
         """Returns (overall loss, [task losses])"""
         assert len(outputs) == len(self._enabled_tasks) == len(self._loss_funcs)
 
-        losses = [loss_func(output, labels, original) if enabled else torch.tensor([0.0], device=output.device) for
-                  enabled, loss_func, output in zip(self._enabled_tasks, self._loss_funcs, outputs)]
+        raw_losses = [
+            loss_func.get_raw_loss(output, labels, original) if enabled else torch.tensor([0.0], device=output.device)
+            for enabled, loss_func, output in zip(self._enabled_tasks, self._loss_funcs, outputs)]
 
-        return losses[0] + losses[1] + losses[2], (losses[0], losses[1], losses[2])
+        weighted_losses = [loss_func.weight_loss(raw_loss) for loss_func, raw_loss in zip(self._loss_funcs, raw_losses)]
+        total_loss = weighted_losses[0] + weighted_losses[1] + weighted_losses[2]
+
+        return total_loss, (raw_losses[0], raw_losses[1], raw_losses[2])
 
 
 def get_fixed_loss(enabled_tasks: [bool], weights: [float], mnist_type: str):
