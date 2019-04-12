@@ -82,11 +82,7 @@
         + \log \sigma_\text{dep} 
   \]
      
-  \item Model architecture
-\begin{itemize}
-\item DeepLabv3 encoder architecture, including ResNet-101 layers with dilated convolutions and Atrous Spatial Pooling Pyramid module to increase contextual awareness
-\item Simple decoder architecture with two convolutional layers for each task
-\end{itemize}
+  \item Model consisted of DeepLabv3 encoder architecture, including ResNet-101 layers with dilated convolutions and Atrous Spatial Pooling Pyramid module to increase contextual awareness with a simple decoder architecture with two convolutional layers for each task
 \end{itemize}
        
     }
@@ -100,27 +96,29 @@
 	\begin{center}
    	\begin{tabular}{c c  c | c c c }
   	\hline			
-  	  \multicolumn{3}{c|}{Task weights} & $\>$ Segment. $\>$ &Instance& $\>$ Inv. depth$\>$ \\
+  	  \multicolumn{3}{c|}{Task Weights} & $\:$ Segment. $\:$ &Instance Mean& $\:$ Inverse Depth$\:$ \\
 	
-	 $\>$Seg.$\>$ &$\>$ Inst.$\>$ &$\>$ Depth$\>$ & IoU &  $\>$ mean error $\>$  & $\>$ mean error$\>$ \\
+	 $\:$Seg.$\:$ &$\:$ Inst.$\:$ &$\:$ Depth$\:$ & IoU [\%]&  $\:$ Error [$px$]$\:$  & $\:$ Mean Error [$px$]$\:$ \\
 	\hline
   	 1 		& 0 	& 0			&33.2\% 	& -			&-\\
   	  0  	&  1 	& 0 		& -			&\textbf{5.3}	&-\\
 	 0 		& 0 	&	1		&-			& -			& 0.45 \\ \hline 
 	 0.333 & 0.333 & 0.333 		& 32.3\% 	& 5.7		& 0.46 \\
 	 0.89 	&0.01	&0.1		&32.7 \%	&8.4		&0.53\\ \hline
-	  $\:$ Learned $\:$ &	$\:$ Learned$\:$ 	& - 	&33.9\%		&7.2		& - \\
-	 $\:$ Learned$\:$  & - &$\:$  Learned 	$\:$ 	& 33.2\% 	& - 		& 0.43 \\
-	 - &$\:$  Learned $\:$ & $\:$ Learned $\:$ 		& - 		& 6.3		& 0.43 \\\hline
-	 $\:$ Learned$\:$  &$\:$  Learned $\:$ & $\:$ Learned	$\:$ &\textbf{34.0\%} & 5.8 & \textbf{0.42} \\
+	  $\!$ Learned $\!$ &	$\!$ Learned$\!$ 	& - 	&33.9\%		&7.2		& - \\
+	 $\!$ Learned$\!$  & - &$\!$  Learned 	$\!$ 	& 33.2\% 	& - 		& 0.43 \\
+	 - &$\!$  Learned $\!$ & $\!$ Learned $\!$ 		& - 		& 6.3		& 0.43 \\\hline
+	 $\!$ Learned$\!$  &$\!$  Learned $\!$ & $\!$ Learned	$\!$ &\textbf{34.0\%} & 5.8 & \textbf{0.42} \\
  	 \hline  
 	\end{tabular}
 	\end{center}
    \vspace{0.5em}
    
     \begin{tikzfigure}
-    \includegraphics[width=0.4\linewidth]{repro2.png}
+    \includegraphics[width=0.4\linewidth]{aachen.png}
             \includegraphics[width=0.4\linewidth]{repro1.png}
+             \includegraphics[width=0.4\linewidth]{instance2.png}
+              \includegraphics[width=0.4\linewidth]{depth1.png}
         \end{tikzfigure}
 	
 	\begin{itemize}
@@ -129,9 +127,7 @@
 	
 	
 	\item Learning rate search
-   
-   
-   \vspace{0.5em}
+
 	\begin{center}
    	\begin{tabular}{c | c }
   	\hline
@@ -163,7 +159,7 @@
   	\hline			
   	  \multicolumn{2}{c|}{Task weights} & $\>$ Classification $\>$ & $\>$ Reconstruction$\>$ \\
 	
-	 $\>$Classif.$\>$ &$\>$ Reconstr.$\>$ & accuracy & error \\
+	 $\>$Classif.$\>$ &$\>$ Reconstr.$\>$ & accuracy [\%] & error \\
 	\hline
   	 1  & 0  &89.7\% & -\\
   	  0  &  1& -& 0.087\\
