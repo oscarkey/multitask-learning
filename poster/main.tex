@@ -93,13 +93,12 @@
     
     \block{Reproduction results}{
 
-   	\begin{itemize}
-   	\item 
+   	
 	
 	
 	 \vspace{0.5em}
 	\begin{center}
-   	\begin{tabular}{c| c | c | c| c |c }
+   	\begin{tabular}{c c  c | c c c }
   	\hline			
   	  \multicolumn{3}{c|}{Task weights} & $\>$ Segment. $\>$ &Instance& $\>$ Inv. depth$\>$ \\
 	
@@ -119,10 +118,26 @@
 	\end{center}
    \vspace{0.5em}
 	
+	\begin{itemize}
 	
-	\item LR search: 596, 591, 592, 593
-s
+	\item Learning rate search
    
+   
+   \vspace{0.5em}
+	\begin{center}
+   	\begin{tabular}{c | c }
+  	\hline
+	Learning rate & Segmentation IoU \\			
+  	\hline
+	0.01 & \textbf{33.3}\%\\
+	0.001 & 33.0\%\\
+	0.0001 & 31.2\% \\
+	0.00001 & 25.2\% \\
+ 	 \hline  
+	\end{tabular}
+	\end{center}
+   \vspace{0.5em}
+
     \end{itemize} 
          
     }
@@ -136,7 +151,7 @@ s
     
     \vspace{0.5em}
 	\begin{center}
-   	\begin{tabular}{c | c | c| c }
+   	\begin{tabular}{c  c | c c }
   	\hline			
   	  \multicolumn{2}{c|}{Task weights} & $\>$ Classification $\>$ & $\>$ Reconstruction$\>$ \\
 	
@@ -145,7 +160,7 @@ s
   	 1  & 0  &89.7\% & -\\
   	  0  &  1& -& 0.087\\
 	 0.5 & 0.5 &89.3\%& 0.085 \\ \hline 
-	 \multicolumn{2}{c|}{Learned}& \textbf{90.2\%} & \textbf{0.075} \\
+	$\:$ Learned $\:$& $\:$ Learned $\:$& \textbf{90.2\%} & \textbf{0.075} \\
  	 \hline  
 	\end{tabular}
 	\end{center}
