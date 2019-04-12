@@ -87,19 +87,41 @@
 \item DeepLabv3 encoder architecture, including ResNet-101 layers with dilated convolutions and Atrous Spatial Pooling Pyramid module to increase contextual awareness
 \item Simple decoder architecture with two convolutional layers for each task
 \end{itemize}
-\item Sacred with MongoDB to save results
 \end{itemize}
        
     }
     
-    \block{Reproductioesults}{
+    \block{Reproduction results}{
 
    	\begin{itemize}
-   	\item Table 1 with paper hyperparams
-   	\item Semseg lr search
-   	\item Semseg weight decay search
-   	\item ASPP dilation size search
-   	\item Single batch (+ IoU calibration)
+   	\item 
+	
+	
+	 \vspace{0.5em}
+	\begin{center}
+   	\begin{tabular}{c| c | c | c| c |c }
+  	\hline			
+  	  \multicolumn{3}{c|}{Task weights} & $\>$ Segment. $\>$ &Instance& $\>$ Inv. depth$\>$ \\
+	
+	 $\>$Seg.$\>$ &$\>$ Inst.$\>$ &$\>$ Depth$\>$ & IoU &  $\>$ mean error $\>$  & $\>$ mean error$\>$ \\
+	\hline
+  	 1 		& 0 	& 0			&33.2\% 	& -			&-\\
+  	  0  	&  1 	& 0 		& -			&\textbf{5.3}	&-\\
+	 0 		& 0 	&	1		&-			& -			& 0.45 \\ \hline 
+	 0.333 & 0.333 & 0.333 		& 32.3\% 	& 5.7		& 0.46 \\
+	 0.89 	&0.01	&0.1		&32.7 \%	&8.4		&0.53\\ \hline
+	  $\:$ Learned $\:$ &	$\:$ Learned$\:$ 	& - 	&33.9\%		&7.2		& - \\
+	 $\:$ Learned$\:$  & - &$\:$  Learned 	$\:$ 	& 33.2\% 	& - 		& 0.43 \\
+	 - &$\:$  Learned $\:$ & $\:$ Learned $\:$ 		& - 		& 6.3		& 0.43 \\\hline
+	 $\:$ Learned$\:$  &$\:$  Learned $\:$ & $\:$ Learned	$\:$ &\textbf{34.0\%} & 5.8 & \textbf{0.42} \\
+ 	 \hline  
+	\end{tabular}
+	\end{center}
+   \vspace{0.5em}
+	
+	
+	\item LR search: 596, 591, 592, 593
+s
    
     \end{itemize} 
          
@@ -110,17 +132,36 @@
     \block{Success on other multi-task problems}{
     
     \begin{itemize}
-    \item Applying the principled approach to other multi-task learning problems
-    \end{itemize}
+    \item Applying the principled approach to Fashion MNIST classification and reconstruction yields a learned weights multi-task model which outperforms individually trained models and fixed weights multi-task model
     
-\textbf{MNIST and Fashion MNIST}
-   
-   \begin{itemize}
-   
-   \item Table 1 style
-   \item Grid search for optimal weights on two task
-   \item Uncertainty convergence from different initial values
-   
+    \vspace{0.5em}
+	\begin{center}
+   	\begin{tabular}{c | c | c| c }
+  	\hline			
+  	  \multicolumn{2}{c|}{Task weights} & $\>$ Classification $\>$ & $\>$ Reconstruction$\>$ \\
+	
+	 $\>$Classif.$\>$ &$\>$ Reconstr.$\>$ & accuracy & error \\
+	\hline
+  	 1  & 0  &89.7\% & -\\
+  	  0  &  1& -& 0.087\\
+	 0.5 & 0.5 &89.3\%& 0.085 \\ \hline 
+	 \multicolumn{2}{c|}{Learned}& \textbf{90.2\%} & \textbf{0.075} \\
+ 	 \hline  
+	\end{tabular}
+	\end{center}
+   \vspace{0.5em}
+	\item Reconstruction output sample from learned weights multi-task model
+	
+	\begin{tikzfigure}
+            \includegraphics[width=0.7\linewidth]{shirt.png}
+        \end{tikzfigure}
+        
+	\item Optimal weight search
+	
+	\begin{tikzfigure}
+            \includegraphics[width=0.8\linewidth]{optimal.png}
+        \end{tikzfigure}
+
    \end{itemize}   
     }
    
