@@ -1,1 +1,5 @@
-# multitask-learning
+## Reproduction of 'Multi-Task Learning using Uncertainty to Weigh Losses for Scene Geometry and Semantics'
+
+A. Kendall, Y. Gal and R. Cipolla. Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2018. http://arxiv.org/abs/1705.07115
+
+_'Numerous deep learning applications benefit from multi-task learning with multiple regression and classification objectives. In this paper we make the observation that the performance of such systems is strongly dependent on the relative weighting between each task's loss. Tuning these weights by hand is a difficult and expensive process, making multi-task learning prohibitive in practice. We propose a principled approach to multi-task deep learning which weighs multiple loss functions by considering the homoscedastic uncertainty of each task. This allows us to simultaneously learn various quantities with different units or scales in both classification and regression settings. We demonstrate our model learning per-pixel depth regression, semantic and instance segmentation from a monocular input image. Perhaps surprisingly, we show our model can learn multi-task weightings and outperform separate models trained individually on each task.'_
