@@ -46,9 +46,9 @@
             \includegraphics[width=1\linewidth]{overall}
         \end{tikzfigure}
         
-        \item 3 key contributions:
+        \item Three key contributions:
         \begin{enumerate}
-       \item  Aleatoric homoscedastic uncertainty to weigh losses in different tasks
+       \item  Principled method of weighing task losses using aleatoric homoscedastic uncertainty
        \item  Unified architecture for all three tasks with the same encoder for different tasks, with a separate decoder for each task
        \item Demonstrating that loss weighting is important for performance, and showing how superior performance can be achieved on multi-task models compared to individually trained single-task models
        \end{enumerate}
@@ -61,7 +61,8 @@
         + \log \sigma_\text{dep} 
   \]
      
-  \item Model consisted of DeepLabv3 encoder architecture, including ResNet-101 layers with dilated convolutions and Atrous Spatial Pooling Pyramid module to increase contextual awareness with a simple decoder architecture with two convolutional layers for each task
+  \item Encoder: deep image classification network, ResNet-101, followed by an Atrous Spatial Pooling Pyramid module (based on DeepLabv3)
+  \item Decoders: shallow convolutional network for each task
 \end{itemize}
 
 \vspace{2em}
@@ -93,7 +94,6 @@
    	
 	\begin{itemize}
 	\item Quantitative improvement for semantic segmentation and depth regression for multi-task model with learned weights
-	\item Improved baseline for inverse mean depth error from 0.522 to 0.425
 	\end{itemize}
 	
 
@@ -179,30 +179,30 @@ Ground truth \qquad \qquad \qquad \qquad \qquad  Predicted \quad
     
     \vspace{0.5em}
 	\begin{center}
-   	\begin{tabular}{c  c | c c }
+   	\begin{tabular}{l| c  c | c c }
   	\hline			
-  	  \multicolumn{2}{c|}{Task weights} & $\>$ Classification $\>$ & $\>$ Reconstruction$\>$ \\
+  	  &\multicolumn{2}{c|}{Task weights} & $\>$ Classification $\>$ & $\>$ Reconstruction$\>$ \\
 	
-	 $\>$Classif.$\>$ &$\>$ Reconstr.$\>$ & accuracy [\%] & error \\
+	 &$\>$Classif.$\>$ &$\>$ Reconstr.$\>$ & accuracy [\%] & error \\
 	\hline
-  	 1  & 0  &89.7\% & -\\
-  	  0  &  1& -& 0.087\\
-	 0.5 & 0.5 &89.3\%& 0.085 \\ \hline 
-	$\:$ Learned $\:$& $\:$ Learned $\:$& \textbf{90.2\%} & \textbf{0.075} \\
+  	Task 1 only& 1  & 0  &89.7\% & -\\
+  	Task 2 only & 0  &  1& -& 0.087\\\hline
+	Unweighted  &0.5 & 0.5 &89.3\%& 0.085 \\ 
+	Optimal & 0.4 & 0.6 & 89.3\% & 0.080 \\\hline 
+	Learned &$\:$ Learned $\:$& $\:$ Learned $\:$& \textbf{90.2\%} & \textbf{0.075} \\
  	 \hline  
 	\end{tabular}
 	\end{center}
    \vspace{0.25em}
    
    \begin{tikzfigure}
-            \includegraphics[width=0.65\linewidth]{clas}
-             \includegraphics[width=0.65\linewidth]{reco}
+            \includegraphics[width=0.7\linewidth]{graphs}
         \end{tikzfigure}
 	\item Reconstruction output samples from learned weights multi-task model
 	  \vspace{-0.5em}
 	
 	\begin{tikzfigure}
-            \includegraphics[width=0.7\linewidth]{reconstructions.png}
+            \includegraphics[width=0.6\linewidth]{reconstructions.png}
         \end{tikzfigure}
         
 	%\item Optimal weight search
