@@ -1,4 +1,9 @@
-# coding: utf-8
+"""Encoder portion of the model, which computes a latent representation of the input image.
+
+This is based of the PyTorch torchvision implementation of ResNet101:
+https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
+with an additional ASPP module rather than the final pooling and fully connected layers.
+"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,7 +14,6 @@ _LAYER_BLOCKS = {
     'resnet50': [3, 4, 6, 3],
 }
 
-# code in this cell mostly from torchvision/models/resnet.py
 
 def conv3x3(in_planes, out_planes, stride=1, dilation=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, dilation=dilation, padding=dilation,
