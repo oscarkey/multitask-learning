@@ -34,7 +34,7 @@
 
 \centering
 \begin{columns}
-    \column{0.32}
+    \column{0.3}
 
     \block{A new approach to multi-task learning}{
              
@@ -100,9 +100,9 @@
 	\begin{center}
    	\begin{tabular}{c c  c | c c c }
   	\hline			
-  	  \multicolumn{3}{c|}{Task Weights} & $\:$ Segment. $\:$ &Instance Mean& $\:$ Inverse Depth$\:$ \\
+  	  \multicolumn{3}{c|}{Task Weights} & $\:$ Segment.  &$\:$Instance Mean&  Inverse Depth$\:$ \\
 	
-	 $\:$Seg.$\:$ &$\:$ Inst.$\:$ &$\:$ Depth$\:$ & IoU [\%]&  $\:$ Error [$px$]$\:$  & $\:$ Mean Error [$px$]$\:$ \\
+	 $\:$Seg.$\:$ &$\:$ Inst.$\:$ &$\:$ Depth$\:$ & IoU [\%]&   Error [$px$]  &  Mean Error [$px$]$\:$ \\
 	\hline
   	 1 		& 0 	& 0			&33.2\% 	& -			&-\\
   	  0  	&  1 	& 0 		& -			&\textbf{5.27}	&-\\
@@ -155,7 +155,7 @@ Ground truth \qquad \qquad \qquad \qquad \qquad  Predicted \quad
 	%\begin{center}
    	%\begin{tabular}{c | c }
   	%\hline
-	%$\>$Learning rate $\>$& $\>$Segmentation IoU $\>$\\			
+	%$\,$Learning rate $\,$& $\>$Segmentation IoU $\>$\\			
   	%\hline
 	%0.01 & \textbf{33.3}\%\\
 	%0.001 & 33.0\%\\
@@ -171,7 +171,7 @@ Ground truth \qquad \qquad \qquad \qquad \qquad  Predicted \quad
     }
 
     
-    \column{0.35}
+    \column{0.37}
     \block{Success on other multi-task problems}{
     
     \begin{itemize}
@@ -181,15 +181,15 @@ Ground truth \qquad \qquad \qquad \qquad \qquad  Predicted \quad
 	\begin{center}
    	\begin{tabular}{l| c  c | c c }
   	\hline			
-  	  &\multicolumn{2}{c|}{Task weights} & $\>$ Classification $\>$ & $\>$ Reconstruction$\>$ \\
+  	  &\multicolumn{2}{c|}{Task weights} & $\,$ Classification $\,$ & Reconstruction$\,$ \\
 	
-	 &$\>$Classif.$\>$ &$\>$ Reconstr.$\>$ & accuracy [\%] & error \\
+	 &$\,$Classif.$\,$ &$\,$ Reconstr.$\,$ & accuracy [\%] & error \\
 	\hline
-  	Task 1 only& 1  & 0  &89.7\% & -\\
-  	Task 2 only & 0  &  1& -& 0.087\\\hline
-	Unweighted  &0.5 & 0.5 &89.3\%& 0.085 \\ 
-	Optimal & 0.4 & 0.6 & 89.3\% & 0.080 \\\hline 
-	Learned &$\:$ Learned $\:$& $\:$ Learned $\:$& \textbf{90.2\%} & \textbf{0.075} \\
+  	Classification only$\,$& 1  & 0  &89.7\% & -\\
+  	Reconstruction only $\,$& 0  &  1& -& 0.087\\\hline
+	Unweighted$\,$  &0.5 & 0.5 &89.3\%& 0.085 \\ 
+	Optimal $\,$& 0.4 & 0.6 & 89.3\% & 0.080 \\\hline %700
+	 &$\,$ Learned $\,$& $\,$ Learned $\,$& \textbf{90.2\%} & \textbf{0.075} \\
  	 \hline  
 	\end{tabular}
 	\end{center}
