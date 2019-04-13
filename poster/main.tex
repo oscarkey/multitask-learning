@@ -63,6 +63,8 @@
      
   \item Model consisted of DeepLabv3 encoder architecture, including ResNet-101 layers with dilated convolutions and Atrous Spatial Pooling Pyramid module to increase contextual awareness with a simple decoder architecture with two convolutional layers for each task
 \end{itemize}
+
+\vspace{2em}
        
                     }
        
@@ -169,11 +171,11 @@ Ground truth \qquad \qquad \qquad \qquad \qquad  Predicted \quad
     }
 
     
-    \column{0.36}
+    \column{0.35}
     \block{Success on other multi-task problems}{
     
     \begin{itemize}
-    \item Applying the principled approach to Fashion MNIST classification and reconstruction yields a learned weights multi-task model which outperforms individually trained models and fixed weights multi-task model
+    \item The principled approach applied to Fashion MNIST classification and reconstruction successfully yields a learned weights multi-task model which outperforms individually trained models and fixed weights multi-task model
     
     \vspace{0.5em}
 	\begin{center}
@@ -193,14 +195,14 @@ Ground truth \qquad \qquad \qquad \qquad \qquad  Predicted \quad
    \vspace{0.25em}
    
    \begin{tikzfigure}
-            \includegraphics[width=0.7\linewidth]{clas}
-             \includegraphics[width=0.7\linewidth]{reco}
+            \includegraphics[width=0.65\linewidth]{clas}
+             \includegraphics[width=0.65\linewidth]{reco}
         \end{tikzfigure}
-	\item Reconstruction output sample from learned weights multi-task model
+	\item Reconstruction output samples from learned weights multi-task model
 	  \vspace{-0.5em}
 	
 	\begin{tikzfigure}
-            \includegraphics[width=0.7\linewidth]{shirt.png}
+            \includegraphics[width=0.7\linewidth]{reconstructions.png}
         \end{tikzfigure}
         
 	%\item Optimal weight search
