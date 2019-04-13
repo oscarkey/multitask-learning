@@ -52,28 +52,7 @@
        \item  Unified architecture for all three tasks with the same encoder for different tasks, with a separate decoder for each task
        \item Demonstrating that loss weighting is important for performance, and showing how superior performance can be achieved on multi-task models compared to individually trained single-task models
        \end{enumerate}
-       \end{itemize}
-                    }
-       
-    
-    \block{Selected reproduction objective}{
-    
-       \begin{itemize}
-       
-       \item Comparison of multi-task learning with single-task learning and learned loss weights with fixed loss weights
-       \item Subsampled dataset, Tiny Cityscapes, requires less computation time
-       
-       \end{itemize}
-    
-       \begin{tikzfigure}[Results that we aimed to reproduce (Kendall et al., 2017)]
-            \includegraphics[width=1\linewidth]{data.png}
-        \end{tikzfigure}
-        
-    }
-   
-   \column{0.36} 
-   \block{Technical details}{
-       \begin{itemize}
+      
        \item Overall joint loss function: 
        \[ \mathcal{L} \approx 
        \frac{1}{\sigma^2_\text{sem}} \mathcal{L}_\text{sem}  + \log \sigma_\text{sem}
@@ -85,14 +64,37 @@
   \item Model consisted of DeepLabv3 encoder architecture, including ResNet-101 layers with dilated convolutions and Atrous Spatial Pooling Pyramid module to increase contextual awareness with a simple decoder architecture with two convolutional layers for each task
 \end{itemize}
        
-    }
+                    }
+       
+      
     
+    \block{Selected reproduction objective}{
+    
+       \begin{itemize}
+       
+       \item Comparison of multi-task learning with single-task learning and learned loss weights with fixed loss weights
+       \item Subsampled dataset, Tiny Cityscapes, requires less computation time
+       
+       \end{itemize}
+    
+       %\begin{tikzfigure}[Results that we aimed to reproduce (Kendall et al., 2017)]
+       %     \includegraphics[width=1\linewidth]{data.png}
+       % \end{tikzfigure}
+        
+    }
+   
+   
+  
+    \column{0.33} 
     \block{Reproduction results}{
 
    	
+	\begin{itemize}
+	\item Quantitative improvement for semantic segmentation and depth regression for multi-task model with learned weights
+	\item Improved baseline for inverse mean depth error from 0.522 to 0.425
+	\end{itemize}
 	
-	
-	 \vspace{0.5em}
+
 	\begin{center}
    	\begin{tabular}{c c  c | c c c }
   	\hline			
@@ -101,53 +103,61 @@
 	 $\:$Seg.$\:$ &$\:$ Inst.$\:$ &$\:$ Depth$\:$ & IoU [\%]&  $\:$ Error [$px$]$\:$  & $\:$ Mean Error [$px$]$\:$ \\
 	\hline
   	 1 		& 0 	& 0			&33.2\% 	& -			&-\\
-  	  0  	&  1 	& 0 		& -			&\textbf{5.3}	&-\\
-	 0 		& 0 	&	1		&-			& -			& 0.45 \\ \hline 
-	 0.333 & 0.333 & 0.333 		& 32.3\% 	& 5.7		& 0.46 \\
-	 0.89 	&0.01	&0.1		&32.7 \%	&8.4		&0.53\\ \hline
-	  $\!$ Learned $\!$ &	$\!$ Learned$\!$ 	& - 	&33.9\%		&7.2		& - \\
-	 $\!$ Learned$\!$  & - &$\!$  Learned 	$\!$ 	& 33.2\% 	& - 		& 0.43 \\
-	 - &$\!$  Learned $\!$ & $\!$ Learned $\!$ 		& - 		& 6.3		& 0.43 \\\hline
-	 $\!$ Learned$\!$  &$\!$  Learned $\!$ & $\!$ Learned	$\!$ &\textbf{34.0\%} & 5.8 & \textbf{0.42} \\
+  	  0  	&  1 	& 0 		& -			&\textbf{5.27}	&-\\
+	 0 		& 0 	&	1		&-			& -			& 0.446 \\ \hline 
+	 0.333 & 0.333 & 0.333 		& 32.3\% 	& 5.72		& 0.459 \\
+	 0.89 	&0.01	&0.1		&32.7 \%	&8.39		&0.528\\ \hline
+	  $\!$ Learned $\!$ &	$\!$ Learned$\!$ 	& - 	&33.9\%		&7.17		& - \\
+	 $\!$ Learned$\!$  & - &$\!$  Learned 	$\!$ 	& 33.2\% 	& - 		& 0.426 \\
+	 - &$\!$  Learned $\!$ & $\!$ Learned $\!$ 		& - 		& 6.26		& 0.430 \\\hline
+	 $\!$ Learned$\!$  &$\!$  Learned $\!$ & $\!$ Learned	$\!$ &\textbf{34.0\%} & 5.82 & \textbf{0.425} \\
  	 \hline  
 	\end{tabular}
 	\end{center}
    \vspace{0.5em}
+  
    
     \begin{tikzfigure}
-    \includegraphics[width=0.4\linewidth]{aachen.png}
-            \includegraphics[width=0.4\linewidth]{repro1.png}
-             \includegraphics[width=0.4\linewidth]{instance2.png}
-              \includegraphics[width=0.4\linewidth]{depth1.png}
+    \includegraphics[width=0.49\linewidth]{aachen.png}
+            \includegraphics[width=0.49\linewidth]{repro1.png}
+            
+            \vspace{0.3em}
+            
+            \includegraphics[width=0.49\linewidth]{instance1.png}
+            \includegraphics[width=0.49\linewidth]{instance2.png}
+            
+               \vspace{0.3em}
+             \includegraphics[width=0.49\linewidth]{depth2.png}
+              \includegraphics[width=0.49\linewidth]{depth1.png}
         \end{tikzfigure}
 	
-	\begin{itemize}
 	
 	
 	
+	%\begin{itemize}
 	
-	\item Learning rate search
+	%\item Learning rate search
 
-	\begin{center}
-   	\begin{tabular}{c | c }
-  	\hline
-	$\>$Learning rate $\>$& $\>$Segmentation IoU $\>$\\			
-  	\hline
-	0.01 & \textbf{33.3}\%\\
-	0.001 & 33.0\%\\
-	0.0001 & 31.2\% \\
-	0.00001 & 25.2\% \\
- 	 \hline  
-	\end{tabular}
-	\end{center}
-   \vspace{0.5em}
+	%\begin{center}
+   	%\begin{tabular}{c | c }
+  	%\hline
+	%$\>$Learning rate $\>$& $\>$Segmentation IoU $\>$\\			
+  	%\hline
+	%0.01 & \textbf{33.3}\%\\
+	%0.001 & 33.0\%\\
+	%0.0001 & 31.2\% \\
+	%0.00001 & 25.2\% \\
+ 	 %\hline  
+	%\end{tabular}
+	%\end{center}
+   %\vspace{0.5em}
 
-    \end{itemize} 
-         
+    %\end{itemize} 
+                    
     }
 
     
-    \column{0.32}
+    \column{0.36}
     \block{Success on other multi-task problems}{
     
     \begin{itemize}
@@ -168,18 +178,24 @@
  	 \hline  
 	\end{tabular}
 	\end{center}
-   \vspace{0.5em}
+   \vspace{0.25em}
+   
+   \begin{tikzfigure}
+            \includegraphics[width=0.7\linewidth]{clas}
+             \includegraphics[width=0.7\linewidth]{reco}
+        \end{tikzfigure}
 	\item Reconstruction output sample from learned weights multi-task model
+	  \vspace{-0.5em}
 	
 	\begin{tikzfigure}
             \includegraphics[width=0.7\linewidth]{shirt.png}
         \end{tikzfigure}
         
-	\item Optimal weight search
+	%\item Optimal weight search
 	
-	\begin{tikzfigure}
-            \includegraphics[width=0.8\linewidth]{optimal.png}
-        \end{tikzfigure}
+	%\begin{tikzfigure}
+         %   \includegraphics[width=0.8\linewidth]{optimal.png}
+       % \end{tikzfigure}
 
    \end{itemize}   
     }
