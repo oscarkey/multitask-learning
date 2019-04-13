@@ -391,6 +391,6 @@ def get_loader_from_dir(root_dir: str, config, transform=NoopTransform()):
 
 
 if __name__ == '__main__':
-    root = '/Users/oscar/Downloads/gtFine_trainvaltest/gtFine/train/'
+    root = '/Users/____/Downloads/gtFine_trainvaltest/gtFine/train/'
     test = CityscapesDataset(root)
     print(test[1])

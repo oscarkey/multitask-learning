@@ -108,8 +108,8 @@ def tiny_cityscapes_servers():
     crop = False
     flip = True
     max_iter = 5000000
-    root_dir_train = '/home/luiten/vision/tinycityscapes/tiny_cityscapes_train'
-    root_dir_validation = '/home/luiten/vision/tinycityscapes/tiny_cityscapes_val'
+    root_dir_train = '/home/____/vision/tinycityscapes/tiny_cityscapes_train'
+    root_dir_validation = '/home/_____/vision/tinycityscapes/tiny_cityscapes_val'
     root_dir_test = 'example-tiny-cityscapes'  # TODO: add test set
     batch_size = 16
     use_adam = False #True

@@ -4,7 +4,7 @@ import torch
 from timeit import default_timer as timer
 from cityscapes import CityscapesDataset
 
-dataset = CityscapesDataset('/Users/joanna.materzynska/werk/multitask-learning/example-tiny-cityscapes/aachen')
+dataset = CityscapesDataset('/Users/______/werk/multitask-learning/example-tiny-cityscapes/aachen')
 
 index = 0
 image_array = dataset._cached_get_image_array(index)
