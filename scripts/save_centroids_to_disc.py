@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 from tqdm import tqdm
 
-import cityscapes
+from cityscapestask import cityscapes
 
 
 def save_mask_instances_file(output_folder, file_path):

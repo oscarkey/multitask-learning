@@ -5,7 +5,7 @@ import pymongo
 import torch
 from torch.optim import Optimizer
 
-from model import MultitaskLearner
+from cityscapestask.model import MultitaskLearner
 
 server_name = 'mongodb://multitask-learning:***REMOVED***@134.209.21.201/admin?retryWrites=true'
 collection_name = 'multitask-learning'

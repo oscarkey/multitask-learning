@@ -3,10 +3,9 @@ import torch
 from torch.optim import Optimizer
 from torchvision.transforms import transforms
 
-import checkpointing
-import cityscapes
-from losses import MultiTaskLoss
-from model import MultitaskLearner
+from cityscapestask import cityscapes, checkpointing
+from cityscapestask.losses import MultiTaskLoss
+from cityscapestask.model import MultitaskLearner
 
 
 def main(_run):

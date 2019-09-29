@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 
-from decoders import Decoders
-from encoder import Encoder
+from cityscapestask.decoders import Decoders
+from cityscapestask.encoder import Encoder
 
 _RESNET_MODELS = {
     'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',

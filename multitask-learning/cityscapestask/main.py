@@ -6,8 +6,7 @@ from sacred.arg_parser import get_config_updates
 from sacred.observers import FileStorageObserver
 from sacred.observers import MongoObserver
 
-import checkpointing
-import train
+from cityscapestask import train, checkpointing
 
 ex = Experiment()
 
