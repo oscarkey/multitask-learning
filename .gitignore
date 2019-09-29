@@ -15,3 +15,5 @@ __pycache__/
 *$py.class
 
 .DS_Store
+
+Pipfile.lock
