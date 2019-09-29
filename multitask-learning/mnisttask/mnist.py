@@ -12,9 +12,9 @@ from sacred.observers import MongoObserver
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-import mnist_loss
-from mnist_loss import MultitaskMnistLoss
-from mnist_model import MultitaskMnistModel
+from mnisttask import mnist_loss
+from mnisttask.mnist_loss import MultitaskMnistLoss
+from mnisttask.mnist_model import MultitaskMnistModel
 
 ex = sacred.Experiment()
 
