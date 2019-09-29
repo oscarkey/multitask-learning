@@ -5,10 +5,8 @@ import pymongo
 import torch
 from torch.optim import Optimizer
 
+import sacred_creds
 from cityscapestask.model import MultitaskLearner
-
-server_name = 'mongodb://multitask-learning:***REMOVED***@134.209.21.201/admin?retryWrites=true'
-collection_name = 'multitask-learning'
 
 
 def save_model(_run, model: MultitaskLearner, optimizer: Optimizer, epoch: int, iterations: int):
@@ -27,7 +25,7 @@ def load_state(_run, run_id: int) -> Tuple[int, Dict, Dict]:
 
     :return (epoch: int, state_dict)
     """
-    db = pymongo.MongoClient(server_name, 27017)[collection_name]
+    db = pymongo.MongoClient(sacred_creds.url, 27017)[sacred_creds.database_name]
     experiment = db['runs'].find_one({'_id': run_id})
 
     artifacts = experiment['artifacts']

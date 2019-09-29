@@ -12,6 +12,7 @@ from sacred.observers import MongoObserver
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+import sacred_creds
 from mnisttask import mnist_loss
 from mnisttask.mnist_loss import MultitaskMnistLoss
 from mnisttask.mnist_model import MultitaskMnistModel
@@ -22,9 +23,7 @@ config_updates, _ = get_config_updates(sys.argv)
 
 # Disable saving to mongo using "with save_to_db=False"
 if ("save_to_db" not in config_updates) or config_updates["save_to_db"]:
-    mongo_observer = MongoObserver.create(
-        url='mongodb://multitask-learning:***REMOVED***@134.209.21.201/admin?retryWrites=true',
-        db_name='multitask-learning')
+    mongo_observer = MongoObserver.create(url=sacred_creds.url, db_name=sacred_creds.database_name)
     ex.observers.append(mongo_observer)
 else:
     ex.observers.append(FileStorageObserver.create('multitask_results'))

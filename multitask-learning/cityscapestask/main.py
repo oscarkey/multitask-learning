@@ -6,7 +6,8 @@ from sacred.arg_parser import get_config_updates
 from sacred.observers import FileStorageObserver
 from sacred.observers import MongoObserver
 
-from cityscapestask import train, checkpointing
+import sacred_creds
+from cityscapestask import train
 
 ex = Experiment()
 
@@ -14,7 +15,7 @@ config_updates, _ = get_config_updates(sys.argv)
 
 # Disable saving to mongo using "with save_to_db=False"
 if ("save_to_db" not in config_updates) or config_updates["save_to_db"]:
-    mongo_observer = MongoObserver.create(url=checkpointing.server_name, db_name=checkpointing.collection_name)
+    mongo_observer = MongoObserver.create(url=sacred_creds.url, db_name=sacred_creds.database_name)
     ex.observers.append(mongo_observer)
 else:
     ex.observers.append(FileStorageObserver.create('multitask_results'))
@@ -69,7 +70,7 @@ def config():
     # When True, use minute Cityscapes. This is downsampled to 64x128, then cropped in half to 64x64.
     minute = False
     resnet_type = 'resnet101'
-    dropout = 'none' 
+    dropout = 'none'
     # when None, no dropout is applied, other options are 'after_layer_4' and 'after_aspp'
 
 
