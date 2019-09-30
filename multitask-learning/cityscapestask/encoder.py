@@ -3,6 +3,8 @@
 This is based of the PyTorch torchvision implementation of ResNet101:
 https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
 with an additional ASPP module rather than the final pooling and fully connected layers.
+
+See PYTORCH_LICENSE for the license for the PyTorch code partially reproduced below.
 """
 import torch
 import torch.nn as nn
