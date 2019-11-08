@@ -8,13 +8,17 @@ In many applications of machine learning it is beneficial to have a single model
 
 One option is to use a simple weighted sum of the loss of each individual task. However, using a grid search to find the weights can be very expensive, and may not find the optimal values because it is limited in resolution. The weights might also have varying optimal values at different epochs during training, and so any value of the fixed weights may not be optimal for the entire training procedure.
 
-The hypothesis that the paper presents and tests is that a multi-task model will achieve higher accuracy when using a loss which weights each task by a function of its homoscedastic aleatoric uncertainty, rather than by fixed weights. Moreover, a multi-task model will achieve higher accuracy than several single task models learning each task individually. For the derivation of the loss function, see [`reports/aml_report_oscar_key.pdf`](reports/aml_report_oscar_key.pdf).
+The hypothesis that the paper presents and tests is that a multi-task model will achieve higher accuracy when using a loss which weights each task by a function of its homoscedastic aleatoric uncertainty, rather than by fixed weights. Moreover, a multi-task model will achieve higher accuracy than several single task models learning each task individually.
+
+For more details, including the derivation of the loss function, see [`reports/aml_report_oscar_key.pdf`](reports/aml_report_oscar_key.pdf) or the original paper.
 
 ## Our results
 
 On a simple task, using the Fashion MNIST dataset, we are able to reproduce results analogous to those in the original paper.
 
 On the Cityscapes task, as used by the original paper, we are unable to reproduce the baseline results. We ran out of time during the project to debug the baselines.
+
+Again, for more details see [`reports/aml_report_oscar_key.pdf`](reports/aml_report_oscar_key.pdf).
 
 
 ### Fashion MNIST task
