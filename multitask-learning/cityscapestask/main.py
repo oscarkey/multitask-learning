@@ -70,8 +70,8 @@ def config():
     # When True, use minute Cityscapes. This is downsampled to 64x128, then cropped in half to 64x64.
     minute = False
     resnet_type = 'resnet101'
-    dropout = 'none'
     # when None, no dropout is applied, other options are 'after_layer_4' and 'after_aspp'
+    dropout = 'none'
 
 
 @ex.named_config

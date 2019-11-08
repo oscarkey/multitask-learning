@@ -1,3 +1,4 @@
+"""Contains training and validation functions."""
 import numpy as np
 import torch
 from torch.optim import Optimizer

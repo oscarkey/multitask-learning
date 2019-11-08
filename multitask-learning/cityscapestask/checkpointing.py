@@ -1,3 +1,4 @@
+"""Provides methods to save and load the state from Sacred."""
 import tempfile
 from typing import Dict, Tuple
 
@@ -23,7 +24,7 @@ def save_model(_run, model: MultitaskLearner, optimizer: Optimizer, epoch: int, 
 def load_state(_run, run_id: int) -> Tuple[int, Dict, Dict]:
     """Loads the state of the latest save from the given run.
 
-    :return (epoch: int, state_dict)
+    :returns: (epoch: int, state_dict)
     """
     db = pymongo.MongoClient(sacred_creds.url, 27017)[sacred_creds.database_name]
     experiment = db['runs'].find_one({'_id': run_id})

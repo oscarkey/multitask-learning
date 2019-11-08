@@ -1,4 +1,4 @@
-"""Loads the Cityscapes dataset for use with Pytorch."""
+"""Loads the Cityscapes dataset for use with PyTorch."""
 
 import glob
 import os

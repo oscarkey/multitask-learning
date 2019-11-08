@@ -1,3 +1,6 @@
+"""Main entry point, training and validation script for the experiments on Fashion MNIST."""
+import sys
+print('path', sys.path)
 import sys
 import tempfile
 from logging import Logger
@@ -34,7 +37,7 @@ def config():
     """Default config values."""
     # Allows us to filter to mnist results only in sacredboard.
     mnist = 1
-    # Whether to use the standard MNIST or FashionMNIST dataset, and so what type of classifcation task to perform.
+    # Whether to use the standard MNIST or FashionMNIST dataset, and so what type of classification task to perform.
     # See mnist_loss._labels_to_1()
     mnist_type = 'numbers'
     max_epochs = 100

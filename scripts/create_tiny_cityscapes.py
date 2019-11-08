@@ -1,3 +1,4 @@
+"""Script to resize the full sized Cityscapes dataset to 256x128, to speed up experiments."""
 import os
 import argparse
 
@@ -38,8 +39,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('root_folder')
     parser.add_argument('output_folder')
-    #parser.add_argument('-height', type=int)
-    #parser.add_argument('-width', type=int)
     args = vars(parser.parse_args())
 
     main(args['root_folder'], args['output_folder'])

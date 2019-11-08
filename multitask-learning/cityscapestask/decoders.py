@@ -1,3 +1,5 @@
+"""Decoder portion of the model."""
+
 import torch
 import torch.nn.functional as F
 from torch import nn
